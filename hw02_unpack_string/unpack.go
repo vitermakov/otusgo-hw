@@ -13,13 +13,13 @@ const (
 )
 
 // isCtrl управляющий слэш?
-func isCtrl(Rune rune) bool {
-	return Ctrl == Rune
+func isCtrl(char rune) bool {
+	return Ctrl == char
 }
 
 // isDigit арабская цифра?
-func isDigit(Rune rune) (int, bool) {
-	d := Rune - Nil
+func isDigit(char rune) (int, bool) {
+	d := char - Nil
 	if d >= 0 && d < 10 {
 		return int(d), true
 	}
