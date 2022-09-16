@@ -25,7 +25,7 @@ type Dictionary struct {
 func DictionaryNew() *Dictionary {
 	return &Dictionary{
 		data:  make([]FreqWord, 0),
-		index: make(map[string]int, 0),
+		index: make(map[string]int),
 	}
 }
 
