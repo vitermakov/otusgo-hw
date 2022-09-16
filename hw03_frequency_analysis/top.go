@@ -6,22 +6,22 @@ const (
 	spaceDelimiter = ' '
 	tabDelimiter   = '\t'
 	nlDelimiter    = '\n'
-	// dashDelimiter  = '-'
+	/* dashDelimiter  = '-'. */
 )
 
-// FreqWord слово с частотой
+// FreqWord слово с частотой.
 type FreqWord struct {
 	word  string
 	count int
 }
 
-// Dictionary хранилище слов с частотностью
+// Dictionary хранилище слов с частотностью.
 type Dictionary struct {
 	data  []FreqWord
 	index map[string]int
 }
 
-// DictionaryNew конструктор - память под слайс и мапу должы быть выделены
+// DictionaryNew конструктор - память под слайс и мапу должы быть выделены.
 func DictionaryNew() *Dictionary {
 	return &Dictionary{
 		data:  make([]FreqWord, 0),
@@ -29,10 +29,10 @@ func DictionaryNew() *Dictionary {
 	}
 }
 
-// takeInto учесть одно свойство
+// takeInto учесть одно свойство.
 func (d *Dictionary) takeInto(word string) {
 	// пропускаем пустые слова
-	if len(word) <= 0 {
+	if len(word) == 0 {
 		return
 	}
 	i, exists := d.index[word]
@@ -47,17 +47,18 @@ func (d *Dictionary) takeInto(word string) {
 	}
 }
 
-// Analyze анализ текста
+// Analyze анализ текста.
 func (d *Dictionary) Analyze(text string, tokenizer *Tokenizer) {
 	tokenizer.Proc(text, func(word string, dl rune) {
 		if len(word) > 0 {
 			d.takeInto(word)
 		}
-		//if dl == dashDelimiter {
+		// if dl == dashDelimiter {
 		//	d.takeInto(string(dl))
-		//}
+		// }
 	})
 }
+
 func (d Dictionary) GetTop(n int) []FreqWord {
 	// частотности сортируем в обратном порядке, слова в прямом
 	sort.Slice(d.data, func(i, j int) bool {
@@ -73,7 +74,7 @@ func (d Dictionary) GetTop(n int) []FreqWord {
 	return d.data[0:n]
 }
 
-// Tokenizer токенизатор
+// Tokenizer токенизатор.
 type Tokenizer struct {
 	dlChars []rune
 }
@@ -84,7 +85,7 @@ func TokenizerNew(delims []rune) *Tokenizer {
 	}
 }
 
-// Proc при каждом новом токене вызываем callback
+// Proc при каждом новом токене вызываем callback.
 func (t Tokenizer) Proc(text string, callback func(word string, dl rune)) {
 	var prev int
 	var word string
@@ -98,6 +99,7 @@ func (t Tokenizer) Proc(text string, callback func(word string, dl rune)) {
 	word = text[prev:]
 	callback(word, 0)
 }
+
 func (t Tokenizer) isDelimiter(c rune) bool {
 	for _, v := range t.dlChars {
 		if v == c {
@@ -108,11 +110,11 @@ func (t Tokenizer) isDelimiter(c rune) bool {
 }
 
 func Top10(text string) []string {
-	var dict = DictionaryNew()
+	dict := DictionaryNew()
 	// чтобы результаты совпадали с результатами теста необходимо
 	// кроме пробелов как разделители использовать знаки табов и переносов строк
-	var tokenizer = TokenizerNew([]rune{
-		spaceDelimiter, nlDelimiter, tabDelimiter, //dashDelimiter,
+	tokenizer := TokenizerNew([]rune{
+		spaceDelimiter, nlDelimiter, tabDelimiter, // dashDelimiter,
 	})
 	dict.Analyze(text, tokenizer)
 	topFreq := dict.GetTop(10)
