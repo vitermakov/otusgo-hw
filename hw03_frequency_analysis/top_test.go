@@ -7,9 +7,9 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+// var taskWithAsteriskIsCompleted = true
 
-var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
+var longText = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
 	ступеньки собственным затылком:  бум-бум-бум.  Другого  способа
 	сходить  с  лестницы  он  пока  не  знает.  Иногда ему, правда,
@@ -44,27 +44,51 @@ var text = `Как видите, он  спускается  по  лестни�
 		В этот вечер...`
 
 func TestTop10(t *testing.T) {
-	t.Run("no words in empty string", func(t *testing.T) {
-		require.Len(t, Top10(""), 0)
-	})
+	testCases1 := []struct {
+		name        string
+		text        string
+		expectedLen int
+	}{
+		{
+			name:        "no words in empty string",
+			text:        "",
+			expectedLen: 0,
+		}, {
+			name:        "only spaces",
+			text:        "             ",
+			expectedLen: 0,
+		}, {
+			name: "lew line chars and tabs",
+			text: `
+			
+			
+			`,
+			expectedLen: 0,
+		}, {
+			name:        "less than 10",
+			text:        `a a b b c c d d b a b a`,
+			expectedLen: 4,
+		}, {
+			name:        "more than 10",
+			text:        `a b c d e f g h i j k l l l`,
+			expectedLen: 10,
+		},
+	}
+	for _, tc := range testCases1 {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Len(t, Top10(tc.text), tc.expectedLen)
+		})
+	}
 
-	t.Run("positive test", func(t *testing.T) {
-		if taskWithAsteriskIsCompleted {
-			expected := []string{
-				"а",         // 8
-				"он",        // 8
-				"и",         // 6
-				"ты",        // 5
-				"что",       // 5
-				"в",         // 4
-				"его",       // 4
-				"если",      // 4
-				"кристофер", // 4
-				"не",        // 4
-			}
-			require.Equal(t, expected, Top10(text))
-		} else {
-			expected := []string{
+	testCases2 := []struct {
+		name     string
+		text     string
+		expected []string
+	}{
+		{
+			name: "positive test",
+			text: longText,
+			expected: []string{
 				"он",        // 8
 				"а",         // 6
 				"и",         // 6
@@ -75,8 +99,38 @@ func TestTop10(t *testing.T) {
 				"если",      // 4
 				"не",        // 4
 				"то",        // 4
-			}
-			require.Equal(t, expected, Top10(text))
-		}
-	})
+			},
+		}, {
+			name: "yes-forms",
+			text: `yesyes yes, yes yes-yes
+			yes - yes -`,
+			expected: []string{
+				"yes",     // 4
+				"-",       // 2
+				"yes,",    // 1
+				"yes-yes", // 1
+				"yesyes",  // 1
+			},
+		},
+	}
+	for _, tc := range testCases2 {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, Top10(tc.text))
+		})
+	}
 }
+
+/*
+	expected := []string{
+		"а",         // 8
+		"он",        // 8
+		"и",         // 6
+		"ты",        // 5
+		"что",       // 5
+		"в",         // 4
+		"его",       // 4
+		"если",      // 4
+		"кристофер", // 4
+		"не",        // 4
+	}
+*/
