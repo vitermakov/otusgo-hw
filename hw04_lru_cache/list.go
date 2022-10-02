@@ -69,19 +69,20 @@ func (l *list) PushBack(v interface{}) *ListItem {
 }
 
 func (l *list) Remove(i *ListItem) {
-	if i.Prev == nil && i.Next == nil {
+	switch {
+	case i.Prev == nil && i.Next == nil:
 		// единственный элемент
 		l.front = nil
 		l.back = nil
-	} else if i.Prev == nil {
+	case i.Prev == nil:
 		// это front
 		i.Next.Prev = nil
 		l.front = i.Next
-	} else if i.Next == nil {
+	case i.Next == nil:
 		// это back
 		i.Prev.Next = nil
 		l.back = i.Prev
-	} else {
+	default:
 		i.Prev.Next, i.Next.Prev = i.Next, i.Prev
 	}
 	// на всякий случай
