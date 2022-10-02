@@ -5,6 +5,7 @@ import "sync"
 type Key string
 
 // Cache common simple interface.
+// Add Unset method. Set nil is not unset.
 type Cache interface {
 	Set(key Key, value interface{}) bool
 	Unset(key Key) (interface{}, bool)
@@ -12,15 +13,16 @@ type Cache interface {
 	Clear()
 }
 
-// LruCache LRU type caching
+// LruCache LRU type caching.
 type LruCache struct {
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
-	mx       sync.Mutex
+	sync.Mutex
 }
 
 // public
+
 // Set thread-safe setting value by key.
 // Returns existing-flag before setting, value can be nil.
 func (lc *LruCache) Set(key Key, value interface{}) (exists bool) {
@@ -30,7 +32,7 @@ func (lc *LruCache) Set(key Key, value interface{}) (exists bool) {
 	return
 }
 
-// Get thread-safe getting value by key
+// Get thread-safe getting value by key.
 func (lc *LruCache) Get(key Key) (value interface{}, exists bool) {
 	lc.safeExec(func() {
 		value, exists = lc.get(key)
@@ -38,8 +40,8 @@ func (lc *LruCache) Get(key Key) (value interface{}, exists bool) {
 	return
 }
 
-// Unset thread-safe unset value by key
-// Returns value
+// Unset thread-safe unset value by key.
+// Returns value for possible using.
 func (lc *LruCache) Unset(key Key) (value interface{}, exists bool) {
 	lc.safeExec(func() {
 		value, exists = lc.unset(key)
@@ -47,17 +49,20 @@ func (lc *LruCache) Unset(key Key) (value interface{}, exists bool) {
 	return
 }
 
-// Clear thread-safe clear all cache
+// Clear thread-safe clear all cache.
 func (lc *LruCache) Clear() {
 	lc.safeExec(lc.clear)
 }
 
 // private
+
 func (lc *LruCache) safeExec(unsafeFunc func()) {
-	lc.mx.Lock()
+	lc.Lock()
+	defer lc.Unlock()
+
 	unsafeFunc()
-	lc.mx.Unlock()
 }
+
 func (lc *LruCache) set(key Key, value interface{}) bool {
 	item, exists := lc.items[key]
 	val := cacheItem{key: key, value: value}
@@ -75,6 +80,7 @@ func (lc *LruCache) set(key Key, value interface{}) bool {
 	}
 	return exists
 }
+
 func (lc *LruCache) get(key Key) (interface{}, bool) {
 	item, exists := lc.items[key]
 	if exists {
@@ -83,6 +89,7 @@ func (lc *LruCache) get(key Key) (interface{}, bool) {
 	}
 	return nil, false
 }
+
 func (lc *LruCache) unset(key Key) (interface{}, bool) {
 	value, exists := lc.get(key)
 	if exists {
@@ -92,6 +99,7 @@ func (lc *LruCache) unset(key Key) (interface{}, bool) {
 	}
 	return value, exists
 }
+
 func (lc *LruCache) clear() {
 	lc.queue = NewList()
 	lc.items = make(map[Key]*ListItem, lc.capacity)

@@ -1,5 +1,6 @@
 package hw04lrucache
 
+// List nil <- (prev) front <-> ... <-> elem <-> ... <-> back (next) -> nil.
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -10,8 +11,7 @@ type List interface {
 	MoveToFront(i *ListItem)
 }
 
-// ListItem
-// nil <- (prev) front <-> ... <-> elem <-> ... <-> back (next) -> nil
+// ListItem linked list item.
 type ListItem struct {
 	Value interface{}
 	Next  *ListItem
@@ -27,12 +27,15 @@ type list struct {
 func (l list) Len() int {
 	return l.length
 }
+
 func (l list) Front() *ListItem {
 	return l.front
 }
+
 func (l list) Back() *ListItem {
 	return l.back
 }
+
 func (l *list) PushFront(v interface{}) *ListItem {
 	curFront := l.front
 	item := &ListItem{
@@ -48,6 +51,7 @@ func (l *list) PushFront(v interface{}) *ListItem {
 	l.length++
 	return item
 }
+
 func (l *list) PushBack(v interface{}) *ListItem {
 	curBack := l.back
 	item := &ListItem{
@@ -63,6 +67,7 @@ func (l *list) PushBack(v interface{}) *ListItem {
 	l.length++
 	return item
 }
+
 func (l *list) Remove(i *ListItem) {
 	if i.Prev == nil && i.Next == nil {
 		// единственный элемент
@@ -84,6 +89,7 @@ func (l *list) Remove(i *ListItem) {
 	i.Next = nil
 	l.length--
 }
+
 func (l *list) MoveToFront(i *ListItem) {
 	if i == l.Front() {
 		return
