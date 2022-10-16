@@ -70,13 +70,13 @@ func (lc *LruCache) set(key Key, value interface{}) bool {
 		item.Value = val
 		lc.queue.MoveToFront(item)
 	} else {
-		item = lc.queue.PushFront(val)
-		lc.items[key] = item
-		for lc.queue.Len() > lc.capacity {
+		if lc.queue.Len() == lc.capacity {
 			back := lc.queue.Back()
 			lc.queue.Remove(back)
 			delete(lc.items, back.Value.(cacheItem).key)
 		}
+		item = lc.queue.PushFront(val)
+		lc.items[key] = item
 	}
 	return exists
 }
