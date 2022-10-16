@@ -8,57 +8,56 @@ import (
 
 var (
 	ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
-	ErrTaskExecute         = errors.New("task execution failed")
+	ErrWrongInput          = errors.New("n, m must be positive")
 )
 
 type Task func() error
+
+func consume(chTasks <-chan Task, errCount *int32, errLimit int) {
+	for task := range chTasks {
+		if atomic.LoadInt32(errCount) >= int32(errLimit) {
+			return
+		}
+		err := task()
+		if err != nil {
+			// увеличиваем счетчик ошибок на 1, вместо примитивов синхронизации
+			// используем атомарную операцию сложения.
+			atomic.AddInt32(errCount, 1)
+		}
+	}
+}
+
+func produce(tasks []Task, chTasks chan<- Task) {
+	for _, task := range tasks {
+		chTasks <- task
+	}
+	close(chTasks)
+}
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
 	var (
 		mErr    int32
-		chTasks chan Task // канал для передачи задач
+		chTasks chan Task // канал для передачи задач.
 		wg      sync.WaitGroup
 	)
-	// канал должен быть небуфферизированным, чтобы количество максимально выполняемых
-	chTasks = make(chan Task)
+	if n <= 0 || m <= 0 {
+		return ErrWrongInput
+	}
+	chTasks = make(chan Task, len(tasks))
 	// количество консюмеров не зависит от количества задач
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		// анонимная функция consumer
+		// анонимная функция обертка для consumer, исключаем wg из списка параметров
 		go func() {
-			for task := range chTasks {
-				err := task()
-				if err != nil {
-					// увеличиваем счетчик ошибок на 1, вместо примитивов синхронизации
-					// используем атомарную операцию сложения
-					atomic.AddInt32(&mErr, 1)
-				}
-			}
-			wg.Done()
+			defer wg.Done()
+			consume(chTasks, &mErr, m)
 		}()
 	}
-
-	// продюсеры перебирают задачи до момента одного из двух событий
-	// 1. превышения кол-ва ошибок
-	// 2. выполнения всех задач
-	bFailed := false
-	for _, task := range tasks {
-		// не добавляем ничего в канал, если кол-во ошибок
-		// больше или равно m. Читаем атомарной операцией.
-		if atomic.LoadInt32(&mErr) >= int32(m) {
-			close(chTasks)
-			bFailed = true
-			break
-		}
-		chTasks <- task
-	}
-	if !bFailed {
-		close(chTasks)
-	}
+	produce(tasks, chTasks)
 	wg.Wait()
 
-	if bFailed {
+	if mErr >= int32(m) {
 		return ErrErrorsLimitExceeded
 	}
 	return nil
