@@ -1,6 +1,7 @@
 package hw06pipelineexecution
 
 import (
+	"errors"
 	"strconv"
 	"testing"
 	"time"
@@ -89,5 +90,104 @@ func TestPipeline(t *testing.T) {
 
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+
+	t.Run("nil case", func(t *testing.T) {
+		result := make([]interface{}, 0, 10)
+		for s := range ExecutePipeline(nil, nil, stages...) {
+			result = append(result, s)
+		}
+		require.Len(t, result, 1)
+		require.True(t, errors.Is(result[0].(error), ErrNilInChannel))
+	})
+
+	t.Run("no stages case", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+		result := make([]int, 0, 10)
+		for s := range ExecutePipeline(in, nil) {
+			result = append(result, s.(int))
+		}
+		require.Equal(t, data, result)
+	})
+}
+
+func TestPipelineWithErrors(t *testing.T) {
+	// Stage generator
+	g := func(_ string, f func(v interface{}) interface{}) Stage {
+		return func(in In) Out {
+			out := make(Bi)
+			go func() {
+				defer close(out)
+				for v := range in {
+					out <- f(v)
+				}
+			}()
+			return out
+		}
+	}
+
+	type I interface{}
+
+	ErrZeroInt := errors.New("value must be assigned positive value")
+
+	checkError := func(v I, f func(x I) I) I {
+		err, ok := v.(error)
+		if ok {
+			return err
+		}
+		return f(v)
+	}
+	stages := []Stage{
+		g("No zero", func(v interface{}) interface{} {
+			if v.(int) > 0 {
+				return v
+			}
+			return ErrZeroInt
+		}),
+		g("Dummy", func(v interface{}) interface{} {
+			return checkError(v, func(x I) I {
+				return x
+			})
+		}),
+		g("Multiplier (* 2)", func(v interface{}) interface{} {
+			return checkError(v, func(x I) I {
+				return x.(int) * 2
+			})
+		}),
+		g("Adder (+ 100)", func(v interface{}) interface{} {
+			return checkError(v, func(x I) I {
+				return x.(int) + 100
+			})
+		}),
+		g("Stringifier", func(v interface{}) interface{} {
+			err, ok := v.(error)
+			if ok {
+				return err.Error()
+			}
+			return strconv.Itoa(v.(int))
+		}),
+	}
+
+	t.Run("error case", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 0, 4, 5}
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+		result := make([]string, 0, 10)
+		for s := range ExecutePipeline(in, nil, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Equal(t, []string{"102", "104", ErrZeroInt.Error(), "108", "110"}, result)
 	})
 }
