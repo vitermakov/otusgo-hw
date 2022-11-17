@@ -59,7 +59,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	bar := progress.New(fileIn, limit)
 	_, err = io.CopyN(fileOut, bar, limit)
-	if err != nil && errors.Is(err, io.EOF) {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return err
 	}
 

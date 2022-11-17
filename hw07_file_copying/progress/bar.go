@@ -15,6 +15,7 @@ type Bar struct {
 func New(src io.Reader, limit int64) *Bar {
 	return &Bar{src, 0, limit}
 }
+
 func (b *Bar) Read(p []byte) (int, error) {
 	n, err := b.src.Read(p)
 	if err != nil {
@@ -26,6 +27,7 @@ func (b *Bar) Read(p []byte) (int, error) {
 
 	return n, nil
 }
+
 func (b *Bar) displayBar(err error) {
 	n := 40
 	m := int(float64(b.readed) / float64(b.limit) * float64(n))
