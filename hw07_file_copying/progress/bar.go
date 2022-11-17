@@ -1,6 +1,7 @@
 package progress
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -47,7 +48,7 @@ func (b *Bar) displayBar(err error) {
 		int(float64(b.readed)/float64(b.limit)*100),
 		msg,
 	)
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		fmt.Print("\n")
 	}
 }
