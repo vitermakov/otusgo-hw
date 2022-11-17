@@ -14,6 +14,12 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit < 0 {
+		limit = 0
+	}
 	fileIn, err := os.Open(fromPath)
 	if err != nil {
 		return err
@@ -53,7 +59,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	bar := progress.New(fileIn, limit)
 	_, err = io.CopyN(fileOut, bar, limit)
-	if err != nil {
+	if err != nil && errors.Is(err, io.EOF) {
 		return err
 	}
 

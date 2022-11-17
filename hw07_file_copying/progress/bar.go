@@ -27,18 +27,23 @@ func (b *Bar) Read(p []byte) (int, error) {
 	return n, nil
 }
 func (b *Bar) displayBar(err error) {
-	n := 20
-	m := int(b.readed / b.limit * int64(n))
+	n := 40
+	m := int(float64(b.readed) / float64(b.limit) * float64(n))
 	l := 1
 	if m > n-1 {
 		l = 0
 	}
-	fmt.Print(
-		"[%s%s%s] %d%%",
+	msg := "Копирование"
+	if b.readed == b.limit {
+		msg = "Готово     "
+	}
+	fmt.Printf(
+		"\r[%s%s%s] %d%% %s",
 		strings.Repeat("=", m),
 		strings.Repeat(">", l),
 		strings.Repeat("-", n-m-l),
-		int(b.readed/b.limit*100),
+		int(float64(b.readed)/float64(b.limit)*100),
+		msg,
 	)
 	if err == io.EOF {
 		fmt.Print("\n")
