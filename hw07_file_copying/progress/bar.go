@@ -1,7 +1,6 @@
 package progress
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -30,6 +29,7 @@ func (b *Bar) Read(p []byte) (int, error) {
 }
 
 func (b *Bar) displayBar(err error) {
+	var ready bool
 	n := 40
 	m := int(float64(b.readed) / float64(b.limit) * float64(n))
 	l := 1
@@ -38,6 +38,7 @@ func (b *Bar) displayBar(err error) {
 	}
 	msg := "Копирование"
 	if b.readed == b.limit {
+		ready = true
 		msg = "Готово     "
 	}
 	fmt.Printf(
@@ -48,7 +49,7 @@ func (b *Bar) displayBar(err error) {
 		int(float64(b.readed)/float64(b.limit)*100),
 		msg,
 	)
-	if errors.Is(err, io.EOF) {
+	if ready {
 		fmt.Print("\n")
 	}
 }
