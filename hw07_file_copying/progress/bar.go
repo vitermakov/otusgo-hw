@@ -19,16 +19,16 @@ func New(src io.Reader, limit int64) *Bar {
 func (b *Bar) Read(p []byte) (int, error) {
 	n, err := b.src.Read(p)
 	if err != nil {
-		b.displayBar(err)
+		b.displayBar()
 		return n, err
 	}
 	b.readed += int64(n)
-	b.displayBar(nil)
+	b.displayBar()
 
 	return n, nil
 }
 
-func (b *Bar) displayBar(err error) {
+func (b *Bar) displayBar() {
 	var ready bool
 	n := 40
 	m := int(float64(b.readed) / float64(b.limit) * float64(n))
