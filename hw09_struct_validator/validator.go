@@ -1,17 +1,30 @@
-package hw09structvalidator
+package hw09_struct_validator
 
-type ValidationError struct {
-	Field string
-	Err   error
-}
+import (
+	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
+)
 
-type ValidationErrors []ValidationError
-
-func (v ValidationErrors) Error() string {
-	panic("implement me")
-}
-
+/*
+	func main() {
+		var u = User1{
+			Role: "admin",
+			Response: struct {
+				Code int `validate:"in:200,400,404"`
+				Body string
+			}{
+				Code: 200,
+				Body: "",
+			},
+			Address: Address{
+				Zipcode: "555934",
+			},
+			Email: "dd@yandex.ru",
+			Age:   22,
+		}
+		err := Validate(u)
+		fmt.Println(err)
+	}
+*/
 func Validate(v interface{}) error {
-	// Place your code here.
-	return nil
+	return validator.ValidateStruct(v)
 }

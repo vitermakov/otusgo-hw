@@ -1,3 +1,5 @@
-module github.com/fixme_my_friend/hw09_struct_validator
+module github.com/vitermakov/otusgo-hw/hw09_struct_validator
 
-go 1.16
+go 1.18
+
+require github.com/pkg/errors v0.9.1
