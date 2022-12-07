@@ -1,6 +1,9 @@
 package validator
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 // Rule интерфейс правила валидации
 type Rule interface {
@@ -37,4 +40,13 @@ func getRule(key string) (Rule, bool) {
 		return nil, false
 	}
 	return create(), true
+}
+
+type Invalid struct {
+	Code string
+	Err  error
+}
+
+func (i Invalid) Error() string {
+	return fmt.Sprintf("(%s) %s", i.Code, i.Err.Error())
 }

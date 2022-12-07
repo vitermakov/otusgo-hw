@@ -7,7 +7,7 @@ import (
 )
 
 // CmpRule правило, которое проверяет числовое значение функцией CmpFn
-// считаем что самый общий числовой тип float64
+// считаем (для упрощения), что самый общий числовой тип float64
 type CmpRule struct {
 	CmpFn     func(float64, float64) bool
 	ErrFormat string
@@ -35,14 +35,14 @@ func (m CmpRule) Check(val reflect.Value) error {
 	if t >= reflect.Int && t <= reflect.Uint64 {
 		v = float64(val.Int())
 		if !m.CmpFn(v, m.value) {
-			return fmt.Errorf(m.ErrFormat, m.value, v)
+			return Invalid{Code: "cmp", Err: fmt.Errorf(m.ErrFormat, m.value, v)}
 		}
 		return nil
 	}
 	if t >= reflect.Float32 && t <= reflect.Float64 {
 		v = val.Float()
 		if !m.CmpFn(v, m.value) {
-			return fmt.Errorf(m.ErrFormat, m.value, v)
+			return Invalid{Code: "cmp", Err: fmt.Errorf(m.ErrFormat, m.value, v)}
 		}
 		return nil
 	}
