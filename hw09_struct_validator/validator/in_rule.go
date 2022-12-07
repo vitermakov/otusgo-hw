@@ -15,6 +15,9 @@ func (m *InRule) Init(kind reflect.Kind, args []string) error {
 	if !m.supports(kind) {
 		return ErrSupportArgType
 	}
+	if len(args) == 0 {
+		return ErrWrongArgsList
+	}
 	for i, arg := range args {
 		var (
 			v   interface{}
@@ -61,7 +64,7 @@ func (m InRule) Check(val reflect.Value) error {
 			}
 		}
 	}
-	return fmt.Errorf("`%v` is not in required set %v", val.Interface(), m.values)
+	return Invalid{Code: "in", Err: fmt.Errorf("`%v` is not in required set %v", val.Interface(), m.values)}
 }
 func (m InRule) supports(k reflect.Kind) bool {
 	return k == reflect.String || (k >= reflect.Int && k <= reflect.Float64 && k != reflect.Uintptr)

@@ -1,0 +1,79 @@
+package validator
+
+import (
+	"errors"
+	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestInRule(t *testing.T) {
+	allowedValues := []string{"new", "running", "done", "error"}
+	wrongValue := reflect.ValueOf("complete")
+	rightValue := reflect.ValueOf("done")
+	testCases := []struct {
+		name           string
+		kind           reflect.Kind
+		args           []string
+		assertInitErr  func(*testing.T, error)
+		checkValue     *reflect.Value
+		assertCheckErr func(*testing.T, error)
+	}{
+		{
+			name: "wrong argrs count (0)",
+			kind: reflect.String,
+			args: []string{},
+			assertInitErr: func(t *testing.T, err error) {
+				require.True(t, errors.Is(err, ErrWrongArgsList))
+			},
+		}, {
+			name: "wrong type",
+			kind: reflect.Map,
+			args: allowedValues,
+			assertInitErr: func(t *testing.T, err error) {
+				require.True(t, errors.Is(err, ErrSupportArgType))
+			},
+		}, {
+			name: "wrong value",
+			kind: reflect.String,
+			args: allowedValues,
+			assertInitErr: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+			checkValue: &wrongValue,
+			assertCheckErr: func(t *testing.T, err error) {
+				_, ok := err.(Invalid)
+				require.True(t, ok)
+			},
+		}, {
+			name: "ok",
+			kind: reflect.String,
+			args: allowedValues,
+			assertInitErr: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+			checkValue: &rightValue,
+			assertCheckErr: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc := tc
+			t.Parallel()
+
+			// Place your code here.
+			rule := NewInRule()
+			err := rule.Init(tc.kind, tc.args)
+			tc.assertInitErr(t, err)
+
+			if tc.checkValue != nil {
+				err := rule.Check(*tc.checkValue)
+				tc.assertCheckErr(t, err)
+			}
+		})
+	}
+}

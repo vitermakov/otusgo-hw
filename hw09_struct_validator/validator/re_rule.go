@@ -31,7 +31,7 @@ func (m ReRule) Check(val reflect.Value) error {
 		return ErrSupportArgType
 	}
 	if !m.re.Match([]byte(val.String())) {
-		return fmt.Errorf("value `%s` not matching spcified pattern `%s`", val.String(), m.re.String())
+		return Invalid{Code: "re", Err: fmt.Errorf("value `%s` not matching spcified pattern `%s`", val.String(), m.re.String())}
 	}
 	return nil
 }

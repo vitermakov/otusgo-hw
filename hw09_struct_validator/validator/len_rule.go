@@ -25,8 +25,8 @@ func (m *LenRule) Init(kind reflect.Kind, args []string) error {
 	if err != nil {
 		return err
 	}
-	if v < 0 {
-		return fmt.Errorf("len can't be negative, got %d", v)
+	if v <= 0 {
+		return fmt.Errorf("len must be positive, got %d", v)
 	}
 	m.lenTest = int(v)
 
@@ -35,7 +35,7 @@ func (m *LenRule) Init(kind reflect.Kind, args []string) error {
 func (m LenRule) Check(val reflect.Value) error {
 	if val.Kind() == reflect.String {
 		if val.Len() != m.lenTest {
-			return fmt.Errorf("expected length %d, got %d", m.lenTest, val.Len())
+			return Invalid{Code: "cmp", Err: fmt.Errorf("expected length %d, got %d", m.lenTest, val.Len())}
 		}
 		return nil
 	}
