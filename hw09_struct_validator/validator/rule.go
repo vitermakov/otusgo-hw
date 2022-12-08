@@ -42,6 +42,7 @@ func getRule(key string) (Rule, bool) {
 	return create(), true
 }
 
+// ошибка, возвращаемая при ошибке валидации конкретного обработчика
 type Invalid struct {
 	Code string
 	Err  error

@@ -1,4 +1,4 @@
-package validator
+package validator_test
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
 )
 
 func TestLenRule(t *testing.T) {
@@ -25,14 +26,14 @@ func TestLenRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{},
 			assertInitErr: func(t *testing.T, err error) {
-				require.True(t, errors.Is(err, ErrWrongArgsList))
+				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
 			name: "wrong argrs count (>1)",
 			kind: reflect.String,
 			args: []string{"4", "3"},
 			assertInitErr: func(t *testing.T, err error) {
-				require.True(t, errors.Is(err, ErrWrongArgsList))
+				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
 			name: "arg not int",
@@ -54,7 +55,7 @@ func TestLenRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{"4"},
 			assertInitErr: func(t *testing.T, err error) {
-				require.True(t, errors.Is(err, ErrSupportArgType))
+				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
 			name: "wrong value",
@@ -65,7 +66,7 @@ func TestLenRule(t *testing.T) {
 			},
 			checkValue: &wrongValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				_, ok := err.(Invalid)
+				_, ok := err.(validator.Invalid)
 				require.True(t, ok)
 			},
 		}, {
@@ -88,7 +89,7 @@ func TestLenRule(t *testing.T) {
 			t.Parallel()
 
 			// Place your code here.
-			rule := NewLenRule()
+			rule := validator.NewLenRule()
 			err := rule.Init(tc.kind, tc.args)
 			tc.assertInitErr(t, err)
 

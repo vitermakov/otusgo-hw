@@ -112,7 +112,7 @@ func checkStruct(rStruct reflect.Value, rules StructRules, names ...string) Vali
 		case reflect.Slice, reflect.Array:
 			rules, _ := ruleSet.(Rules)
 			for i := 0; i < fVal.Len(); i++ {
-				errorSet = append(errorSet, checkValue(fVal, rules, append(names, strconv.Itoa(i))...)...)
+				errorSet = append(errorSet, checkValue(fVal.Index(i), rules, append(names, strconv.Itoa(i))...)...)
 			}
 		case reflect.Struct:
 			sRules, _ := ruleSet.(StructRules)

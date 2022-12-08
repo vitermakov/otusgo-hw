@@ -1,4 +1,4 @@
-package validator
+package validator_test
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
 )
 
 func TestReRule(t *testing.T) {
@@ -26,7 +27,7 @@ func TestReRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{},
 			assertInitErr: func(t *testing.T, err error) {
-				require.True(t, errors.Is(err, ErrWrongArgsList))
+				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
 			name: "arg re syntax error",
@@ -41,7 +42,7 @@ func TestReRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{mailRe},
 			assertInitErr: func(t *testing.T, err error) {
-				require.True(t, errors.Is(err, ErrSupportArgType))
+				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
 			name: "wrong value",
@@ -52,7 +53,7 @@ func TestReRule(t *testing.T) {
 			},
 			checkValue: &wrongValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				_, ok := err.(Invalid)
+				_, ok := err.(validator.Invalid)
 				require.True(t, ok)
 			},
 		}, {
@@ -75,7 +76,7 @@ func TestReRule(t *testing.T) {
 			t.Parallel()
 
 			// Place your code here.
-			rule := NewReRule()
+			rule := validator.NewReRule()
 			err := rule.Init(tc.kind, tc.args)
 			tc.assertInitErr(t, err)
 
