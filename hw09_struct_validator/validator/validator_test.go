@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
+	"github.com/vitermakov/otusgo-hw/hw09structvalidator/validator"
 )
 
-type UserRole string
-type Status string
+type (
+	UserRole string
+	Status   string
+)
 
 // Test the function on different structures and other types.
 type (
@@ -46,6 +48,7 @@ type (
 func (u *User) Block(value bool) {
 	u.isBlocked = value
 }
+
 func (u User) IsBlocked() bool {
 	return u.isBlocked
 }

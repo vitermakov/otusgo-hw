@@ -42,6 +42,7 @@ func (m *InRule) Init(kind reflect.Kind, args []string) error {
 	}
 	return nil
 }
+
 func (m InRule) Check(val reflect.Value) error {
 	kind := val.Kind()
 	if !m.supports(kind) {
@@ -66,6 +67,7 @@ func (m InRule) Check(val reflect.Value) error {
 	}
 	return Invalid{Code: "in", Err: fmt.Errorf("`%v` is not in required set %v", val.Interface(), m.values)}
 }
+
 func (m InRule) supports(k reflect.Kind) bool {
 	return k == reflect.String || (k >= reflect.Int && k <= reflect.Float64 && k != reflect.Uintptr)
 }

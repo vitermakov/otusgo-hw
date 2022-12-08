@@ -32,6 +32,7 @@ func (m *LenRule) Init(kind reflect.Kind, args []string) error {
 
 	return nil
 }
+
 func (m LenRule) Check(val reflect.Value) error {
 	if val.Kind() == reflect.String {
 		if val.Len() != m.lenTest {
@@ -41,9 +42,11 @@ func (m LenRule) Check(val reflect.Value) error {
 	}
 	return ErrSupportArgType
 }
+
 func (m LenRule) supports(k reflect.Kind) bool {
 	return k == reflect.String
 }
+
 func NewLenRule() Rule {
 	return &LenRule{}
 }

@@ -136,6 +136,7 @@ func checkStruct(rStruct reflect.Value, rules StructRules, names ...string) Vali
 
 	return errorSet
 }
+
 func checkValue(value reflect.Value, rules Rules, names ...string) ValidationErrors {
 	errorSet := make(ValidationErrors, 0)
 	for _, rule := range rules {
@@ -170,7 +171,7 @@ func parseTag(kind reflect.Kind, tag string) (Rules, error) {
 	return rules, nil
 }
 
-//var cache = make(map[string]StructRules, 0)
+// var cache = make(map[string]StructRules, 0)
 
 /*
 var cacheOn = true

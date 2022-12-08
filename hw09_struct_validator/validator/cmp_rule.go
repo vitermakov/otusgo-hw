@@ -29,6 +29,7 @@ func (m *CmpRule) Init(kind reflect.Kind, args []string) error {
 
 	return nil
 }
+
 func (m CmpRule) Check(val reflect.Value) error {
 	var v float64
 	t := val.Kind()
@@ -48,6 +49,7 @@ func (m CmpRule) Check(val reflect.Value) error {
 	}
 	return ErrSupportArgType
 }
+
 func (m CmpRule) supports(k reflect.Kind) bool {
 	return k >= reflect.Int && k <= reflect.Float64 && k != reflect.Uintptr
 }
@@ -60,6 +62,7 @@ func NewMinRule() Rule {
 		ErrFormat: "expected value must be not less then %f, got %f",
 	}
 }
+
 func NewMaxRule() Rule {
 	return &CmpRule{
 		CmpFn: func(v float64, m float64) bool {

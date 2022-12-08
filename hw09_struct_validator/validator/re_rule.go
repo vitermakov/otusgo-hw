@@ -26,6 +26,7 @@ func (m *ReRule) Init(kind reflect.Kind, args []string) error {
 
 	return nil
 }
+
 func (m ReRule) Check(val reflect.Value) error {
 	if !m.supports(val.Kind()) {
 		return ErrSupportArgType
@@ -35,9 +36,11 @@ func (m ReRule) Check(val reflect.Value) error {
 	}
 	return nil
 }
+
 func (m ReRule) supports(k reflect.Kind) bool {
 	return k == reflect.String
 }
+
 func NewReRule() Rule {
 	return &ReRule{}
 }
