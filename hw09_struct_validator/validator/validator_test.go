@@ -23,21 +23,21 @@ type (
 	}
 	Point struct {
 		Longtitude float32 `validate:"min:-180|max:180"`
-		Latitude   float32 `validate:"min:-180|max:180"` //`validate:"len:15"`
+		Latitude   float32 `validate:"min:-180|max:180"` // `validate:"len:15"`.
 	}
 	Object struct {
 		ID   string `json:"id" validate:"len:36"`
 		Name string
 	}
 	User struct {
-		// встроенный
+		// встроенный.
 		Object `validate:"nested"`
 		Age    int      `validate:"min:18|max:50"`
 		Email  string   `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
 		Role   UserRole `validate:"in:admin,stuff"`
 		Phones []string `validate:"len:11"`
 		Status struct {
-			Code Status `validate:"in:default,approved,banned"` // не должно проверяться, так как Status не `nested`
+			Code Status `validate:"in:default,approved,banned"` // не должно проверяться, так как Status не `nested`.
 			Text string
 		}
 		Address   Address `validate:"nested"`
@@ -60,7 +60,7 @@ func TestValidateInit(t *testing.T) {
 	err = validator.ValidateStruct(32)
 	require.True(t, errors.Is(err, validator.ErrInputNotStruct))
 
-	// тестируем, что ошибки парсинга тегов прокидываются из ValidateStruct
+	// тестируем, что ошибки парсинга тегов прокидываются из ValidateStruct.
 	errorRetrieveCases := []interface{}{
 		struct {
 			Value int `validate:"min:x"`
@@ -107,7 +107,7 @@ func TestValidateInit(t *testing.T) {
 	}
 
 	for i, ec := range errorRetrieveCases {
-		t.Run(fmt.Sprintf("error case retrive %d", i+1), func(t *testing.T) {
+		t.Run(fmt.Sprintf("error case retrieve %d", i+1), func(t *testing.T) {
 			ec := ec
 			t.Parallel()
 
@@ -191,6 +191,7 @@ func TestValidateCheck(t *testing.T) {
 }
 
 func checkErrorSet(t *testing.T, err error, errFields []string) {
+	t.Helper()
 	if errFields == nil {
 		require.NoError(t, err, "no errors expected")
 	} else {

@@ -53,14 +53,14 @@ func ValidateStruct(v interface{}) error {
 	if err != nil {
 		return err
 	}
-	errors := checkStruct(val, rules, typ.Name())
-	if len(errors) > 0 {
-		return errors
+	errs := checkStruct(val, rules, typ.Name())
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }
 
-func retrieveRules(rStruct reflect.Value, key string, names ...string) (StructRules, error) {
+func retrieveRules(rStruct reflect.Value, _ string, names ...string) (StructRules, error) {
 	var rules Rules
 	var err error
 	// TODO: проверить увеличивает ли это производительность
@@ -83,7 +83,7 @@ func retrieveRules(rStruct reflect.Value, key string, names ...string) (StructRu
 		fVal := rStruct.Field(i)
 		// TODO: подумать об указателях
 		fType := fVal.Type()
-		switch fType.Kind() {
+		switch fType.Kind() { //nolint:exhaustive
 		case reflect.Array, reflect.Slice:
 			rules, err = parseTag(fVal.Type().Elem().Kind(), tag)
 			structRules[i] = rules
@@ -119,7 +119,7 @@ func checkStruct(rStruct reflect.Value, rules StructRules, names ...string) Vali
 		sVal := rStruct.Field(i)
 		fVal := reflect.Indirect(sVal)
 		names := append(names, rStruct.Type().Field(i).Name)
-		switch fVal.Kind() {
+		switch fVal.Kind() { //nolint:exhaustive
 		case reflect.Slice, reflect.Array:
 			rules, _ := ruleSet.(Rules)
 			for i := 0; i < fVal.Len(); i++ {
@@ -158,10 +158,10 @@ func parseTag(kind reflect.Kind, tag string) (Rules, error) {
 		if pos < 0 {
 			return Rules{}, fmt.Errorf("rule `%s` not found", "")
 		}
-		ruleId := r[0:pos]
-		rule, ok := getRule(ruleId)
+		ruleID := r[0:pos]
+		rule, ok := getRule(ruleID)
 		if !ok {
-			return Rules{}, fmt.Errorf("rule `%s` not found", ruleId)
+			return Rules{}, fmt.Errorf("rule `%s` not found", ruleID)
 		}
 		if err := rule.Init(kind, strings.Split(r[pos+1:], ",")); err != nil {
 			return Rules{}, err
