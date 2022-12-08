@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrInputStructIsNull = errors.New("input value is null")
-	ErrInputNotStruct    = errors.New("input value is not struct")
+	ErrInputStructIsNull = errors.New("variable value is null")
+	ErrInputNotStruct    = errors.New("variable value is not struct")
 	ErrWrongArgsList     = errors.New("wrong argument list")
 	ErrSupportArgType    = errors.New("unsupported arg type")
 )
@@ -24,6 +24,7 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
+	fmt.Println(len(v))
 	s := strings.Builder{}
 	for _, err := range v {
 		s.WriteString(err.Field + ": " + err.Err.Error() + "\n")
@@ -52,7 +53,11 @@ func ValidateStruct(v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return checkStruct(val, rules, typ.Name())
+	errors := checkStruct(val, rules, typ.Name())
+	if len(errors) > 0 {
+		return errors
+	}
+	return nil
 }
 
 func retrieveRules(rStruct reflect.Value, key string, names ...string) (StructRules, error) {
@@ -74,6 +79,7 @@ func retrieveRules(rStruct reflect.Value, key string, names ...string) (StructRu
 		if tag == "" {
 			continue
 		}
+		nesChecked := false
 		fVal := rStruct.Field(i)
 		// TODO: подумать об указателях
 		fType := fVal.Type()
@@ -81,19 +87,24 @@ func retrieveRules(rStruct reflect.Value, key string, names ...string) (StructRu
 		case reflect.Array, reflect.Slice:
 			rules, err = parseTag(fVal.Type().Elem().Kind(), tag)
 			structRules[i] = rules
+			nesChecked = true
 		case reflect.Struct:
-			if tag == "nested" {
-				var nested StructRules
-				key := ""
-				if fType.Name() != "" {
-					key = fType.Name() + ":" + fType.PkgPath()
-				}
-				nested, err = retrieveRules(fVal, key, names...)
-				structRules[i] = nested
+			var nested StructRules
+			key := ""
+			if fType.Name() != "" {
+				key = fType.Name() + ":" + fType.PkgPath()
 			}
+			nested, err = retrieveRules(fVal, key, names...)
+			structRules[i] = nested
+			nesChecked = true
+		// case reflect.Map:
+		// case reflect.Bool:
 		default:
 			rules, err = parseTag(fVal.Kind(), tag)
 			structRules[i] = rules
+		}
+		if tag == "nested" && !nesChecked {
+			err = ErrInputNotStruct
 		}
 		if err != nil {
 			return StructRules{}, errors.Wrapf(err, "error retrieve rule on `%s`", strings.Join(append(names, sf.Name), "."))
@@ -122,6 +133,7 @@ func checkStruct(rStruct reflect.Value, rules StructRules, names ...string) Vali
 			errorSet = append(errorSet, checkValue(fVal, rules, names...)...)
 		}
 	}
+
 	return errorSet
 }
 func checkValue(value reflect.Value, rules Rules, names ...string) ValidationErrors {
