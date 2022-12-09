@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vitermakov/otusgo-hw/hw09structvalidator/validator"
+	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
 )
 
 func TestInRule(t *testing.T) {
@@ -72,9 +72,7 @@ func TestInRule(t *testing.T) {
 			tc := tc
 			t.Parallel()
 
-			// Place your code here.
-			rule := validator.NewInRule()
-			err := rule.Init(tc.kind, tc.args)
+			rule, err := validator.GetRuleFactory("in", tc.kind, tc.args)
 			tc.assertInitErr(t, err)
 
 			if tc.checkValue != nil {

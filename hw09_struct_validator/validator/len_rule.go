@@ -7,13 +7,12 @@ import (
 )
 
 // LenRule проверяет строковое поле на длину.
-type LenRule struct {
-	CmpFn     func(float64, float64) bool
+type lenRule struct {
 	ErrFormat string
 	lenTest   int
 }
 
-func (m *LenRule) Init(kind reflect.Kind, args []string) error {
+func (m *lenRule) init(kind reflect.Kind, args []string) error {
 	if !m.supports(kind) {
 		return ErrSupportArgType
 	}
@@ -32,20 +31,24 @@ func (m *LenRule) Init(kind reflect.Kind, args []string) error {
 	return nil
 }
 
-func (m LenRule) Check(val reflect.Value) error {
-	if val.Kind() == reflect.String {
-		if val.Len() != m.lenTest {
-			return Invalid{Code: "cmp", Err: fmt.Errorf("expected length %d, got %d", m.lenTest, val.Len())}
-		}
-		return nil
+func (m lenRule) Check(val reflect.Value) error {
+	if val.Kind() != reflect.String {
+		return ErrSupportArgType
 	}
-	return ErrSupportArgType
+	if val.Len() != m.lenTest {
+		return Invalid{Code: "cmp", Err: fmt.Errorf("expected length %d, got %d", m.lenTest, val.Len())}
+	}
+	return nil
 }
 
-func (m LenRule) supports(k reflect.Kind) bool {
+func (m lenRule) supports(k reflect.Kind) bool {
 	return k == reflect.String
 }
 
-func NewLenRule() Rule {
-	return &LenRule{}
+func createLenRule(kind reflect.Kind, args []string) (rule, error) {
+	rule := &lenRule{}
+	if err := rule.init(kind, args); err != nil {
+		return nil, err
+	}
+	return rule, nil
 }

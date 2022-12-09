@@ -8,13 +8,13 @@ import (
 
 // CmpRule правило, которое проверяет числовое значение функцией CmpFn
 // считаем (для упрощения), что самый общий числовой тип float64.
-type CmpRule struct {
+type cmpRule struct {
 	CmpFn     func(float64, float64) bool
 	ErrFormat string
 	value     float64 // самый общий числовой тип
 }
 
-func (m *CmpRule) Init(kind reflect.Kind, args []string) error {
+func (m *cmpRule) init(kind reflect.Kind, args []string) error {
 	if !m.supports(kind) {
 		return ErrSupportArgType
 	}
@@ -30,7 +30,7 @@ func (m *CmpRule) Init(kind reflect.Kind, args []string) error {
 	return nil
 }
 
-func (m CmpRule) Check(val reflect.Value) error {
+func (m cmpRule) Check(val reflect.Value) error {
 	var v float64
 	t := val.Kind()
 	if t >= reflect.Int && t <= reflect.Uint64 {
@@ -50,24 +50,32 @@ func (m CmpRule) Check(val reflect.Value) error {
 	return ErrSupportArgType
 }
 
-func (m CmpRule) supports(k reflect.Kind) bool {
+func (m cmpRule) supports(k reflect.Kind) bool {
 	return k >= reflect.Int && k <= reflect.Float64 && k != reflect.Uintptr
 }
 
-func NewMinRule() Rule {
-	return &CmpRule{
-		CmpFn: func(v float64, m float64) bool {
+func createMinRule(kind reflect.Kind, args []string) (rule, error) {
+	rule := &cmpRule{
+		CmpFn: func(v, m float64) bool {
 			return v >= m
 		},
 		ErrFormat: "expected value must be not less then %f, got %f",
 	}
+	if err := rule.init(kind, args); err != nil {
+		return nil, err
+	}
+	return rule, nil
 }
 
-func NewMaxRule() Rule {
-	return &CmpRule{
-		CmpFn: func(v float64, m float64) bool {
+func createMaxRule(kind reflect.Kind, args []string) (rule, error) {
+	rule := &cmpRule{
+		CmpFn: func(v, m float64) bool {
 			return v <= m
 		},
 		ErrFormat: "expected value must be not greater then %f, got %f",
 	}
+	if err := rule.init(kind, args); err != nil {
+		return nil, err
+	}
+	return rule, nil
 }

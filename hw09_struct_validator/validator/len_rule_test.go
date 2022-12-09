@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vitermakov/otusgo-hw/hw09structvalidator/validator"
+	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
 )
 
 func TestLenRule(t *testing.T) {
@@ -98,8 +98,7 @@ func TestLenRule(t *testing.T) {
 			t.Parallel()
 
 			// Place your code here.
-			rule := validator.NewLenRule()
-			err := rule.Init(tc.kind, tc.args)
+			rule, err := validator.GetRuleFactory("len", tc.kind, tc.args)
 			tc.assertInitErr(t, err)
 
 			if tc.checkValue != nil {

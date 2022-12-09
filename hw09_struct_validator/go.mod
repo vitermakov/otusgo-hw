@@ -1,4 +1,4 @@
-module github.com/vitermakov/otusgo-hw/hw09structvalidator
+module github.com/vitermakov/otusgo-hw/hw09_struct_validator
 
 go 1.18
 

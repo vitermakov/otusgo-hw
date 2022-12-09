@@ -6,12 +6,12 @@ import (
 	"regexp"
 )
 
-// ReRule проверка строки по регулярному выражению.
-type ReRule struct {
+// reRule проверка строки по регулярному выражению.
+type reRule struct {
 	re regexp.Regexp // скомпилированное рег.выражение.
 }
 
-func (m *ReRule) Init(kind reflect.Kind, args []string) error {
+func (m *reRule) init(kind reflect.Kind, args []string) error {
 	if !m.supports(kind) {
 		return ErrSupportArgType
 	}
@@ -27,23 +27,27 @@ func (m *ReRule) Init(kind reflect.Kind, args []string) error {
 	return nil
 }
 
-func (m ReRule) Check(val reflect.Value) error {
+func (m reRule) Check(val reflect.Value) error {
 	if !m.supports(val.Kind()) {
 		return ErrSupportArgType
 	}
 	if !m.re.Match([]byte(val.String())) {
 		return Invalid{
-			Code: "re",
+			Code: "regexp",
 			Err:  fmt.Errorf("value `%s` not matching spcified pattern `%s`", val.String(), m.re.String()),
 		}
 	}
 	return nil
 }
 
-func (m ReRule) supports(k reflect.Kind) bool {
+func (m reRule) supports(k reflect.Kind) bool {
 	return k == reflect.String
 }
 
-func NewReRule() Rule {
-	return &ReRule{}
+func createReRule(kind reflect.Kind, args []string) (rule, error) {
+	rule := &reRule{}
+	if err := rule.init(kind, args); err != nil {
+		return nil, err
+	}
+	return rule, nil
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vitermakov/otusgo-hw/hw09structvalidator/validator"
+	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
 )
 
 func TestMinRule(t *testing.T) {
@@ -15,6 +15,7 @@ func TestMinRule(t *testing.T) {
 	v10 := reflect.ValueOf(10)
 	testCases := []struct {
 		name           string
+		rules          []string
 		kind           reflect.Kind
 		args           []string
 		assertInitErr  func(*testing.T, error)
@@ -22,42 +23,47 @@ func TestMinRule(t *testing.T) {
 		assertCheckErr func(*testing.T, error)
 	}{
 		{
-			name: "wrong argrs count (0)",
-			kind: reflect.Int,
-			args: []string{},
+			name:  "wrong argrs count (0)",
+			rules: []string{"min", "max"},
+			kind:  reflect.Int,
+			args:  []string{},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
-			name: "wrong argrs count (>1)",
-			kind: reflect.Int,
-			args: []string{"4", "3"},
+			name:  "wrong argrs count (>1)",
+			rules: []string{"min", "max"},
+			kind:  reflect.Int,
+			args:  []string{"4", "3"},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
-			name: "arg not number",
-			kind: reflect.Int,
-			args: []string{"xxx"},
+			name:  "arg not number",
+			rules: []string{"min", "max"},
+			kind:  reflect.Int,
+			args:  []string{"xxx"},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				var ne *strconv.NumError
 				require.True(t, errors.As(err, &ne))
 			},
 		}, {
-			name: "wrong type",
-			kind: reflect.Map,
-			args: []string{"4"},
+			name:  "wrong type",
+			rules: []string{"min", "max"},
+			kind:  reflect.Map,
+			args:  []string{"4"},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
-			name: "wrong value",
-			kind: reflect.Float32,
-			args: []string{"7.0"},
+			name:  "wrong value",
+			rules: []string{"min"},
+			kind:  reflect.Float32,
+			args:  []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				require.NoError(t, err)
@@ -69,9 +75,10 @@ func TestMinRule(t *testing.T) {
 				require.True(t, errors.As(err, &ne))
 			},
 		}, {
-			name: "ok",
-			kind: reflect.Float32,
-			args: []string{"7.0"},
+			name:  "ok",
+			rules: []string{"min"},
+			kind:  reflect.Float32,
+			args:  []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				require.NoError(t, err)
@@ -81,75 +88,11 @@ func TestMinRule(t *testing.T) {
 				t.Helper()
 				require.NoError(t, err)
 			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc := tc
-			t.Parallel()
-
-			// Place your code here.
-			rule := validator.NewMinRule()
-			err := rule.Init(tc.kind, tc.args)
-			tc.assertInitErr(t, err)
-
-			if tc.checkValue != nil {
-				err := rule.Check(*tc.checkValue)
-				tc.assertCheckErr(t, err)
-			}
-		})
-	}
-}
-
-func TestMaxRule(t *testing.T) {
-	v4 := reflect.ValueOf(4)
-	v10 := reflect.ValueOf(10)
-	testCases := []struct {
-		name           string
-		kind           reflect.Kind
-		args           []string
-		assertInitErr  func(*testing.T, error)
-		checkValue     *reflect.Value
-		assertCheckErr func(*testing.T, error)
-	}{
-		{
-			name: "wrong argrs count (0)",
-			kind: reflect.Int,
-			args: []string{},
-			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
-				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
-			},
 		}, {
-			name: "wrong argrs count (>1)",
-			kind: reflect.Int,
-			args: []string{"4", "3"},
-			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
-				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
-			},
-		}, {
-			name: "arg not number",
-			kind: reflect.Int,
-			args: []string{"xxx"},
-			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
-				var ne *strconv.NumError
-				require.True(t, errors.As(err, &ne))
-			},
-		}, {
-			name: "wrong type",
-			kind: reflect.Map,
-			args: []string{"4"},
-			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
-				require.True(t, errors.Is(err, validator.ErrSupportArgType))
-			},
-		}, {
-			name: "wrong value",
-			kind: reflect.Float32,
-			args: []string{"7.0"},
+			name:  "wrong value",
+			rules: []string{"max"},
+			kind:  reflect.Float32,
+			args:  []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				require.NoError(t, err)
@@ -161,9 +104,10 @@ func TestMaxRule(t *testing.T) {
 				require.True(t, errors.As(err, &ne))
 			},
 		}, {
-			name: "ok",
-			kind: reflect.Float32,
-			args: []string{"7.0"},
+			name:  "ok",
+			rules: []string{"max"},
+			kind:  reflect.Float32,
+			args:  []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
 				t.Helper()
 				require.NoError(t, err)
@@ -177,19 +121,20 @@ func TestMaxRule(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tc := tc
-			t.Parallel()
+		tc := tc
+		for _, rc := range tc.rules {
+			rc := rc
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
 
-			// Place your code here.
-			rule := validator.NewMaxRule()
-			err := rule.Init(tc.kind, tc.args)
-			tc.assertInitErr(t, err)
+				rule, err := validator.GetRuleFactory(rc, tc.kind, tc.args)
+				tc.assertInitErr(t, err)
 
-			if tc.checkValue != nil {
-				err := rule.Check(*tc.checkValue)
-				tc.assertCheckErr(t, err)
-			}
-		})
+				if tc.checkValue != nil {
+					err := rule.Check(*tc.checkValue)
+					tc.assertCheckErr(t, err)
+				}
+			})
+		}
 	}
 }

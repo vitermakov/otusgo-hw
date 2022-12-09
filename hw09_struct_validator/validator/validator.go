@@ -1,7 +1,6 @@
 package validator
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -24,7 +23,6 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
-	fmt.Println(len(v))
 	s := strings.Builder{}
 	for _, err := range v {
 		s.WriteString(err.Field + ": " + err.Err.Error() + "\n")
@@ -32,7 +30,7 @@ func (v ValidationErrors) Error() string {
 	return s.String()
 }
 
-type Rules []Rule
+type ruleSet []rule
 
 type StructRules map[int]interface{}
 
@@ -61,7 +59,7 @@ func ValidateStruct(v interface{}) error {
 }
 
 func retrieveRules(rStruct reflect.Value, _ string, names ...string) (StructRules, error) {
-	var rules Rules
+	var rules ruleSet
 	var err error
 	// TODO: проверить увеличивает ли это производительность
 	// if key != "" {
@@ -116,21 +114,21 @@ func retrieveRules(rStruct reflect.Value, _ string, names ...string) (StructRule
 
 func checkStruct(rStruct reflect.Value, rules StructRules, names ...string) ValidationErrors {
 	errorSet := make(ValidationErrors, 0)
-	for i, ruleSet := range rules {
+	for i, rs := range rules {
 		sVal := rStruct.Field(i)
 		fVal := reflect.Indirect(sVal)
 		names := append(names, rStruct.Type().Field(i).Name)
 		switch fVal.Kind() { //nolint:exhaustive // есть default
 		case reflect.Slice, reflect.Array:
-			rules, _ := ruleSet.(Rules)
+			rules, _ := rs.(ruleSet)
 			for i := 0; i < fVal.Len(); i++ {
 				errorSet = append(errorSet, checkValue(fVal.Index(i), rules, append(names, strconv.Itoa(i))...)...)
 			}
 		case reflect.Struct:
-			sRules, _ := ruleSet.(StructRules)
+			sRules, _ := rs.(StructRules)
 			errorSet = append(errorSet, checkStruct(fVal, sRules, names...)...)
 		default:
-			rules, _ := ruleSet.(Rules)
+			rules, _ := rs.(ruleSet)
 			errorSet = append(errorSet, checkValue(fVal, rules, names...)...)
 		}
 	}
@@ -138,7 +136,7 @@ func checkStruct(rStruct reflect.Value, rules StructRules, names ...string) Vali
 	return errorSet
 }
 
-func checkValue(value reflect.Value, rules Rules, names ...string) ValidationErrors {
+func checkValue(value reflect.Value, rules ruleSet, names ...string) ValidationErrors {
 	errorSet := make(ValidationErrors, 0)
 	for _, rule := range rules {
 		if err := rule.Check(value); err != nil {
@@ -151,21 +149,20 @@ func checkValue(value reflect.Value, rules Rules, names ...string) ValidationErr
 	return errorSet
 }
 
-func parseTag(kind reflect.Kind, tag string) (Rules, error) {
+func parseTag(kind reflect.Kind, tag string) (ruleSet, error) {
 	tagRules := strings.Split(tag, "|")
-	rules := make(Rules, len(tagRules))
+	rules := make(ruleSet, len(tagRules))
 	for i, r := range tagRules {
+		ruleID := ""
+		ruleParams := ""
 		pos := strings.Index(r, ":")
-		if pos < 0 {
-			return Rules{}, fmt.Errorf("rule `%s` not found", "")
+		if pos >= 0 {
+			ruleID = r[0:pos]
+			ruleParams = r[pos+1:]
 		}
-		ruleID := r[0:pos]
-		rule, ok := getRule(ruleID)
-		if !ok {
-			return Rules{}, fmt.Errorf("rule `%s` not found", ruleID)
-		}
-		if err := rule.Init(kind, strings.Split(r[pos+1:], ",")); err != nil {
-			return Rules{}, err
+		rule, err := GetRuleFactory(ruleID, kind, strings.Split(ruleParams, ","))
+		if err != nil {
+			return ruleSet{}, err
 		}
 		rules[i] = rule
 	}

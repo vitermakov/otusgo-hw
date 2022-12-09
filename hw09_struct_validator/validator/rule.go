@@ -6,40 +6,37 @@ import (
 )
 
 // Rule интерфейс правила валидации.
-type Rule interface {
-	// Инициализация значения идет из tag-параметров, поэтому как исходное значение передается
-	// массив строк, дальнейшая инициализация которыми конкретного правила идет индивидуально.
-	Init(reflect.Kind, []string) error
-
+type rule interface {
 	// Проверка значения
 	Check(reflect.Value) error
 }
 
 // RuleCreate конструктор правила.
-type RuleCreate func() Rule
+// Инициализация значения идет из tag-параметров, поэтому как исходное значение передается
+// массив строк, дальнейшая инициализация которыми конкретного правила идет индивидуально.
+type ruleCreate func(kind reflect.Kind, args []string) (rule, error)
 
-// Registry регистр правил
+// ruleRegistry регистр правил
 // - в качестве ключа используется строковый идентификатор правила валидации
 // - в качестве значения - конструктор правила.
-type Registry map[string]RuleCreate
+type ruleRegistry map[string]ruleCreate
 
 // имеющиеся на данный момент правила.
-var registry = Registry{
-	"min":    NewMinRule,
-	"max":    NewMaxRule,
-	"in":     NewInRule,
-	"len":    NewLenRule,
-	"regexp": NewReRule,
+var registry = ruleRegistry{
+	"min":    createMinRule,
+	"max":    createMaxRule,
+	"in":     createInRule,
+	"len":    createLenRule,
+	"regexp": createReRule,
 }
 
-// поиск конструктора правил.
-// возвращает созданный объект правила или nil и флаг существования указанного правила.
-func getRule(key string) (Rule, bool) {
+// абстрактная фабрика правил.
+func GetRuleFactory(key string, kind reflect.Kind, args []string) (rule, error) {
 	create, ok := registry[key]
 	if !ok {
-		return nil, false
+		return nil, fmt.Errorf("rule '%s' not exists", key)
 	}
-	return create(), true
+	return create(kind, args)
 }
 
 // ошибка, возвращаемая при ошибке валидации конкретного обработчика.
