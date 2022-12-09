@@ -195,11 +195,11 @@ func checkErrorSet(t *testing.T, err error, errFields []string) {
 	if errFields == nil {
 		require.NoError(t, err, "no errors expected")
 	} else {
-		errors, ok := err.(validator.ValidationErrors)
-		require.True(t, ok, "err is not ValidationErrors")
+		var errs validator.ValidationErrors
+		require.True(t, errors.As(err, &errs), "err is not ValidationErrors")
 
 		result := make([]string, 0)
-		for _, err := range errors {
+		for _, err := range errs {
 			result = append(result, err.Field)
 		}
 		require.ElementsMatch(t, result, errFields)

@@ -6,9 +6,9 @@ import (
 	"regexp"
 )
 
-// ReRule проверка строки по регулярному выражению
+// ReRule проверка строки по регулярному выражению.
 type ReRule struct {
-	re regexp.Regexp // скомпилированное рег.выражение
+	re regexp.Regexp // скомпилированное рег.выражение.
 }
 
 func (m *ReRule) Init(kind reflect.Kind, args []string) error {
@@ -32,7 +32,10 @@ func (m ReRule) Check(val reflect.Value) error {
 		return ErrSupportArgType
 	}
 	if !m.re.Match([]byte(val.String())) {
-		return Invalid{Code: "re", Err: fmt.Errorf("value `%s` not matching spcified pattern `%s`", val.String(), m.re.String())}
+		return Invalid{
+			Code: "re",
+			Err:  fmt.Errorf("value `%s` not matching spcified pattern `%s`", val.String(), m.re.String()),
+		}
 	}
 	return nil
 }

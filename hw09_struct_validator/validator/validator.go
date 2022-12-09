@@ -64,11 +64,11 @@ func retrieveRules(rStruct reflect.Value, _ string, names ...string) (StructRule
 	var rules Rules
 	var err error
 	// TODO: проверить увеличивает ли это производительность
-	//if key != "" {
+	// if key != "" {
 	//	if r, ok := cache[key]; ok {
 	//		return r, nil
 	//	}
-	//}
+	// }
 	structRules := make(StructRules)
 	for i := 0; i < rStruct.NumField(); i++ {
 		sf := rStruct.Type().Field(i)
@@ -83,7 +83,7 @@ func retrieveRules(rStruct reflect.Value, _ string, names ...string) (StructRule
 		fVal := rStruct.Field(i)
 		// TODO: подумать об указателях
 		fType := fVal.Type()
-		switch fType.Kind() { //nolint:exhaustive
+		switch fType.Kind() { //nolint:exhaustive // есть default
 		case reflect.Array, reflect.Slice:
 			rules, err = parseTag(fVal.Type().Elem().Kind(), tag)
 			structRules[i] = rules
@@ -107,7 +107,8 @@ func retrieveRules(rStruct reflect.Value, _ string, names ...string) (StructRule
 			err = ErrInputNotStruct
 		}
 		if err != nil {
-			return StructRules{}, errors.Wrapf(err, "error retrieve rule on `%s`", strings.Join(append(names, sf.Name), "."))
+			return StructRules{}, errors.Wrapf(
+				err, "error retrieve rule on `%s`", strings.Join(append(names, sf.Name), "."))
 		}
 	}
 	return structRules, nil
@@ -119,7 +120,7 @@ func checkStruct(rStruct reflect.Value, rules StructRules, names ...string) Vali
 		sVal := rStruct.Field(i)
 		fVal := reflect.Indirect(sVal)
 		names := append(names, rStruct.Type().Field(i).Name)
-		switch fVal.Kind() { //nolint:exhaustive
+		switch fVal.Kind() { //nolint:exhaustive // есть default
 		case reflect.Slice, reflect.Array:
 			rules, _ := ruleSet.(Rules)
 			for i := 0; i < fVal.Len(); i++ {

@@ -26,6 +26,7 @@ func TestMinRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -33,6 +34,7 @@ func TestMinRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{"4", "3"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -40,14 +42,16 @@ func TestMinRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{"xxx"},
 			assertInitErr: func(t *testing.T, err error) {
-				_, ok := err.(*strconv.NumError)
-				require.True(t, ok)
+				t.Helper()
+				var ne *strconv.NumError
+				require.True(t, errors.As(err, &ne))
 			},
 		}, {
 			name: "wrong type",
 			kind: reflect.Map,
 			args: []string{"4"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
@@ -55,22 +59,26 @@ func TestMinRule(t *testing.T) {
 			kind: reflect.Float32,
 			args: []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &v4,
 			assertCheckErr: func(t *testing.T, err error) {
-				_, ok := err.(validator.Invalid)
-				require.True(t, ok)
+				t.Helper()
+				var ne validator.Invalid
+				require.True(t, errors.As(err, &ne))
 			},
 		}, {
 			name: "ok",
 			kind: reflect.Float32,
 			args: []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &v10,
 			assertCheckErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 		},
@@ -110,6 +118,7 @@ func TestMaxRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -117,6 +126,7 @@ func TestMaxRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{"4", "3"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -124,14 +134,16 @@ func TestMaxRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{"xxx"},
 			assertInitErr: func(t *testing.T, err error) {
-				_, ok := err.(*strconv.NumError)
-				require.True(t, ok)
+				t.Helper()
+				var ne *strconv.NumError
+				require.True(t, errors.As(err, &ne))
 			},
 		}, {
 			name: "wrong type",
 			kind: reflect.Map,
 			args: []string{"4"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
@@ -139,22 +151,26 @@ func TestMaxRule(t *testing.T) {
 			kind: reflect.Float32,
 			args: []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &v10,
 			assertCheckErr: func(t *testing.T, err error) {
-				_, ok := err.(validator.Invalid)
-				require.True(t, ok)
+				t.Helper()
+				var ne validator.Invalid
+				require.True(t, errors.As(err, &ne))
 			},
 		}, {
 			name: "ok",
 			kind: reflect.Float32,
 			args: []string{"7.0"},
 			assertInitErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &v4,
 			assertCheckErr: func(t *testing.T, err error) {
+				t.Helper()
 				require.NoError(t, err)
 			},
 		},

@@ -6,8 +6,7 @@ import (
 	"strconv"
 )
 
-// CmpRule правило, которое проверяет числовое значение функцией CmpFn
-// считаем что самый общий числовой тип float64
+// LenRule проверяет строковое поле на длину.
 type LenRule struct {
 	CmpFn     func(float64, float64) bool
 	ErrFormat string
