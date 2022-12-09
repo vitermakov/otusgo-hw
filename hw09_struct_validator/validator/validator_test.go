@@ -32,16 +32,17 @@ type (
 	User struct {
 		// встроенный.
 		Object `validate:"nested"`
-		Age    int      `validate:"min:18|max:50"`
-		Email  string   `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
-		Role   UserRole `validate:"in:admin,stuff"`
-		Phones []string `validate:"len:11"`
+		Age    int        `validate:"min:18|max:50"`
+		Email  string     `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
+		Role   []UserRole `validate:"in:admin,stuff,guest,registered"`
+		Phones []string   `validate:"len:11"`
 		Status struct {
 			Code Status `validate:"in:default,approved,banned"` // не должно проверяться, так как Status не `nested`.
 			Text string
 		}
 		Address   Address `validate:"nested"`
 		isBlocked bool
+		Scores    []int `validate:"in:1,2,3,4,5"`
 	}
 )
 
@@ -54,12 +55,30 @@ func (u User) IsBlocked() bool {
 }
 
 func TestValidateInit(t *testing.T) {
-	err := validator.ValidateStruct(nil)
-	require.True(t, errors.Is(err, validator.ErrInputStructIsNull))
+	testCases := []struct {
+		name        string
+		arg         interface{}
+		expectedErr error
+	}{
+		{
+			name:        "nil arg",
+			arg:         nil,
+			expectedErr: validator.ErrInputStructIsNull,
+		}, {
+			name:        "arg not struct",
+			arg:         32,
+			expectedErr: validator.ErrInputNotStruct,
+		},
+	}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	err = validator.ValidateStruct(32)
-	require.True(t, errors.Is(err, validator.ErrInputNotStruct))
-
+			err := validator.ValidateStruct(tc.arg)
+			require.True(t, errors.Is(err, tc.expectedErr))
+		})
+	}
 	// тестируем, что ошибки парсинга тегов прокидываются из ValidateStruct.
 	errorRetrieveCases := []interface{}{
 		struct {
@@ -107,8 +126,8 @@ func TestValidateInit(t *testing.T) {
 	}
 
 	for i, ec := range errorRetrieveCases {
+		ec := ec
 		t.Run(fmt.Sprintf("error case retrieve %d", i+1), func(t *testing.T) {
-			ec := ec
 			t.Parallel()
 
 			err := validator.ValidateStruct(ec)
@@ -123,7 +142,7 @@ func TestValidateCheck(t *testing.T) {
 			ID:   "444",
 			Name: "Yury",
 		},
-		Role: "admin1",
+		Role: []UserRole{"stuff", "registered", "admin1"},
 		Status: struct {
 			Code Status `validate:"in:default,approved,banned"`
 			Text string
@@ -142,15 +161,16 @@ func TestValidateCheck(t *testing.T) {
 				Latitude:   -200,
 			},
 		},
-		Email: "@yandex.ru",
-		Age:   12,
+		Email:  "@yandex.ru",
+		Age:    12,
+		Scores: []int{5, 10},
 	}
 	checkErrorSet(
 		t,
 		validator.ValidateStruct(invalid),
 		[]string{
 			"User.Object.ID",
-			"User.Role",
+			"User.Role.2",
 			"User.Phones.0",
 			"User.Phones.1",
 			"User.Address.Zipcode",
@@ -158,6 +178,7 @@ func TestValidateCheck(t *testing.T) {
 			"User.Address.GeoPoint.Latitude",
 			"User.Email",
 			"User.Age",
+			"User.Scores.1",
 		},
 	)
 
@@ -166,7 +187,7 @@ func TestValidateCheck(t *testing.T) {
 			ID:   "9a7ef00e-5991-11ec-a009-d00dde7fb0c3",
 			Name: "Alex",
 		},
-		Role: "admin",
+		Role: []UserRole{"guest", "registered"},
 		Status: struct {
 			Code Status `validate:"in:default,approved,banned"`
 			Text string
@@ -181,8 +202,9 @@ func TestValidateCheck(t *testing.T) {
 		Address: Address{
 			Zipcode: "555934",
 		},
-		Email: "dd@yandex.ru",
-		Age:   22,
+		Email:  "dd@yandex.ru",
+		Age:    22,
+		Scores: []int{4, 5},
 	}
 
 	err := validator.ValidateStruct(valid)

@@ -93,8 +93,8 @@ func TestLenRule(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc := tc
 			t.Parallel()
 
 			// Place your code here.

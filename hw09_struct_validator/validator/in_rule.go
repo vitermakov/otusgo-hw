@@ -24,16 +24,14 @@ func (m *inRule) init(kind reflect.Kind, args []string) error {
 			v   interface{}
 			err error
 		)
-		if kind >= reflect.Int && kind <= reflect.Int64 {
+		switch {
+		case kind >= reflect.Int && kind <= reflect.Int64:
 			v, err = strconv.ParseInt(arg, 10, 64)
-		}
-		if kind >= reflect.Uint && kind <= reflect.Uint64 {
+		case kind >= reflect.Uint && kind <= reflect.Uint64:
 			v, err = strconv.ParseInt(arg, 10, 64)
-		}
-		if kind >= reflect.Float32 && kind <= reflect.Float64 {
+		case kind >= reflect.Float32 && kind <= reflect.Float64:
 			v, err = strconv.ParseFloat(args[0], 64)
-		}
-		if kind == reflect.String {
+		case kind == reflect.String:
 			v = arg
 		}
 		if err != nil {
@@ -50,17 +48,16 @@ func (m inRule) Check(val reflect.Value) error {
 		return ErrSupportArgType
 	}
 	for _, iv := range m.values {
-		if kind >= reflect.Int && kind <= reflect.Uint64 {
+		switch {
+		case kind >= reflect.Int && kind <= reflect.Uint64:
 			if iv == val.Int() {
 				return nil
 			}
-		}
-		if kind >= reflect.Float32 && kind <= reflect.Float64 {
+		case kind >= reflect.Float32 && kind <= reflect.Float64:
 			if iv == val.Float() {
 				return nil
 			}
-		}
-		if kind == reflect.String {
+		case kind == reflect.String:
 			if iv == val.String() {
 				return nil
 			}
