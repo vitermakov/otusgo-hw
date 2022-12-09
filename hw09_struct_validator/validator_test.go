@@ -1,18 +1,18 @@
-package hw09_struct_validator_test
+package hw09structvalidator_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vitermakov/otusgo-hw/hw09_struct_validator"
-	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
+	"github.com/vitermakov/otusgo-hw/hw09structvalidator"
+	"github.com/vitermakov/otusgo-hw/hw09structvalidator/validator"
 )
 
 func TestValidate(t *testing.T) {
-	err := hw09_struct_validator.Validate(nil)
+	err := hw09structvalidator.Validate(nil)
 	require.True(t, errors.Is(err, validator.ErrInputStructIsNull))
 
-	err = hw09_struct_validator.Validate(32)
+	err = hw09structvalidator.Validate(32)
 	require.True(t, errors.Is(err, validator.ErrInputNotStruct))
 }

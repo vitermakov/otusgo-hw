@@ -1,7 +1,7 @@
-package hw09_struct_validator
+package hw09structvalidator
 
 import (
-	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
+	"github.com/vitermakov/otusgo-hw/hw09structvalidator/validator"
 )
 
 func Validate(v interface{}) error {

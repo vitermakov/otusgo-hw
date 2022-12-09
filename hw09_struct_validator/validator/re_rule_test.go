@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vitermakov/otusgo-hw/hw09_struct_validator/validator"
+	"github.com/vitermakov/otusgo-hw/hw09structvalidator/validator"
 )
 
 func TestReRule(t *testing.T) {
