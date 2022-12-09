@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// InRule проверяет входит ли значение в указанное множество.
 type InRule struct {
 	values []interface{}
 }
