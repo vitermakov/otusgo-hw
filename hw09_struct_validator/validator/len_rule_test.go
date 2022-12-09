@@ -26,7 +26,6 @@ func TestLenRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -34,7 +33,6 @@ func TestLenRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{"4", "3"},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -42,16 +40,14 @@ func TestLenRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{"xxx"},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
-				var ne *strconv.NumError
-				require.True(t, errors.As(err, &ne))
+				_, ok := err.(*strconv.NumError)
+				require.True(t, ok)
 			},
 		}, {
 			name: "arg not positive",
 			kind: reflect.String,
 			args: []string{"-10"},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.ErrorContains(t, err, "len must be positive")
 			},
 		}, {
@@ -59,7 +55,6 @@ func TestLenRule(t *testing.T) {
 			kind: reflect.Int,
 			args: []string{"4"},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
@@ -67,26 +62,22 @@ func TestLenRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{"10"},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &wrongValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				t.Helper()
-				var ne validator.Invalid
-				require.True(t, errors.As(err, &ne))
+				_, ok := err.(validator.Invalid)
+				require.True(t, ok)
 			},
 		}, {
 			name: "ok",
 			kind: reflect.String,
 			args: []string{"10"},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &rightValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 		},

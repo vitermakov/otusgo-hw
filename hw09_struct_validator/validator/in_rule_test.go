@@ -26,7 +26,6 @@ func TestInRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -34,7 +33,6 @@ func TestInRule(t *testing.T) {
 			kind: reflect.Map,
 			args: allowedValues,
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
@@ -42,26 +40,22 @@ func TestInRule(t *testing.T) {
 			kind: reflect.String,
 			args: allowedValues,
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &wrongValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				t.Helper()
-				var ne validator.Invalid
-				require.True(t, errors.As(err, &ne))
+				_, ok := err.(validator.Invalid)
+				require.True(t, ok)
 			},
 		}, {
 			name: "ok",
 			kind: reflect.String,
 			args: allowedValues,
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &rightValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 		},

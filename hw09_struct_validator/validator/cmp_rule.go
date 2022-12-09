@@ -7,7 +7,7 @@ import (
 )
 
 // CmpRule правило, которое проверяет числовое значение функцией CmpFn
-// считаем (для упрощения), что самый общий числовой тип float64.
+// считаем (для упрощения), что самый общий числовой тип float64
 type CmpRule struct {
 	CmpFn     func(float64, float64) bool
 	ErrFormat string

@@ -27,7 +27,6 @@ func TestReRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrWrongArgsList))
 			},
 		}, {
@@ -35,16 +34,14 @@ func TestReRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{"(()"},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
-				var ne *syntax.Error
-				require.True(t, errors.As(err, &ne))
+				_, ok := err.(*syntax.Error)
+				require.True(t, ok)
 			},
 		}, {
 			name: "wrong type",
 			kind: reflect.Int,
 			args: []string{mailRe},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.True(t, errors.Is(err, validator.ErrSupportArgType))
 			},
 		}, {
@@ -52,26 +49,22 @@ func TestReRule(t *testing.T) {
 			kind: reflect.String,
 			args: []string{mailRe},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &wrongValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				t.Helper()
-				var ne validator.Invalid
-				require.True(t, errors.As(err, &ne))
+				_, ok := err.(validator.Invalid)
+				require.True(t, ok)
 			},
 		}, {
 			name: "ok",
 			kind: reflect.String,
 			args: []string{mailRe},
 			assertInitErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 			checkValue: &rightValue,
 			assertCheckErr: func(t *testing.T, err error) {
-				t.Helper()
 				require.NoError(t, err)
 			},
 		},
