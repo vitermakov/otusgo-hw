@@ -8,8 +8,8 @@ import (
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
-	// при ошибках, возникающих до запуска подпроцесса вернем код = 1.
-	returnCode = 1
+	// при ошибках, возникающих до запуска подпроцесса вернем код = -1, так как 0, 1 заняты
+	returnCode = -1
 
 	if len(cmd) == 0 {
 		log.Println("cmd not set")
@@ -42,7 +42,11 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	if err := execCmd.Run(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			returnCode = exitErr.ExitCode()
+		} else {
+			log.Println(err.Error())
 		}
+	} else {
+		returnCode = 0
 	}
 
 	return
