@@ -97,7 +97,7 @@ func TestRunCmd(t *testing.T) {
 					"EMPTY": "",
 				}
 				actualEnv := make(map[string]string, len(expectedEnv))
-				for k, _ := range expectedEnv {
+				for k := range expectedEnv {
 					v, exists := os.LookupEnv(k)
 					if exists {
 						actualEnv[k] = v

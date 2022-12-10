@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -47,7 +48,6 @@ func ReadDir(dir string) (Environment, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func ReadDir(dir string) (Environment, error) {
 
 func clearValue(value string) string {
 	value = strings.TrimRight(value, " \t\r")
-	return strings.Replace(value, "\x00", "\n", -1)
+	return strings.ReplaceAll(value, "\x00", "\n")
 }
 
 func readFirstLine(filePath string) (string, error) {
@@ -71,7 +71,7 @@ func readFirstLine(filePath string) (string, error) {
 
 	reader := bufio.NewReader(handle)
 	bs, _, err := reader.ReadLine()
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return "", err
 	}
 

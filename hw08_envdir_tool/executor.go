@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -34,14 +35,15 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		}
 	}
 
-	execCmd := exec.Command(cmd[0], cmd[1:]...)
+	execCmd := exec.Command(cmd[0], cmd[1:]...) //nolint:gosec // must have
 	execCmd.Stdout = os.Stdout
 	execCmd.Stderr = os.Stderr
 	execCmd.Stderr = os.Stderr
 
 	if err := execCmd.Run(); err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			returnCode = exitErr.ExitCode()
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			returnCode = ee.ExitCode()
 		} else {
 			log.Println(err.Error())
 		}
