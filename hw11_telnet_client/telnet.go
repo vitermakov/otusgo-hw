@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"io"
+	"net"
 	"time"
 )
 
@@ -13,9 +16,65 @@ type TelnetClient interface {
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
-	// Place your code here.
+	return &TClient{address: address, timeout: timeout, in: in, out: out}
+}
+
+// TClient реализация TelnetClient
+type TClient struct {
+	address string
+	timeout time.Duration
+	in      io.ReadCloser
+	out     io.Writer
+
+	handle net.Conn
+	// Исходя из предписанных тестов функции Send() и Receive() должны
+	// возвращать управление после того, как из потока читается символ переноса строки.
+	// Чтобы не делать эту логику самостоятельно для чтения in -> handle и handle -> out
+	// посредников bufio.Scanner
+	sendBuff *bufio.Scanner
+	recvBuff *bufio.Scanner
+}
+
+func (tc *TClient) Connect() error {
+	h, err := net.DialTimeout("tcp", tc.address, tc.timeout)
+	if err != nil {
+		return err
+	}
+	tc.handle = h
+
+	tc.sendBuff = bufio.NewScanner(tc.in)
+	tc.sendBuff.Split(bufio.ScanLines)
+
+	tc.recvBuff = bufio.NewScanner(tc.handle)
+	tc.recvBuff.Split(bufio.ScanLines)
+
 	return nil
 }
 
-// Place your code here.
-// P.S. Author's solution takes no more than 50 lines.
+func (tc *TClient) Close() error {
+	return tc.handle.Close()
+}
+
+func (tc *TClient) copyLine(writer io.Writer, scanner *bufio.Scanner) error {
+	// сканируем один раз до EOF или LN
+	if !scanner.Scan() {
+		return io.EOF
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	// так как данных может быть много используем функцию io.Copy.
+	_, err := io.Copy(writer, bytes.NewReader(scanner.Bytes()))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tc *TClient) Send() error {
+	return tc.copyLine(tc.handle, tc.sendBuff)
+}
+
+func (tc *TClient) Receive() error {
+	return tc.copyLine(tc.out, tc.recvBuff)
+}
