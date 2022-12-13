@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"net"
 	"time"
 )
 
@@ -13,9 +15,44 @@ type TelnetClient interface {
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
-	// Place your code here.
+	return &TClient{address: address, timeout: timeout, in: in, out: out}
+}
+
+// TClient реализация TelnetClient.
+type TClient struct {
+	address string
+	timeout time.Duration
+	in      io.ReadCloser
+	out     io.Writer
+
+	handle net.Conn
+}
+
+func (tc *TClient) Connect() error {
+	h, err := net.DialTimeout("tcp", tc.address, tc.timeout)
+	if err != nil {
+		return err
+	}
+	tc.handle = h
 	return nil
 }
 
-// Place your code here.
-// P.S. Author's solution takes no more than 50 lines.
+func (tc *TClient) Close() error {
+	return tc.handle.Close()
+}
+
+func (tc *TClient) Send() error {
+	_, err := io.Copy(tc.handle, tc.in)
+	if err != nil {
+		return fmt.Errorf("error sending: %w", err)
+	}
+	return nil
+}
+
+func (tc *TClient) Receive() error {
+	_, err := io.Copy(tc.out, tc.handle)
+	if err != nil {
+		return fmt.Errorf("error receive: %w", err)
+	}
+	return err
+}
