@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -38,79 +37,42 @@ func main() {
 		_ = tClient.Close()
 	}()
 
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := signal.NotifyContext(context.TODO(), os.Interrupt)
 	defer cancel()
 
-	// с помощью sigChan оповестим контекст в manageProcess, что надо закрыться.
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
+	go manageProcess(ctx, tClient)
 
-	// с помощью done оповестим main, что в manageProcess все завершилось (возможно с ошибкой).
-	done := make(chan struct{})
-
-	go manageProcess(ctx, cancel, done, tClient)
-
-	select {
-	case <-sigChan:
-		cancel()
-		<-done
-	case <-done:
-		close(sigChan)
-	}
+	<-ctx.Done()
 }
 
-func manageProcess(ctx context.Context, cancel context.CancelFunc, done chan struct{}, client TelnetClient) {
-	var wg sync.WaitGroup
-
-	wg.Add(1)
+func manageProcess(ctx context.Context, client TelnetClient) {
 	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("context receive done")
-				return
-			default:
-				log.Println("before receive")
-				if err := client.Receive(); err != nil {
-					if !errors.Is(err, io.EOF) {
-						log.Printf("error receive: %s\n", err.Error())
-					} else {
-						log.Println("connection closed")
-					}
-					cancel()
-					// Каким образом внешним сигналом прибить
-					os.Stdin.WriteString("\n")
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if err := client.Receive(); err != nil {
+				if !errors.Is(err, io.EOF) {
+					log.Printf("error receive: %s\n", err.Error())
+				} else {
+					log.Println("connection closed")
 				}
-				log.Println("after receive")
 			}
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("context send done")
-				return
-			default:
-				log.Println("before send")
-				if err := client.Send(); err != nil {
-					if !errors.Is(err, io.EOF) {
-						log.Printf("error send: %s\n", err.Error())
-					} else {
-						log.Println("stdin closed")
-					}
-					cancel()
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if err := client.Send(); err != nil {
+				if !errors.Is(err, io.EOF) {
+					log.Printf("error send: %s\n", err.Error())
+				} else {
+					log.Println("stdin closed")
 				}
-				log.Println("after send")
 			}
 		}
 	}()
-
-	wg.Wait()
-
-	done <- struct{}{}
 }
