@@ -74,6 +74,7 @@ func manageProcess(ctx context.Context, cancel context.CancelFunc, client Telnet
 					log.Println("stdin closed")
 				}
 			}
+			cancel()
 		}
 	}()
 }
