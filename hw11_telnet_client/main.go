@@ -40,12 +40,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.TODO(), os.Interrupt)
 	defer cancel()
 
-	go manageProcess(ctx, tClient)
+	go manageProcess(ctx, cancel, tClient)
 
 	<-ctx.Done()
 }
 
-func manageProcess(ctx context.Context, client TelnetClient) {
+func manageProcess(ctx context.Context, cancel context.CancelFunc, client TelnetClient) {
 	go func() {
 		select {
 		case <-ctx.Done():
@@ -58,6 +58,7 @@ func manageProcess(ctx context.Context, client TelnetClient) {
 					log.Println("connection closed")
 				}
 			}
+			cancel()
 		}
 	}()
 
@@ -73,6 +74,7 @@ func manageProcess(ctx context.Context, client TelnetClient) {
 					log.Println("stdin closed")
 				}
 			}
+			cancel()
 		}
 	}()
 }
