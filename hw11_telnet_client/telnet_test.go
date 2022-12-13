@@ -76,7 +76,7 @@ func TestTelnetClient(t *testing.T) {
 
 			in := &bytes.Buffer{}
 			out := &bytes.Buffer{}
-			timeout := time.Duration(10 * time.Second)
+			timeout := 10 * time.Second
 
 			client := NewTelnetClient(l.Addr().String(), timeout, io.NopCloser(in), out)
 			require.NoError(t, client.Connect())
@@ -88,7 +88,7 @@ func TestTelnetClient(t *testing.T) {
 			err = client.Receive()
 			require.NoError(t, err)
 			require.Equal(t, "", out.String())
-			//require.Contains(t, err, "broken pipe")
+			// require.Contains(t, err, "broken pipe")
 		}()
 
 		go func() {
