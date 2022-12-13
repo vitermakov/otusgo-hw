@@ -47,34 +47,32 @@ func main() {
 
 func manageProcess(ctx context.Context, cancel context.CancelFunc, client TelnetClient) {
 	go func() {
-		select {
-		case <-ctx.Done():
-			return
-		default:
+		<-ctx.Done()
+		client.Close()
+		fmt.Fprint(os.Stderr, "client closed")
+	}()
+
+	go func() {
+		for {
 			if err := client.Receive(); err != nil {
 				if !errors.Is(err, io.EOF) {
-					log.Printf("error receive: %s\n", err.Error())
-				} else {
-					log.Println("connection closed")
+					fmt.Fprint(os.Stderr, err)
 				}
+				cancel()
+				return
 			}
-			cancel()
 		}
 	}()
 
 	go func() {
-		select {
-		case <-ctx.Done():
-			return
-		default:
+		for {
 			if err := client.Send(); err != nil {
 				if !errors.Is(err, io.EOF) {
-					log.Printf("error send: %s\n", err.Error())
-				} else {
-					log.Println("stdin closed")
+					fmt.Fprint(os.Stderr, err)
 				}
+				cancel()
+				return
 			}
-			cancel()
 		}
 	}()
 }
