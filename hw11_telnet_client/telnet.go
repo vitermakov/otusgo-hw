@@ -19,7 +19,7 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 	return &TClient{address: address, timeout: timeout, in: in, out: out}
 }
 
-// TClient реализация TelnetClient
+// TClient реализация TelnetClient.
 type TClient struct {
 	address string
 	timeout time.Duration
@@ -43,7 +43,7 @@ func (tc *TClient) Connect() error {
 	tc.handle = h
 
 	tc.sendBuff = bufio.NewScanner(tc.in)
-	tc.sendBuff.Split(bufio.ScanLines)
+	// tc.sendBuff.Split(bufio.ScanLines)
 
 	tc.recvBuff = bufio.NewScanner(tc.handle)
 	tc.recvBuff.Split(bufio.ScanLines)
@@ -60,15 +60,13 @@ func (tc *TClient) copyLine(writer io.Writer, scanner *bufio.Scanner) error {
 	if !scanner.Scan() {
 		return io.EOF
 	}
-	if err := scanner.Err(); err != nil {
-		return err
+	if scanner.Err() != nil {
+		return scanner.Err()
 	}
 	// так как данных может быть много используем функцию io.Copy.
-	_, err := io.Copy(writer, bytes.NewReader(scanner.Bytes()))
-	if err != nil {
-		return err
-	}
-	return nil
+	data := append(scanner.Bytes(), '\n')
+	_, err := io.Copy(writer, bytes.NewReader(data))
+	return err
 }
 
 func (tc *TClient) Send() error {
