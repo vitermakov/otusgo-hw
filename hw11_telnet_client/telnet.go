@@ -1,8 +1,7 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -27,12 +26,6 @@ type TClient struct {
 	out     io.Writer
 
 	handle net.Conn
-	// Исходя из предписанных тестов функции Send() и Receive() должны
-	// возвращать управление после того, как из потока читается символ переноса строки.
-	// Чтобы не делать эту логику самостоятельно для чтения in -> handle и handle -> out
-	// посредников bufio.Scanner
-	sendBuff *bufio.Scanner
-	recvBuff *bufio.Scanner
 }
 
 func (tc *TClient) Connect() error {
@@ -42,12 +35,6 @@ func (tc *TClient) Connect() error {
 	}
 	tc.handle = h
 
-	tc.sendBuff = bufio.NewScanner(tc.in)
-	// tc.sendBuff.Split(bufio.ScanLines)
-
-	tc.recvBuff = bufio.NewScanner(tc.handle)
-	tc.recvBuff.Split(bufio.ScanLines)
-
 	return nil
 }
 
@@ -55,24 +42,33 @@ func (tc *TClient) Close() error {
 	return tc.handle.Close()
 }
 
-func (tc *TClient) copyLine(writer io.Writer, scanner *bufio.Scanner) error {
-	// сканируем один раз до EOF или LN
-	if !scanner.Scan() {
-		return io.EOF
+/*
+	func (tc *TClient) copyLine(writer io.Writer, scanner *bufio.Scanner) error {
+		// сканируем один раз до EOF или LN
+		if !scanner.Scan() {
+			return io.EOF
+		}
+		if scanner.Err() != nil {
+			return scanner.Err()
+		}
+		// так как данных может быть много используем функцию io.Copy.
+		data := append(scanner.Bytes(), '\n')
+		_, err := io.Copy(writer, bytes.NewReader(data))
+		return err
 	}
-	if scanner.Err() != nil {
-		return scanner.Err()
-	}
-	// так как данных может быть много используем функцию io.Copy.
-	data := append(scanner.Bytes(), '\n')
-	_, err := io.Copy(writer, bytes.NewReader(data))
-	return err
-}
-
+*/
 func (tc *TClient) Send() error {
-	return tc.copyLine(tc.handle, tc.sendBuff)
+	_, err := io.Copy(tc.handle, tc.in)
+	if err != nil {
+		return fmt.Errorf("error sending %w", err)
+	}
+	return nil
 }
 
 func (tc *TClient) Receive() error {
-	return tc.copyLine(tc.out, tc.recvBuff)
+	_, err := io.Copy(tc.out, tc.handle)
+	if err != nil {
+		return fmt.Errorf("error receive %w", err)
+	}
+	return err
 }
