@@ -1,11 +1,10 @@
-package hw10programoptimization
+package hw10_program_optimization
 
 import (
 	"bufio"
+	"encoding/json"
 	"io"
 	"strings"
-
-	jsoniter "github.com/json-iterator/go"
 )
 
 type User struct {
@@ -20,25 +19,25 @@ type User struct {
 
 type DomainStat map[string]int
 
-var parser = jsoniter.ConfigCompatibleWithStandardLibrary
-
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	var user User
+	suffix := "." + domain // инициализируем суффикс один раз.
 	stats := make(DomainStat)
 	reader := bufio.NewReader(r)
 	for {
-		json, _, err := reader.ReadLine()
+		jsonText, _, err := reader.ReadLine()
 		if err == io.EOF {
 			break
 		}
-		err = parser.Unmarshal(json, &user)
+		err = json.Unmarshal(jsonText, &user)
 		if err != nil {
 			return DomainStat{}, err
 		}
-		// подходит как домен
-		if !strings.HasSuffix(user.Email, "."+domain) {
+		// подходит как домен.
+		if !strings.HasSuffix(user.Email, suffix) {
 			continue
 		}
+		// предполагаем, что E-mail введен верно, иначе необходимо использовать регульрные выражения.
 		if pos := strings.Index(user.Email, "@"); pos > 0 {
 			domain := strings.ToLower(user.Email[pos+1:])
 			stats[domain]++
