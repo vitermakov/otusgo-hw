@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/vitermakov/otusgo-hw/hw10_program_optimization
+cpu: Intel(R) Core(TM) i5-8600K CPU @ 3.60GHz
+BenchmarkGetDomainStatOne-6   	  278889	      4289 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  277075	      4348 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  278959	      4806 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  238558	      4424 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  267859	      4429 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  264888	      4443 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  277924	      4373 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  271718	      4411 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  282244	      4284 ns/op	    4920 B/op	      37 allocs/op
+BenchmarkGetDomainStatOne-6   	  269804	      4280 ns/op	    4920 B/op	      37 allocs/op
+PASS
+ok  	github.com/vitermakov/otusgo-hw/hw10_program_optimization	21.192s

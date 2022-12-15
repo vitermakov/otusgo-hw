@@ -5,9 +5,10 @@ import (
 	"io"
 	"strings"
 
-	jsoniter "github.com/json-iterator/go"
+	json "github.com/mailru/easyjson"
 )
 
+//easyjson:json
 type User struct {
 	ID       int
 	Name     string
@@ -19,8 +20,6 @@ type User struct {
 }
 
 type DomainStat map[string]int
-
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	var user User
