@@ -1,7 +1,8 @@
-package hw10_program_optimization
+package hw10programoptimization
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"strings"
 
@@ -22,7 +23,7 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	reader := bufio.NewReader(r)
 	for {
 		jsonText, _, err := reader.ReadLine()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		err = json.Unmarshal(jsonText, &user)
