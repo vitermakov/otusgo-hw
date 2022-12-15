@@ -1,7 +1,7 @@
 //go:build !bench
 // +build !bench
 
-package hw10programoptimization
+package hw10_program_optimization
 
 import (
 	"bytes"

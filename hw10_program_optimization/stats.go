@@ -2,9 +2,10 @@ package hw10_program_optimization
 
 import (
 	"bufio"
-	"encoding/json"
 	"io"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 type User struct {
@@ -18,6 +19,8 @@ type User struct {
 }
 
 type DomainStat map[string]int
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	var user User
