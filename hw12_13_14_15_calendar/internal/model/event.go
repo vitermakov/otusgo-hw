@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/base/errx"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,9 +25,42 @@ type EventCreate struct {
 	Title       string
 	Date        time.Time
 	Duration    time.Duration
-	OwnerId     *uuid.UUID
-	Description *string // опционально
-	NotifyTerm  *int    // опционально
+	OwnerId     uuid.UUID
+	Description *string // опционально.
+	NotifyTerm  *int    // опционально.
+}
+
+// Validate базовая валидация структуры
+func (ec EventCreate) Validate() error {
+	var errs errx.ValidationErrors
+	if ec.Title == "" {
+		errs.Add(errx.ValidationError{
+			Field: "Title",
+			Err:   ErrEventEmptyTitle,
+		})
+	}
+	if ec.Date.IsZero() {
+		errs.Add(errx.ValidationError{
+			Field: "Date",
+			Err:   ErrEventZeroDate,
+		})
+	}
+	if ec.Duration.Minutes() == 0 {
+		errs.Add(errx.ValidationError{
+			Field: "Duration",
+			Err:   ErrEventZeroDuration,
+		})
+	}
+	if ec.OwnerId.ID() == 0 {
+		errs.Add(errx.ValidationError{
+			Field: "OwnerId",
+			Err:   ErrEventOwnerId,
+		})
+	}
+	if errs.Empty() {
+		return nil
+	}
+	return errs
 }
 
 // EventUpdate модель обновления события - обновлять можно не все поля.
@@ -38,12 +72,41 @@ type EventUpdate struct {
 	NotifyTerm  *int
 }
 
+// Validate базовая валидация структуры
+func (ec EventUpdate) Validate() error {
+	var errs errx.ValidationErrors
+	if ec.Title != nil && *ec.Title == "" {
+		errs.Add(errx.ValidationError{
+			Field: "Title",
+			Err:   ErrEventEmptyTitle,
+		})
+	}
+	if ec.Date != nil && ec.Date.IsZero() {
+		errs.Add(errx.ValidationError{
+			Field: "Date",
+			Err:   ErrEventZeroDate,
+		})
+	}
+	if ec.Duration != nil && ec.Duration.Minutes() == 0 {
+		errs.Add(errx.ValidationError{
+			Field: "Duration",
+			Err:   ErrEventZeroDuration,
+		})
+	}
+	if errs.Empty() {
+		return nil
+	}
+	return errs
+}
+
 // EventSearch модель поиска. Исходя из условия задачи и всех ее аспектов искать события
-// необходимо по идентификатору и промежутку дат.
+// необходимо по идентификатору и промежутку дат (с учетом и без учета продолжительности).
 type EventSearch struct {
-	ID        *uuid.UUID
-	NotID     *uuid.UUID
-	DateRange *DateRange
+	ID          *uuid.UUID
+	NotID       *uuid.UUID
+	OwnerID     *uuid.UUID
+	DateRange   *DateRange
+	TacDuration bool // учитывать продолжительность мероприятий.
 }
 
 func EventSearchID(guid string) (EventSearch, error) {

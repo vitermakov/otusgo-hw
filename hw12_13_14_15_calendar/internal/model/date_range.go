@@ -15,7 +15,7 @@ const (
 	DateAlignError
 )
 
-func (da DateAlign) IsValid() bool {
+func (da DateAlign) Valid() bool {
 	return da > DateAlignNone && da < DateAlignError
 }
 
