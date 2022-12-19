@@ -49,7 +49,7 @@ type Notifications struct {
 
 type Conn struct {
 	Host     string `json:"host"`
-	Port     string `json:"port"`
+	Port     int    `json:"port"`
 	User     string `json:"user"`
 	Password string `json:"password"`
 }
