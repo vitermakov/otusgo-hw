@@ -60,7 +60,7 @@ func (ur *UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
 }
 
 // GetList не учитываем пагинацию, сортировку
-func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]model.User, error) {
+func (ur *UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]model.User, error) {
 	var users, filtered []model.User
 	ur.mu.RLock()
 	users = ur.users
@@ -72,9 +72,14 @@ func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]mode
 	}
 	return filtered, nil
 }
-func (ur UserRepo) matchSearch(user model.User, search model.UserSearch) bool {
+func (ur *UserRepo) matchSearch(user model.User, search model.UserSearch) bool {
 	if search.ID != nil {
 		if strings.Compare(user.ID.String(), search.ID.String()) != 0 {
+			return false
+		}
+	}
+	if search.Email != nil {
+		if strings.Compare(user.Email, *search.Email) != 0 {
 			return false
 		}
 	}

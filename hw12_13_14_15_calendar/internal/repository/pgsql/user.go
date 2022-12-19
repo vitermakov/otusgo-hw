@@ -20,7 +20,7 @@ func NewUserRepo(Pool *sql.DB) repository.User {
 func (ur UserRepo) Add(ctx context.Context, input model.UserCreate) (*model.User, error) {
 	guid := uuid.New()
 	stmt := sqlf.InsertInto("users").
-		Set("uuid", guid.String()).
+		Set("id", guid.String()).
 		Set("name", input.Name).
 		Set("email", input.Email)
 	// Returning("uuid").To(&guid)
@@ -60,7 +60,7 @@ func (ur UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
 // GetList не учитываем пагинацию, сортировку
 func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]model.User, error) {
 	var dto struct {
-		Id    string `db:"uuid"`
+		Id    string `db:"id"`
 		Name  string `db:"title"`
 		Email string `db:"email"`
 	}
@@ -82,6 +82,9 @@ func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]mode
 }
 func (ur UserRepo) applySearch(stmt *sqlf.Stmt, search model.UserSearch) {
 	if search.ID != nil {
-		stmt.Where("users.uuid = ?", search.ID.String())
+		stmt.Where("users.id = ?", search.ID.String())
+	}
+	if search.Email != nil {
+		stmt.Where("users.email = ?", *search.Email)
 	}
 }

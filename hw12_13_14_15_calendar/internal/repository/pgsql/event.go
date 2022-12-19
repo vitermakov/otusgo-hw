@@ -22,7 +22,7 @@ func NewEventRepo(Pool *sql.DB) repository.Event {
 func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Event, error) {
 	guid := uuid.New()
 	stmt := sqlf.InsertInto("events").
-		Set("uuid", guid.String()).
+		Set("id", guid.String()).
 		Set("title", input.Title).
 		Set("date", input.Date).
 		Set("duration", int(input.Duration.Minutes())).
@@ -85,7 +85,7 @@ func (er EventRepo) Delete(ctx context.Context, search model.EventSearch) error 
 func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
 	var userJson sql.NullString
 	var dto struct {
-		Id          string         `db:"uuid"`
+		Id          string         `db:"id"`
 		Title       string         `db:"title"`
 		Date        time.Time      `db:"date"`
 		Duration    int64          `db:"duration"`
@@ -110,7 +110,7 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 		event.ID, _ = uuid.Parse(dto.Id)
 		if userJson.Valid {
 			var dtoUser struct {
-				Id    string `json:"uuid"`
+				Id    string `json:"id"`
 				Name  string `json:"name"`
 				Email string `json:"email"`
 			}
@@ -136,13 +136,20 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 }
 func (er EventRepo) applySearch(stmt *sqlf.Stmt, search model.EventSearch) {
 	if search.ID != nil {
-		stmt.Where("events.uuid = ?", search.ID.String())
+		stmt.Where("events.id = ?", search.ID.String())
 	}
 	if search.NotID != nil {
-		stmt.Where("events.uuid != ?", search.ID.String())
+		stmt.Where("events.id != ?", search.ID.String())
+	}
+	if search.OwnerID != nil {
+		stmt.Where("events.owner_id != ?", search.OwnerID.String())
 	}
 	if search.DateRange != nil {
 		stmt.Where("events.date >= ?", search.DateRange.GetFrom())
-		stmt.Where("events.date < ?", search.DateRange.GetTo())
+		if search.TacDuration {
+			stmt.Where("events.date + events.duration", search.DateRange.GetTo())
+		} else {
+			stmt.Where("events.date", search.DateRange.GetTo())
+		}
 	}
 }

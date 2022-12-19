@@ -107,9 +107,18 @@ func (er EventRepo) matchSearch(event model.Event, search model.EventSearch) boo
 			return false
 		}
 	}
+	if search.OwnerID != nil {
+		if strings.Compare(event.Owner.ID.String(), search.OwnerID.String()) != 0 {
+			return false
+		}
+	}
 	if search.DateRange != nil {
+		d := event.Date
+		if search.TacDuration {
+			d = d.Add(event.Duration)
+		}
 		if !(event.Date.After(search.DateRange.GetFrom()) &&
-			event.Date.Before(search.DateRange.GetTo())) {
+			d.Before(search.DateRange.GetTo())) {
 			return false
 		}
 	}
