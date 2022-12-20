@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/google/uuid"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/base/errx"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 	"net/mail"
 )
 

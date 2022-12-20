@@ -29,7 +29,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		Set("description", input.Description).
 		Set("notify_term", input.NotifyTerm)
 	// Returning("uuid").To(&guid)
-	if input.OwnerId != nil {
+	if input.OwnerId.ID() > 0 {
 		stmt.Set("owner_id", input.OwnerId.String())
 	}
 	if input.Description != nil {

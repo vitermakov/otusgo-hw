@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/base/errx"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 	"time"
 
 	"github.com/google/uuid"

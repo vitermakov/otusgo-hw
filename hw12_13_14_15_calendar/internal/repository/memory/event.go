@@ -28,8 +28,8 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if input.OwnerId != nil {
-		event.Owner = &model.User{ID: *input.OwnerId}
+	if input.OwnerId.ID() > 0 {
+		event.Owner = &model.User{ID: input.OwnerId}
 	}
 	if input.Description != nil {
 		event.Description = *input.Description
