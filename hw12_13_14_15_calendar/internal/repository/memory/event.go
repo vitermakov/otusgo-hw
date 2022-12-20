@@ -113,12 +113,13 @@ func (er EventRepo) matchSearch(event model.Event, search model.EventSearch) boo
 		}
 	}
 	if search.DateRange != nil {
-		d := event.Date
+		evStart := event.Date
+		evEnd := event.Date
 		if search.TacDuration {
-			d = d.Add(event.Duration)
+			evEnd = evEnd.Add(event.Duration)
 		}
-		if !(event.Date.After(search.DateRange.GetFrom()) &&
-			d.Before(search.DateRange.GetTo())) {
+		if !(evEnd.After(search.DateRange.GetFrom()) &&
+			evStart.Before(search.DateRange.GetTo())) {
 			return false
 		}
 	}

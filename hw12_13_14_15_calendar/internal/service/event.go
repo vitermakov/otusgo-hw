@@ -27,7 +27,7 @@ func (es EventService) validateAdd(ctx context.Context, input model.EventCreate)
 		OwnerID: &input.OwnerId,
 		DateRange: &model.DateRange{
 			DateStart: input.Date,
-			Duration:  input.Duration,
+			Duration:  time.Duration(input.Duration) * time.Minute,
 		},
 		TacDuration: true,
 	})
@@ -59,7 +59,7 @@ func (es EventService) validateUpdate(ctx context.Context, event model.Event, in
 		if input.Duration == nil {
 			dateRgn.Duration = event.Duration
 		} else {
-			dateRgn.Duration = *input.Duration
+			dateRgn.Duration = time.Duration(*input.Duration) * time.Minute
 		}
 		search := model.EventSearch{
 			OwnerID:     &event.Owner.ID,

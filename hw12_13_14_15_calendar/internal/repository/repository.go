@@ -16,7 +16,7 @@ type Event interface {
 	GetList(context.Context, model.EventSearch) ([]model.Event, error)
 }
 
-// User репозиторий для поиска пользователей.
+// User репозиторий для управления пользователями.
 type User interface {
 	Add(context.Context, model.UserCreate) (*model.User, error)
 	Update(context.Context, model.UserUpdate, model.UserSearch) error
