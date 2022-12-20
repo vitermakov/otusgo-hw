@@ -15,7 +15,7 @@ type Event struct {
 	Duration    time.Duration
 	Owner       *User
 	Description string
-	NotifyTerm  int
+	NotifyTerm  time.Duration
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -24,10 +24,10 @@ type Event struct {
 type EventCreate struct {
 	Title       string
 	Date        time.Time
-	Duration    time.Duration
+	Duration    int // в минутах.
 	OwnerId     uuid.UUID
 	Description *string // опционально.
-	NotifyTerm  *int    // опционально.
+	NotifyTerm  *int    // в днях, опционально.
 }
 
 // Validate базовая валидация структуры
@@ -45,16 +45,22 @@ func (ec EventCreate) Validate() error {
 			Err:   ErrEventZeroDate,
 		})
 	}
-	if ec.Duration.Minutes() == 0 {
+	if ec.Duration <= 0 {
 		errs.Add(errx.ValidationError{
 			Field: "Duration",
-			Err:   ErrEventZeroDuration,
+			Err:   ErrEventWrongDuration,
 		})
 	}
 	if ec.OwnerId.ID() == 0 {
 		errs.Add(errx.ValidationError{
 			Field: "OwnerId",
 			Err:   ErrEventOwnerId,
+		})
+	}
+	if ec.NotifyTerm != nil && *ec.NotifyTerm <= 0 {
+		errs.Add(errx.ValidationError{
+			Field: "NotifyTerm",
+			Err:   ErrEventWrongNotifyTerm,
 		})
 	}
 	if errs.Empty() {
@@ -67,7 +73,7 @@ func (ec EventCreate) Validate() error {
 type EventUpdate struct {
 	Title       *string
 	Date        *time.Time
-	Duration    *time.Duration
+	Duration    *int
 	Description *string
 	NotifyTerm  *int
 }
@@ -87,10 +93,16 @@ func (ec EventUpdate) Validate() error {
 			Err:   ErrEventZeroDate,
 		})
 	}
-	if ec.Duration != nil && ec.Duration.Minutes() == 0 {
+	if ec.Duration != nil && *ec.Duration <= 0 {
 		errs.Add(errx.ValidationError{
 			Field: "Duration",
-			Err:   ErrEventZeroDuration,
+			Err:   ErrEventWrongDuration,
+		})
+	}
+	if ec.NotifyTerm != nil && *ec.NotifyTerm <= 0 {
+		errs.Add(errx.ValidationError{
+			Field: "NotifyTerm",
+			Err:   ErrEventWrongNotifyTerm,
 		})
 	}
 	if errs.Empty() {

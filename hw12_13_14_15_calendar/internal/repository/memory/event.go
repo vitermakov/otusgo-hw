@@ -24,7 +24,7 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 		ID:        uuid.New(),
 		Title:     input.Title,
 		Date:      input.Date,
-		Duration:  input.Duration,
+		Duration:  time.Duration(input.Duration) * time.Minute,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -35,7 +35,7 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 		event.Description = *input.Description
 	}
 	if input.NotifyTerm != nil {
-		event.NotifyTerm = *input.NotifyTerm
+		event.NotifyTerm = time.Duration(*input.NotifyTerm) * time.Hour * 24
 	}
 	er.mu.Lock()
 	er.events = append(er.events, event)
@@ -54,13 +54,13 @@ func (er *EventRepo) Update(ctx context.Context, input model.EventUpdate, search
 				event.Date = *input.Date
 			}
 			if input.Duration != nil {
-				event.Duration = *input.Duration
+				event.Duration = time.Duration(*input.Duration) * time.Minute
 			}
 			if input.Description != nil {
 				event.Description = *input.Description
 			}
 			if input.NotifyTerm != nil {
-				event.NotifyTerm = *input.NotifyTerm
+				event.NotifyTerm = time.Duration(*input.NotifyTerm) * time.Hour * 24
 			}
 			event.UpdatedAt = time.Now()
 			er.events[i] = event

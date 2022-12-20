@@ -25,7 +25,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		Set("id", guid.String()).
 		Set("title", input.Title).
 		Set("date", input.Date).
-		Set("duration", int(input.Duration.Minutes())).
+		Set("duration", time.Duration(input.Duration)*time.Minute).
 		Set("description", input.Description).
 		Set("notify_term", input.NotifyTerm)
 	// Returning("uuid").To(&guid)
@@ -36,7 +36,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", *input.NotifyTerm)
+		stmt.Set("notify_term", time.Duration(*input.NotifyTerm)*time.Hour*24)
 	}
 	err := stmt.QueryRowAndClose(ctx, er.Pool)
 	if err != nil {
@@ -59,13 +59,13 @@ func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search 
 		stmt.Set("date", *input.Date)
 	}
 	if input.Duration != nil {
-		stmt.Set("duration", input.Duration.Minutes())
+		stmt.Set("duration", time.Duration(*input.Duration)*time.Minute)
 	}
 	if input.Description != nil {
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", *input.NotifyTerm)
+		stmt.Set("notify_term", time.Duration(*input.NotifyTerm)*time.Hour*24)
 	}
 	if _, err := stmt.ExecAndClose(ctx, er.Pool); err != nil {
 		return err
@@ -125,7 +125,7 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 			event.Description = dto.Description.String
 		}
 		if dto.NotifyTerm.Valid {
-			event.NotifyTerm = int(dto.NotifyTerm.Int64)
+			event.NotifyTerm = time.Duration(dto.NotifyTerm.Int64)
 		}
 		events = append(events, event)
 	})
