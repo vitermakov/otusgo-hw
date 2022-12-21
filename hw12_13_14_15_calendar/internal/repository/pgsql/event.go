@@ -145,11 +145,12 @@ func (er EventRepo) applySearch(stmt *sqlf.Stmt, search model.EventSearch) {
 		stmt.Where("events.owner_id != ?", search.OwnerID.String())
 	}
 	if search.DateRange != nil {
-		stmt.Where("events.date >= ?", search.DateRange.GetFrom())
+
 		if search.TacDuration {
-			stmt.Where("events.date + events.duration", search.DateRange.GetTo())
+			stmt.Where("events.date + events.duration > ?", search.DateRange.GetFrom())
 		} else {
-			stmt.Where("events.date", search.DateRange.GetTo())
+			stmt.Where("events.date > ?", search.DateRange.GetFrom())
 		}
+		stmt.Where("events.date < ?", search.DateRange.GetTo())
 	}
 }

@@ -61,7 +61,7 @@ func (ur UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
 func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]model.User, error) {
 	var dto struct {
 		Id    string `db:"id"`
-		Name  string `db:"title"`
+		Name  string `db:"name"`
 		Email string `db:"email"`
 	}
 	stmt := sqlf.From("users").Bind(&dto)
