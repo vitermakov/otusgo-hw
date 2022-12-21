@@ -90,11 +90,11 @@ func TestLogrusAdapter(t *testing.T) {
 			log.SetOutput(os.Stderr)
 		}()
 
-		logger.Debug(nil, "debug")
-		logger.Info(nil, "info")
-		logger.Error(nil, "error")
-		logger.Warn(nil, "warn")
-		logger.Fatal(nil, "fatal")
+		logger.Debug("debug")
+		logger.Info("info")
+		logger.Error("error")
+		logger.Warn("warn")
+		logger.Fatal("fatal")
 
 		s, err := os.ReadFile(file.Name())
 		logged := string(s)

@@ -39,7 +39,7 @@ func (app *Application) initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	resources := &Resources{}
+	app.resources = &Resources{}
 	if app.config.Storage.Type == "pgsql" {
 		pgCfg := app.config.Storage.PGConn
 		dsnURL := url.URL{
@@ -49,22 +49,22 @@ func (app *Application) initialize(ctx context.Context) error {
 			Path:     "/" + pgCfg.DBName,
 			RawQuery: "application_name=" + app.config.ServiceID,
 		}
-		resources.DBPool, err = sql.Open("pgx", dsnURL.String())
+		app.resources.DBPool, err = sql.Open("pgx", dsnURL.String())
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
-		resources.DBPool.SetConnMaxLifetime(20 * time.Second)
+		app.resources.DBPool.SetConnMaxLifetime(20 * time.Second)
 
-		app.logger.Info(nil, "database connected...")
+		app.logger.Info("database connected...")
 
 		// запускаем миграции
 		if err = goose.SetDialect("postgres"); err != nil {
 			return fmt.Errorf("error init migrations: %w", err)
 		}
-		if err = goose.Up(resources.DBPool, "migrations"); err != nil {
+		if err = goose.Up(app.resources.DBPool, "migrations"); err != nil {
 			return fmt.Errorf("error make migrations: %w", err)
 		}
-		app.logger.Info(nil, "migrations OK...")
+		app.logger.Info("migrations OK...")
 
 		// устанавливаем диалект билдера запросов
 		sqlf.SetDialect(sqlf.PostgreSQL)
@@ -102,7 +102,7 @@ func (app *Application) close() {
 	}
 }
 
-func (app *Application) run(ctx context.Context) error {
+func (app *Application) run(ctx context.Context) error { //nolint:unparam // will be used
 	var err error
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -132,19 +132,19 @@ func (app *Application) run(ctx context.Context) error {
 		defer cancel()
 
 		if err = restServer.Stop(ctx); err != nil {
-			app.logger.Error(nil, "failed to stop http server: "+err.Error())
+			app.logger.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		if err = restServer.Start(); err != nil {
-			app.logger.Error(nil, "failed to start http server: "+err.Error())
+			app.logger.Error("failed to start http server: " + err.Error())
 			cancel()
 		}
 	}()
 
-	app.logger.Info(nil, "calendar is running...")
+	app.logger.Info("calendar is running...")
 
 	wg.Wait()
 

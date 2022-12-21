@@ -3,7 +3,7 @@
     "serviceName": "Otus Calendar",
     "logger": {
         "fileName": "./logs/hw12-15.log",
-        "level": "warn"
+        "level": "info"
     },
     "storage": {
         "type": "pgsql",

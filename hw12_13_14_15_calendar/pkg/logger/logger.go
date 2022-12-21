@@ -23,11 +23,11 @@ const (
 
 // Logger интерфейс логгера.
 type Logger interface {
-	Info(data map[string]interface{}, msg string, args ...interface{})
-	Warn(data map[string]interface{}, msg string, args ...interface{})
-	Error(data map[string]interface{}, msg string, args ...interface{})
-	Fatal(data map[string]interface{}, msg string, args ...interface{})
-	Debug(data map[string]interface{}, msg string, args ...interface{})
+	Info(string, ...interface{})
+	Warn(string, ...interface{})
+	Error(string, ...interface{})
+	Fatal(string, ...interface{})
+	Debug(string, ...interface{})
 }
 
 func (l Level) String() string {

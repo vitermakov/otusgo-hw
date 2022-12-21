@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
@@ -70,7 +72,6 @@ func NewServer(cfg Config, authSrv AuthService, logger logger.Logger) *Server {
 
 func (s *Server) Start() error {
 	s.router.Use(
-		s.stopPanic,
 		s.loggingMiddleware,
 		s.authMiddleware,
 	)
@@ -115,8 +116,18 @@ func (s *Server) DELETE(pattern string, handler HandlerFunc) {
 func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		var response rs.Response
+		if request.Method == "OPTIONS" {
+			writer.WriteHeader(http.StatusOK)
+			return
+		}
 		doneChan := make(chan bool)
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					response = rs.FromError(errx.FatalNew(fmt.Sprintf("%+v\n%+v", r, string(debug.Stack()))))
+					close(doneChan)
+				}
+			}()
 			response = handler(request)
 			close(doneChan)
 		}()
@@ -131,22 +142,36 @@ func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
 }
 
 func (s *Server) showResponse(w http.ResponseWriter, resp rs.Response) {
+	w.Header().Set("Content-type", "application/json; charset=utf-8")
 	w.WriteHeader(resp.GetHTTPCode())
 	data, _ := json.Marshal(resp.GetHTTPResp())
 	_, _ = w.Write(data)
 }
 
 func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		var statusCode int
 		timeStart := time.Now()
-		next.ServeHTTP(w, r)
-		s.Logger.Info(
-			map[string]interface{}{
-				"method":  r.Method,
-				"url":     r.URL,
-				"latency": time.Since(timeStart).Milliseconds(),
+		wrapped := httpsnoop.Wrap(w, httpsnoop.Hooks{
+			WriteHeader: func(httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
+				return func(code int) {
+					w.WriteHeader(code)
+					statusCode = code
+				}
 			},
-			"http query",
+		})
+		next.ServeHTTP(wrapped, req)
+		s.Logger.Info(
+			fmt.Sprintf(
+				"%s %s %s %s %d %s \"%s\"",
+				strings.Split(req.RemoteAddr, ":")[0],
+				req.Method,
+				req.RequestURI,
+				req.Proto,
+				statusCode,
+				time.Since(timeStart).String(),
+				req.Header.Get("User-Agent"),
+			),
 		)
 	})
 }
@@ -171,17 +196,5 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 
 		response := rs.FromError(errx.PermsNew("нет доступа"))
 		s.showResponse(w, response)
-	})
-}
-
-func (s *Server) stopPanic(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if r := recover(); r != nil {
-				response := rs.FromError(errx.FatalNew(fmt.Sprintf("%+v\n%+v", r, string(debug.Stack()))))
-				s.showResponse(w, response)
-			}
-		}()
-		next.ServeHTTP(w, r)
 	})
 }
