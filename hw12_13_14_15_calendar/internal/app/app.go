@@ -12,7 +12,7 @@ import (
 
 	_ "github.com/jackc/pgx/v4/stdlib" // pgx driver for database/sql
 	"github.com/leporo/sqlf"
-	"github.com/pressly/goose/v3"
+	goose "github.com/pressly/goose/v3"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
