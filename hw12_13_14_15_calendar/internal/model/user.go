@@ -1,9 +1,10 @@
 package model
 
 import (
+	"net/mail"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
-	"net/mail"
 )
 
 // User модель пользователя.
@@ -19,7 +20,7 @@ type UserCreate struct {
 	Email string
 }
 
-// Validate базовая валидация структуры
+// Validate базовая валидация структуры.
 func (uc UserCreate) Validate() error {
 	var errs errx.ValidationErrors
 	if uc.Name == "" {
@@ -47,7 +48,7 @@ type UserUpdate struct {
 	Email *string
 }
 
-// Validate базовая валидация структуры
+// Validate базовая валидация структуры.
 func (uu UserUpdate) Validate() error {
 	var errs errx.ValidationErrors
 	if uu.Name != nil && *uu.Name == "" {

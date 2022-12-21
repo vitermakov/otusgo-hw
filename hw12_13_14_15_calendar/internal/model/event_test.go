@@ -2,17 +2,16 @@ package model
 
 import (
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
-	"testing"
-	"time"
 )
 
 func TestEventCreateValidate(t *testing.T) {
-	var (
-		wrongNotifyTerm = -1
-	)
+	wrongNotifyTerm := -1
 	testCases := []struct {
 		name     string
 		input    EventCreate
@@ -34,8 +33,8 @@ func TestEventCreateValidate(t *testing.T) {
 					Field: "Duration",
 					Err:   ErrEventWrongDuration,
 				}, {
-					Field: "OwnerId",
-					Err:   ErrEventOwnerId,
+					Field: "OwnerID",
+					Err:   ErrEventOwnerID,
 				}, {
 					Field: "NotifyTerm",
 					Err:   ErrEventWrongNotifyTerm,
@@ -57,8 +56,8 @@ func TestEventCreateValidate(t *testing.T) {
 					Field: "Duration",
 					Err:   ErrEventWrongDuration,
 				}, {
-					Field: "OwnerId",
-					Err:   ErrEventOwnerId,
+					Field: "OwnerID",
+					Err:   ErrEventOwnerID,
 				},
 			},
 		}, {
@@ -67,7 +66,7 @@ func TestEventCreateValidate(t *testing.T) {
 				Title:    "Test Event",
 				Date:     time.Now(),
 				Duration: 10,
-				OwnerId:  uuid.New(),
+				OwnerID:  uuid.New(),
 			},
 			expected: nil,
 		},

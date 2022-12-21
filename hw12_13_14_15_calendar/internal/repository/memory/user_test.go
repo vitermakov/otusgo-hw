@@ -2,9 +2,10 @@ package memory
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
-	"testing"
 )
 
 func TestUserMemoryRepo(t *testing.T) {

@@ -2,12 +2,13 @@ package memory
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 )
 
 type EventRepo struct {
@@ -28,8 +29,8 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if input.OwnerId.ID() > 0 {
-		event.Owner = &model.User{ID: input.OwnerId}
+	if input.OwnerID.ID() > 0 {
+		event.Owner = &model.User{ID: input.OwnerID}
 	}
 	if input.Description != nil {
 		event.Description = *input.Description
@@ -43,32 +44,35 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 
 	return &event, nil
 }
+
 func (er *EventRepo) Update(ctx context.Context, input model.EventUpdate, search model.EventSearch) error {
 	er.mu.Lock()
 	for i, event := range er.events {
-		if er.matchSearch(event, search) {
-			if input.Title != nil {
-				event.Title = *input.Title
-			}
-			if input.Date != nil {
-				event.Date = *input.Date
-			}
-			if input.Duration != nil {
-				event.Duration = time.Duration(*input.Duration) * time.Minute
-			}
-			if input.Description != nil {
-				event.Description = *input.Description
-			}
-			if input.NotifyTerm != nil {
-				event.NotifyTerm = time.Duration(*input.NotifyTerm) * time.Hour * 24
-			}
-			event.UpdatedAt = time.Now()
-			er.events[i] = event
+		if !er.matchSearch(event, search) {
+			continue
 		}
+		if input.Title != nil {
+			event.Title = *input.Title
+		}
+		if input.Date != nil {
+			event.Date = *input.Date
+		}
+		if input.Duration != nil {
+			event.Duration = time.Duration(*input.Duration) * time.Minute
+		}
+		if input.Description != nil {
+			event.Description = *input.Description
+		}
+		if input.NotifyTerm != nil {
+			event.NotifyTerm = time.Duration(*input.NotifyTerm) * time.Hour * 24
+		}
+		event.UpdatedAt = time.Now()
+		er.events[i] = event
 	}
 	er.mu.Unlock()
 	return nil
 }
+
 func (er *EventRepo) Delete(ctx context.Context, search model.EventSearch) error {
 	er.mu.Lock()
 	result := make([]model.Event, 0)
@@ -82,8 +86,8 @@ func (er *EventRepo) Delete(ctx context.Context, search model.EventSearch) error
 	return nil
 }
 
-// GetList не учитываем пагинацию, сортировку
-func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
+// GetList не учитываем пагинацию, сортировку.
+func (er *EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
 	var events, filtered []model.Event
 	er.mu.RLock()
 	events = er.events
@@ -96,7 +100,7 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 	return filtered, nil
 }
 
-func (er EventRepo) matchSearch(event model.Event, search model.EventSearch) bool {
+func (er *EventRepo) matchSearch(event model.Event, search model.EventSearch) bool {
 	if search.ID != nil {
 		if strings.Compare(event.ID.String(), search.ID.String()) != 0 {
 			return false

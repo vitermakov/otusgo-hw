@@ -3,10 +3,11 @@ package logger
 import (
 	"bytes"
 	"errors"
-	"github.com/stretchr/testify/require"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoggerLevel(t *testing.T) {

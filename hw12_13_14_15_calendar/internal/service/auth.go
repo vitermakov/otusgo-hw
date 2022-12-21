@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
 )
 

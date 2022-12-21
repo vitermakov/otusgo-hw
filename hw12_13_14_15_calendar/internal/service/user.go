@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
 )
 
 type UserService struct {
@@ -25,6 +27,7 @@ func (us UserService) validateAdd(ctx context.Context, input model.UserCreate) e
 	}
 	return nil
 }
+
 func (us UserService) Add(ctx context.Context, input model.UserCreate) (*model.User, error) {
 	if err := input.Validate(); err != nil {
 		return nil, err
@@ -72,8 +75,8 @@ func (us UserService) GetAll(ctx context.Context) ([]model.User, error) {
 	return us.repo.GetList(ctx, model.UserSearch{})
 }
 
-func (us UserService) GetById(ctx context.Context, userId uuid.UUID) (*model.User, error) {
-	return us.getOne(ctx, model.UserSearch{ID: &userId})
+func (us UserService) GetByID(ctx context.Context, userID uuid.UUID) (*model.User, error) {
+	return us.getOne(ctx, model.UserSearch{ID: &userID})
 }
 
 func (us UserService) GetByEmail(ctx context.Context, email string) (*model.User, error) {
@@ -92,20 +95,24 @@ func (us UserService) getOne(ctx context.Context, search model.UserSearch) (*mod
 }
 
 func (us UserService) GetCurrent(ctx context.Context) (*model.User, error) {
-	rawId, ok := ctx.Value("user_id").(string)
-	if !ok || rawId == "" {
+	ctxUser, ok := ctx.Value(rest.CtxKey{}).(map[string]interface{})
+	if !ok {
 		return nil, model.ErrUserEmptyID
 	}
-	userId, err := uuid.Parse(rawId)
+	rawID, ok := ctxUser["id"].(string)
+	if !ok {
+		return nil, model.ErrUserEmptyID
+	}
+	userID, err := uuid.Parse(rawID)
 	if err != nil {
 		return nil, err
 	}
-	return us.GetById(ctx, userId)
+	return us.GetByID(ctx, userID)
 }
 
-func NewUserService(repo repository.User, log logger.Logger) User {
+func NewUserService(repo repository.User, logger logger.Logger) User {
 	return &UserService{
 		repo: repo,
-		log:  log,
+		log:  logger,
 	}
 }

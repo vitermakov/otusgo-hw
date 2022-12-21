@@ -3,6 +3,7 @@ package pgsql
 import (
 	"context"
 	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/leporo/sqlf"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
@@ -10,11 +11,11 @@ import (
 )
 
 type UserRepo struct {
-	Pool *sql.DB
+	pool *sql.DB
 }
 
-func NewUserRepo(Pool *sql.DB) repository.User {
-	return &UserRepo{Pool: Pool}
+func NewUserRepo(pool *sql.DB) repository.User {
+	return &UserRepo{pool: pool}
 }
 
 func (ur UserRepo) Add(ctx context.Context, input model.UserCreate) (*model.User, error) {
@@ -24,7 +25,7 @@ func (ur UserRepo) Add(ctx context.Context, input model.UserCreate) (*model.User
 		Set("name", input.Name).
 		Set("email", input.Email)
 	// Returning("uuid").To(&guid)
-	err := stmt.QueryRowAndClose(ctx, ur.Pool)
+	err := stmt.QueryRowAndClose(ctx, ur.pool)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +35,7 @@ func (ur UserRepo) Add(ctx context.Context, input model.UserCreate) (*model.User
 	}
 	return &events[0], nil
 }
+
 func (ur UserRepo) Update(ctx context.Context, input model.UserUpdate, search model.UserSearch) error {
 	stmt := sqlf.Update("users")
 	ur.applySearch(stmt, search)
@@ -43,36 +45,37 @@ func (ur UserRepo) Update(ctx context.Context, input model.UserUpdate, search mo
 	if input.Email != nil {
 		stmt.Set("email", *input.Email)
 	}
-	if _, err := stmt.ExecAndClose(ctx, ur.Pool); err != nil {
-		return err
-	}
-	return nil
-}
-func (ur UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
-	stmt := sqlf.DeleteFrom("users")
-	ur.applySearch(stmt, search)
-	if _, err := stmt.ExecAndClose(ctx, ur.Pool); err != nil {
+	if _, err := stmt.ExecAndClose(ctx, ur.pool); err != nil {
 		return err
 	}
 	return nil
 }
 
-// GetList не учитываем пагинацию, сортировку
+func (ur UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
+	stmt := sqlf.DeleteFrom("users")
+	ur.applySearch(stmt, search)
+	if _, err := stmt.ExecAndClose(ctx, ur.pool); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetList не учитываем пагинацию, сортировку.
 func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]model.User, error) {
 	var dto struct {
-		Id    string `db:"id"`
+		ID    string `db:"id"`
 		Name  string `db:"name"`
 		Email string `db:"email"`
 	}
 	stmt := sqlf.From("users").Bind(&dto)
 	ur.applySearch(stmt, search)
 	users := make([]model.User, 0)
-	err := stmt.QueryAndClose(ctx, ur.Pool, func(row *sql.Rows) {
+	err := stmt.QueryAndClose(ctx, ur.pool, func(row *sql.Rows) {
 		user := model.User{
 			Name:  dto.Name,
 			Email: dto.Email,
 		}
-		user.ID, _ = uuid.Parse(dto.Id)
+		user.ID, _ = uuid.Parse(dto.ID)
 		users = append(users, user)
 	})
 	if err != nil {
@@ -80,6 +83,7 @@ func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]mode
 	}
 	return users, nil
 }
+
 func (ur UserRepo) applySearch(stmt *sqlf.Stmt, search model.UserSearch) {
 	if search.ID != nil {
 		stmt.Where("users.id = ?", search.ID.String())

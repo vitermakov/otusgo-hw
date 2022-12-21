@@ -4,8 +4,10 @@ import (
 	"errors"
 )
 
-var ErrorUnknownLevel = errors.New("unknown log level")
-var ErrorOpenLogFile = errors.New("error open log file")
+var (
+	ErrorUnknownLevel = errors.New("unknown log level")
+	ErrorOpenLogFile  = errors.New("error open log file")
+)
 
 type Level int
 
@@ -19,7 +21,7 @@ const (
 	LevelOut
 )
 
-// Logger интерфейс логгера
+// Logger интерфейс логгера.
 type Logger interface {
 	Info(data map[string]interface{}, msg string, args ...interface{})
 	Warn(data map[string]interface{}, msg string, args ...interface{})
@@ -40,6 +42,7 @@ func (l Level) String() string {
 		return "fatal"
 	case LevelDebug:
 		return "debug"
+	case LevelNone, LevelOut:
 	}
 	return "none"
 }
@@ -68,7 +71,7 @@ func ParseLevel(level string) (Level, error) {
 	return l, nil
 }
 
-// Config для всех логгеров
+// Config для всех логгеров.
 type Config struct {
 	Level     Level
 	FileName  string

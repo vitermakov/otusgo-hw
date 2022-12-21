@@ -2,9 +2,10 @@ package model
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
-	"testing"
 )
 
 func TestUserCreateValidate(t *testing.T) {

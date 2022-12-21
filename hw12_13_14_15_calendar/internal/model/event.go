@@ -1,13 +1,13 @@
 package model
 
 import (
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
-// Event модель события
+// Event модель события.
 type Event struct {
 	ID          uuid.UUID
 	Title       string
@@ -25,12 +25,12 @@ type EventCreate struct {
 	Title       string
 	Date        time.Time
 	Duration    int // в минутах.
-	OwnerId     uuid.UUID
+	OwnerID     uuid.UUID
 	Description *string // опционально.
 	NotifyTerm  *int    // в днях, опционально.
 }
 
-// Validate базовая валидация структуры
+// Validate базовая валидация структуры.
 func (ec EventCreate) Validate() error {
 	var errs errx.ValidationErrors
 	if ec.Title == "" {
@@ -51,10 +51,10 @@ func (ec EventCreate) Validate() error {
 			Err:   ErrEventWrongDuration,
 		})
 	}
-	if ec.OwnerId.ID() == 0 {
+	if ec.OwnerID.ID() == 0 {
 		errs.Add(errx.ValidationError{
-			Field: "OwnerId",
-			Err:   ErrEventOwnerId,
+			Field: "OwnerID",
+			Err:   ErrEventOwnerID,
 		})
 	}
 	if ec.NotifyTerm != nil && *ec.NotifyTerm <= 0 {
@@ -78,7 +78,7 @@ type EventUpdate struct {
 	NotifyTerm  *int
 }
 
-// Validate базовая валидация структуры
+// Validate базовая валидация структуры.
 func (ec EventUpdate) Validate() error {
 	var errs errx.ValidationErrors
 	if ec.Title != nil && *ec.Title == "" {

@@ -4,16 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/leporo/sqlf"
-	"github.com/pressly/goose/v3"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
 	stdlog "log"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	_ "github.com/jackc/pgx/v4/stdlib" // pgx driver for database/sql
+	"github.com/leporo/sqlf"
+	"github.com/pressly/goose/v3"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
+	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/response"
 )
 
 type Application struct {
@@ -24,7 +27,7 @@ type Application struct {
 	services  *Services
 }
 
-func (app Application) initialize(ctx context.Context) error {
+func (app *Application) initialize(ctx context.Context) error {
 	var err error
 
 	logLevel, _ := logger.ParseLevel(app.config.Logger.Level)
@@ -33,33 +36,33 @@ func (app Application) initialize(ctx context.Context) error {
 		FileName: app.config.Logger.FileName,
 	})
 	if err != nil {
-		return fmt.Errorf("unable start logger: %v", err)
+		return fmt.Errorf("unable start logger: %w", err)
 	}
 
 	resources := &Resources{}
 	if app.config.Storage.Type == "pgsql" {
-		pgCfg := app.config.Storage.PgConn
+		pgCfg := app.config.Storage.PGConn
 		dsnURL := url.URL{
 			Scheme:   "postgres",
 			User:     url.UserPassword(pgCfg.User, pgCfg.Password),
 			Host:     pgCfg.Host,
-			Path:     "/" + pgCfg.DbName,
-			RawQuery: "application_name=" + app.config.ServiceId,
+			Path:     "/" + pgCfg.DBName,
+			RawQuery: "application_name=" + app.config.ServiceID,
 		}
-		resources.DbPool, err = sql.Open("pgx", dsnURL.String())
+		resources.DBPool, err = sql.Open("pgx", dsnURL.String())
 		if err != nil {
-			return fmt.Errorf("unable to connect to database: %v", err)
+			return fmt.Errorf("unable to connect to database: %w", err)
 		}
-		resources.DbPool.SetConnMaxLifetime(20 * time.Second)
+		resources.DBPool.SetConnMaxLifetime(20 * time.Second)
 
 		app.logger.Info(nil, "database connected...")
 
 		// запускаем миграции
 		if err = goose.SetDialect("postgres"); err != nil {
-			return fmt.Errorf("error init migrations %s", err.Error())
+			return fmt.Errorf("error init migrations: %w", err)
 		}
-		if err = goose.Up(resources.DbPool, "migrations"); err != nil {
-			return fmt.Errorf("error make migrations %s", err.Error())
+		if err = goose.Up(resources.DBPool, "migrations"); err != nil {
+			return fmt.Errorf("error make migrations: %w", err)
 		}
 		app.logger.Info(nil, "migrations OK...")
 
@@ -79,41 +82,41 @@ func (app Application) initialize(ctx context.Context) error {
 			}
 		}()
 	}
-	return nil
-}
-
-func (app Application) close() {
-	stdlog.Println("closing resources")
-	if app.resources.DbPool != nil {
-		_ = app.resources.DbPool.Close()
-	}
-}
-
-func (app Application) run(ctx context.Context) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	repos, err := NewRepos(app.config.Storage, app.resources)
 	if err != nil {
-		app.logger.Fatal(nil, "error init data layer %s", err.Error())
+		return fmt.Errorf("error init data layer %w", err)
 	}
-	deps := Deps{Repos: repos, logger: app.logger}
+	app.deps = &Deps{Repos: repos, logger: app.logger}
 
-	// TODO: все остальное делаем в ДЗ №13
-	services := NewServices(deps)
+	// TODO: все остальное делаем в ДЗ №13.
+	app.services = NewServices(app.deps)
 
-	restServer := rest.NewServer(rest.Config{}, services.Auth, app.logger)
+	return nil
+}
+
+func (app *Application) close() {
+	stdlog.Println("closing resources")
+	if app.resources.DBPool != nil {
+		_ = app.resources.DBPool.Close()
+	}
+}
+
+func (app *Application) run(ctx context.Context) error {
+	var err error
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	restServer := rest.NewServer(rest.Config{}, app.services.Auth, app.logger)
 
 	// TODO: убрать отсюда
-	restServer.GET("/", func(r *http.Request) rest.Response {
-		return rest.OK("zer-gud", r.Context().Value("user"))
+	restServer.GET("/hello", func(r *http.Request) rs.Response {
+		return rs.OK("zer-gud", r.Context().Value(rest.CtxKey{}))
 	})
-	restServer.GET("/hello", func(r *http.Request) rest.Response {
-		return rest.OK("zer-gud", r.Context().Value("user"))
-	})
-	restServer.GET("/panic", func(r *http.Request) rest.Response {
-		n := 1 / 0
-		return rest.OK("unreachable", n)
+	restServer.GET("/panic", func(r *http.Request) rs.Response {
+		panic("testing panic")
+		// return rs.OK("unreachable", nil)
 	})
 
 	var wg sync.WaitGroup
@@ -132,8 +135,9 @@ func (app Application) run(ctx context.Context) error {
 			app.logger.Error(nil, "failed to stop http server: "+err.Error())
 		}
 	}()
+
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		if err = restServer.Start(); err != nil {
 			app.logger.Error(nil, "failed to start http server: "+err.Error())
 			cancel()
@@ -145,12 +149,6 @@ func (app Application) run(ctx context.Context) error {
 	wg.Wait()
 
 	return nil
-}
-
-func New(config config.Config) *Application {
-	return &Application{
-		config: config,
-	}
 }
 
 func (app *Application) Main(ctx context.Context) {
@@ -166,5 +164,11 @@ func (app *Application) Main(ctx context.Context) {
 	err = app.run(ctx)
 	if err != nil {
 		stdlog.Fatalf("не удалось запустить приложение: %s", err.Error())
+	}
+}
+
+func New(config config.Config) *Application {
+	return &Application{
+		config: config,
 	}
 }

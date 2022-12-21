@@ -3,6 +3,7 @@ package app
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository/memory"
@@ -14,11 +15,11 @@ import (
 
 // Resources ресурсы внешних систем, таких как СУБД, очереди.
 type Resources struct {
-	DbPool *sql.DB
+	DBPool *sql.DB
 	// MQConn net.Conn
 }
 
-// Repos регистр репозиториев
+// Repos регистр репозиториев.
 type Repos struct {
 	Event repository.Event
 	User  repository.User
@@ -37,8 +38,8 @@ func NewRepos(store config.Storage, res *Resources) (*Repos, error) {
 		}
 	case "pgsql":
 		repos = &Repos{
-			Event: pgsql.NewEventRepo(res.DbPool),
-			User:  pgsql.NewUserRepo(res.DbPool),
+			Event: pgsql.NewEventRepo(res.DBPool),
+			User:  pgsql.NewUserRepo(res.DBPool),
 		}
 	default:
 		err = fmt.Errorf("unknown storage type '%s", store.Type)
@@ -46,13 +47,13 @@ func NewRepos(store config.Storage, res *Resources) (*Repos, error) {
 	return repos, err
 }
 
-// Deps зависимости
+// Deps зависимости.
 type Deps struct {
 	Repos  *Repos
 	logger logger.Logger
 }
 
-// Services регистр сервисов
+// Services регистр сервисов.
 type Services struct {
 	Event  service.Event
 	User   service.User
@@ -60,8 +61,8 @@ type Services struct {
 	Auth   rest.AuthService
 }
 
-func NewServices(deps Deps) *Services {
-	var repo = deps.Repos
+func NewServices(deps *Deps) *Services {
+	repo := deps.Repos
 	userServ := service.NewUserService(repo.User, deps.logger)
 
 	return &Services{

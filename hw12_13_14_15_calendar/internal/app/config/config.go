@@ -6,20 +6,20 @@ import (
 )
 
 type Config struct {
-	ServiceId   string `json:"service_id"`
-	ServiceName string `json:"service_name"`
+	ServiceID   string `json:"serviceId"`
+	ServiceName string `json:"serviceName"`
 	Logger      Logger `json:"logger"`
 	Servers     struct {
-		Http Server `json:"http"`
-		Grpc Server `json:"grpc"`
+		HTTP Server `json:"http"`
+		GRPC Server `json:"grpc"`
 	} `json:"servers"`
 	Storage       Storage       `json:"storage"`
-	BgParams      BgParams      `json:"bg_params"`
+	BgParams      BgParams      `json:"bgParams"`
 	Notifications Notifications `json:"notifications"`
 }
 
 type Logger struct {
-	FileName string `json:"file_name"`
+	FileName string `json:"fileName"`
 	Level    string `json:"level"`
 }
 
@@ -29,22 +29,22 @@ type Server struct {
 }
 
 type BgParams struct {
-	TimeLive int `json:"time_live"`
+	TimeLive int `json:"timeLive"`
 }
 
 type Storage struct {
 	Type   string  `json:"type"`
-	PgConn SqlConn `json:"pgsql"`
+	PGConn SQLConn `json:"pgsql"`
 }
 
 type Queue struct {
 	Type     string `json:"type"`
-	RabbitMQ Conn   `json:"rabbit_mq"`
+	RabbitMQ Conn   `json:"rabbitMq"`
 }
 
 type Notifications struct {
-	DefaultTerm int    `json:"default_term"`
-	QueueName   string `json:"queue_name"`
+	DefaultTerm int    `json:"defaultTerm"`
+	QueueName   string `json:"queueName"`
 }
 
 type Conn struct {
@@ -54,12 +54,12 @@ type Conn struct {
 	Password string `json:"password"`
 }
 
-type SqlConn struct {
+type SQLConn struct {
 	Conn
-	DbName string `json:"dbname"`
+	DBName string `json:"dbName"`
 }
 
-// New пока исользуем обычный encode/json
+// New пока используем обычный encode/json.
 func New(fileName string) (Config, error) {
 	var config Config
 	bs, err := os.ReadFile(fileName)

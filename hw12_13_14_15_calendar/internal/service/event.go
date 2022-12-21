@@ -2,11 +2,12 @@ package service
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"time"
 )
 
 type EventService struct {
@@ -16,7 +17,7 @@ type EventService struct {
 }
 
 func (es EventService) validateAdd(ctx context.Context, input model.EventCreate) error {
-	user, err := es.user.GetById(ctx, input.OwnerId)
+	user, err := es.user.GetByID(ctx, input.OwnerID)
 	if err != nil {
 		return err
 	}
@@ -24,7 +25,7 @@ func (es EventService) validateAdd(ctx context.Context, input model.EventCreate)
 		return model.ErrEventOwnerExists
 	}
 	events, err := es.repo.GetList(ctx, model.EventSearch{
-		OwnerID: &input.OwnerId,
+		OwnerID: &input.OwnerID,
 		DateRange: &model.DateRange{
 			DateStart: input.Date,
 			Duration:  time.Duration(input.Duration) * time.Minute,
@@ -39,6 +40,7 @@ func (es EventService) validateAdd(ctx context.Context, input model.EventCreate)
 	}
 	return nil
 }
+
 func (es EventService) Add(ctx context.Context, input model.EventCreate) (*model.Event, error) {
 	if err := input.Validate(); err != nil {
 		return nil, err
@@ -48,17 +50,17 @@ func (es EventService) Add(ctx context.Context, input model.EventCreate) (*model
 	}
 	return es.repo.Add(ctx, input)
 }
+
 func (es EventService) validateUpdate(ctx context.Context, event model.Event, input model.EventUpdate) error {
 	if input.Date != nil || input.Duration != nil {
-		dateRgn := model.DateRange{}
-		if input.Date == nil {
-			dateRgn.DateStart = event.Date
-		} else {
+		dateRgn := model.DateRange{
+			DateStart: event.Date,
+			Duration:  event.Duration,
+		}
+		if input.Date != nil {
 			dateRgn.DateStart = *input.Date
 		}
-		if input.Duration == nil {
-			dateRgn.Duration = event.Duration
-		} else {
+		if input.Duration != nil {
 			dateRgn.Duration = time.Duration(*input.Duration) * time.Minute
 		}
 		search := model.EventSearch{
@@ -119,8 +121,8 @@ func (es EventService) Delete(ctx context.Context, event model.Event) error {
 	return nil
 }
 
-func (es EventService) GetById(ctx context.Context, eventId uuid.UUID) (*model.Event, error) {
-	return es.getOne(ctx, model.EventSearch{ID: &eventId})
+func (es EventService) GetByID(ctx context.Context, eventID uuid.UUID) (*model.Event, error) {
+	return es.getOne(ctx, model.EventSearch{ID: &eventID})
 }
 
 func (es EventService) getOne(ctx context.Context, search model.EventSearch) (*model.Event, error) {

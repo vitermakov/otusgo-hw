@@ -1,10 +1,11 @@
 package logger
 
 import (
-	"github.com/sirupsen/logrus"
 	"io"
 	"log"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Logrus struct {
@@ -18,7 +19,7 @@ func NewLogrus(cfg Config) (Logger, error) {
 	}
 	var level logrus.Level
 	switch cfg.Level {
-	case LevelNone:
+	case LevelNone, LevelOut:
 		level = logrus.PanicLevel
 	case LevelInfo:
 		level = logrus.InfoLevel
@@ -32,7 +33,7 @@ func NewLogrus(cfg Config) (Logger, error) {
 		level = logrus.DebugLevel
 	}
 	if len(cfg.FileName) > 0 {
-		f, err := os.OpenFile(cfg.FileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		f, err := os.OpenFile(cfg.FileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 		if err != nil {
 			return nil, ErrorOpenLogFile
 		}
