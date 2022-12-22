@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,7 +30,6 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		Set("duration", time.Duration(input.Duration)*time.Minute).
 		Set("description", input.Description).
 		Set("notify_term", input.NotifyTerm)
-	// Returning("uuid").To(&guid)
 	if input.OwnerID.ID() > 0 {
 		stmt.Set("owner_id", input.OwnerID.String())
 	}
@@ -69,10 +69,8 @@ func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search 
 	if input.NotifyTerm != nil {
 		stmt.Set("notify_term", time.Duration(*input.NotifyTerm)*time.Hour*24)
 	}
-	if _, err := stmt.ExecAndClose(ctx, er.pool); err != nil {
-		return err
-	}
-	return nil
+	_, err := stmt.ExecAndClose(ctx, er.pool)
+	return err
 }
 
 func (er EventRepo) Delete(ctx context.Context, search model.EventSearch) error {
@@ -86,56 +84,82 @@ func (er EventRepo) Delete(ctx context.Context, search model.EventSearch) error 
 
 // GetList не учитываем пагинацию, сортировку.
 func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
-	var userJSON sql.NullString
-	var dto struct {
-		ID          string         `db:"id"`
-		Title       string         `db:"title"`
-		Date        time.Time      `db:"date"`
-		Duration    int64          `db:"duration"`
-		Description sql.NullString `db:"description"`
-		NotifyTerm  sql.NullInt64  `db:"notify_term"`
-		CreatedAt   time.Time      `db:"created_at"`
-		UpdatedAt   time.Time      `db:"updated_at"`
-	}
-	stmt := sqlf.From("events").Bind(&dto)
+	stmt := sqlf.From("events").Select("*")
 	er.applySearch(stmt, search)
-	stmt.Select("(select row_to_json(u) from users as u where events.owner_id=u.uuid)").To(&userJSON)
+	stmt.Select("(select row_to_json(u) from users as u where events.owner_id=u.uuid)")
 
 	events := make([]model.Event, 0)
-	err := stmt.QueryAndClose(ctx, er.pool, func(row *sql.Rows) {
-		event := model.Event{
-			Title:     dto.Title,
-			Date:      dto.Date,
-			Duration:  time.Duration(dto.Duration * int64(time.Minute)),
-			CreatedAt: dto.CreatedAt,
-			UpdatedAt: dto.UpdatedAt,
-		}
-		event.ID, _ = uuid.Parse(dto.ID)
-		if userJSON.Valid {
-			var dtoUser struct {
-				ID    string `json:"id"`
-				Name  string `json:"name"`
-				Email string `json:"email"`
-			}
-			_ = json.Unmarshal([]byte(userJSON.String), &dtoUser)
-			event.Owner = &model.User{
-				Name:  dtoUser.Name,
-				Email: dtoUser.Email,
-			}
-			event.Owner.ID, _ = uuid.Parse(dtoUser.ID)
-		}
-		if dto.Description.Valid {
-			event.Description = dto.Description.String
-		}
-		if dto.NotifyTerm.Valid {
-			event.NotifyTerm = time.Duration(dto.NotifyTerm.Int64)
-		}
-		events = append(events, event)
-	})
+	rows, err := er.pool.QueryContext(ctx, stmt.String(), stmt.Args()...)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = rows.Close()
+	}()
+	for rows.Next() {
+		event, err := er.prepareModel(rows)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
 	return events, nil
+}
+
+func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
+	var (
+		id          sql.NullString
+		ownerID     sql.NullString
+		duration    sql.NullInt64
+		description sql.NullString
+		notifyTerm  sql.NullInt64
+		userJSON    sql.NullString
+		event       model.Event
+	)
+	if err := row.Scan(
+		&id, &event.Title, &event.Date, &duration, &ownerID, &description,
+		&notifyTerm, &event.CreatedAt, &event.UpdatedAt, &userJSON); err != nil {
+		if err != nil {
+			return event, err
+		}
+	}
+	if id.Valid {
+		guid, err := uuid.Parse(id.String)
+		if err != nil {
+			return event, err
+		}
+		event.ID = guid
+	}
+	if userJSON.Valid {
+		var dtoUser struct {
+			ID    string `json:"id"`
+			Name  string `json:"name"`
+			Email string `json:"email"`
+		}
+		err := json.Unmarshal([]byte(userJSON.String), &dtoUser)
+		if err != nil {
+			return event, fmt.Errorf("error reading event owner: %w", err)
+		}
+		event.Owner = &model.User{
+			Name:  dtoUser.Name,
+			Email: dtoUser.Email,
+		}
+		guid, err := uuid.Parse(dtoUser.ID)
+		if err != nil {
+			return event, fmt.Errorf("error reading event owner id: %w", err)
+		}
+		event.Owner.ID = guid
+	}
+	if duration.Valid {
+		event.NotifyTerm = time.Duration(duration.Int64)
+	}
+	if description.Valid {
+		event.Description = description.String
+	}
+	if notifyTerm.Valid {
+		event.NotifyTerm = time.Duration(notifyTerm.Int64)
+	}
+	return event, nil
 }
 
 func (er EventRepo) applySearch(stmt *sqlf.Stmt, search model.EventSearch) {

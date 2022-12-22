@@ -52,31 +52,33 @@ func (es EventService) Add(ctx context.Context, input model.EventCreate) (*model
 }
 
 func (es EventService) validateUpdate(ctx context.Context, event model.Event, input model.EventUpdate) error {
-	if input.Date != nil || input.Duration != nil {
-		dateRgn := model.DateRange{
-			DateStart: event.Date,
-			Duration:  event.Duration,
-		}
-		if input.Date != nil {
-			dateRgn.DateStart = *input.Date
-		}
-		if input.Duration != nil {
-			dateRgn.Duration = time.Duration(*input.Duration) * time.Minute
-		}
-		search := model.EventSearch{
-			OwnerID:     &event.Owner.ID,
-			NotID:       &event.ID,
-			DateRange:   &dateRgn,
-			TacDuration: true,
-		}
-		events, err := es.repo.GetList(ctx, search)
-		if err != nil {
-			return err
-		}
-		if len(events) > 0 {
-			return model.ErrEventDateBusy
-		}
+	if input.Date == nil && input.Duration == nil {
+		return nil
 	}
+	dateRgn := model.DateRange{
+		DateStart: event.Date,
+		Duration:  event.Duration,
+	}
+	if input.Date != nil {
+		dateRgn.DateStart = *input.Date
+	}
+	if input.Duration != nil {
+		dateRgn.Duration = time.Duration(*input.Duration) * time.Minute
+	}
+	search := model.EventSearch{
+		OwnerID:     &event.Owner.ID,
+		NotID:       &event.ID,
+		DateRange:   &dateRgn,
+		TacDuration: true,
+	}
+	events, err := es.repo.GetList(ctx, search)
+	if err != nil {
+		return err
+	}
+	if len(events) > 0 {
+		return model.ErrEventDateBusy
+	}
+
 	return nil
 }
 
@@ -115,10 +117,7 @@ func (es EventService) GetEventsOnMonth(ctx context.Context, user model.User, da
 }
 
 func (es EventService) Delete(ctx context.Context, event model.Event) error {
-	if err := es.repo.Delete(ctx, model.EventSearch{ID: &event.ID}); err != nil {
-		return err
-	}
-	return nil
+	return es.repo.Delete(ctx, model.EventSearch{ID: &event.ID})
 }
 
 func (es EventService) GetByID(ctx context.Context, eventID uuid.UUID) (*model.Event, error) {

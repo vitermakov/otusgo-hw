@@ -12,7 +12,6 @@ import (
 
 	_ "github.com/jackc/pgx/v4/stdlib" // pgx driver for database/sql
 	"github.com/leporo/sqlf"
-	goose "github.com/pressly/goose/v3"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
@@ -29,7 +28,6 @@ type Application struct {
 
 func (app *Application) initialize(ctx context.Context) error {
 	var err error
-
 	logLevel, _ := logger.ParseLevel(app.config.Logger.Level)
 	app.logger, err = logger.NewLogrus(logger.Config{
 		Level:    logLevel,
@@ -57,18 +55,8 @@ func (app *Application) initialize(ctx context.Context) error {
 
 		app.logger.Info("database connected...")
 
-		// запускаем миграции
-		if err = goose.SetDialect("postgres"); err != nil {
-			return fmt.Errorf("error init migrations: %w", err)
-		}
-		if err = goose.Up(app.resources.DBPool, "migrations"); err != nil {
-			return fmt.Errorf("error make migrations: %w", err)
-		}
-		app.logger.Info("migrations OK...")
-
 		// устанавливаем диалект билдера запросов
 		sqlf.SetDialect(sqlf.PostgreSQL)
-
 		// это костыль, так как при большом количестве запросов он подтекает
 		go func() {
 			for {
@@ -96,15 +84,17 @@ func (app *Application) initialize(ctx context.Context) error {
 }
 
 func (app *Application) close() {
-	stdlog.Println("closing resources")
+	if app.logger != nil {
+		app.logger.Info("closing resources")
+	} else {
+		stdlog.Println("closing resources")
+	}
 	if app.resources.DBPool != nil {
 		_ = app.resources.DBPool.Close()
 	}
 }
 
 func (app *Application) run(ctx context.Context) error { //nolint:unparam // will be used
-	var err error
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -121,24 +111,20 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 
 	var wg sync.WaitGroup
 
+	wg.Add(1)
 	go func() {
-		defer func() {
-			wg.Done()
-		}()
-
+		defer wg.Done()
 		<-ctx.Done()
-
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		if err = restServer.Stop(ctx); err != nil {
+		if err := restServer.Stop(ctx); err != nil {
 			app.logger.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
-		if err = restServer.Start(); err != nil {
+		if err := restServer.Start(); err != nil {
 			app.logger.Error("failed to start http server: " + err.Error())
 			cancel()
 		}

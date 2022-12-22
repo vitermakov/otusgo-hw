@@ -24,16 +24,15 @@ func (ur UserRepo) Add(ctx context.Context, input model.UserCreate) (*model.User
 		Set("id", guid.String()).
 		Set("name", input.Name).
 		Set("email", input.Email)
-	// Returning("uuid").To(&guid)
 	err := stmt.QueryRowAndClose(ctx, ur.pool)
 	if err != nil {
 		return nil, err
 	}
-	events, err := ur.GetList(ctx, model.UserSearch{ID: &guid})
+	users, err := ur.GetList(ctx, model.UserSearch{ID: &guid})
 	if err != nil {
 		return nil, err
 	}
-	return &events[0], nil
+	return &users[0], nil
 }
 
 func (ur UserRepo) Update(ctx context.Context, input model.UserUpdate, search model.UserSearch) error {
@@ -45,43 +44,65 @@ func (ur UserRepo) Update(ctx context.Context, input model.UserUpdate, search mo
 	if input.Email != nil {
 		stmt.Set("email", *input.Email)
 	}
-	if _, err := stmt.ExecAndClose(ctx, ur.pool); err != nil {
-		return err
-	}
-	return nil
+	_, err := stmt.ExecAndClose(ctx, ur.pool)
+	return err
 }
 
 func (ur UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
 	stmt := sqlf.DeleteFrom("users")
 	ur.applySearch(stmt, search)
-	if _, err := stmt.ExecAndClose(ctx, ur.pool); err != nil {
-		return err
-	}
-	return nil
+	_, err := stmt.ExecAndClose(ctx, ur.pool)
+	return err
 }
 
 // GetList не учитываем пагинацию, сортировку.
 func (ur UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]model.User, error) {
-	var dto struct {
-		ID    string `db:"id"`
-		Name  string `db:"name"`
-		Email string `db:"email"`
-	}
-	stmt := sqlf.From("users").Bind(&dto)
+	stmt := sqlf.From("users").Select("*")
 	ur.applySearch(stmt, search)
 	users := make([]model.User, 0)
-	err := stmt.QueryAndClose(ctx, ur.pool, func(row *sql.Rows) {
-		user := model.User{
-			Name:  dto.Name,
-			Email: dto.Email,
-		}
-		user.ID, _ = uuid.Parse(dto.ID)
-		users = append(users, user)
-	})
+	rows, err := ur.pool.QueryContext(ctx, stmt.String(), stmt.Args()...)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = rows.Close()
+	}()
+	for rows.Next() {
+		user, err := ur.prepareModel(rows)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
 	return users, nil
+}
+
+func (ur UserRepo) prepareModel(row *sql.Rows) (model.User, error) {
+	var (
+		id    sql.NullString
+		name  sql.NullString
+		email sql.NullString
+		user  model.User
+	)
+	if err := row.Scan(&id, &name, &email); err != nil {
+		if err != nil {
+			return user, err
+		}
+	}
+	if id.Valid {
+		guid, err := uuid.Parse(id.String)
+		if err != nil {
+			return user, err
+		}
+		user.ID = guid
+	}
+	if name.Valid {
+		user.Name = name.String
+	}
+	if email.Valid {
+		user.Email = email.String
+	}
+	return user, nil
 }
 
 func (ur UserRepo) applySearch(stmt *sqlf.Stmt, search model.UserSearch) {

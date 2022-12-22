@@ -39,18 +39,18 @@ func (us UserService) Add(ctx context.Context, input model.UserCreate) (*model.U
 }
 
 func (us UserService) validateUpdate(ctx context.Context, user model.User, input model.UserUpdate) error {
-	if input.Email != nil {
-		users, err := us.repo.GetList(ctx, model.UserSearch{
-			Email: input.Email,
-		})
-		if err != nil {
-			return err
-		}
-		if len(users) > 0 && users[0].ID.String() != user.ID.String() {
-			return model.ErrUserDuplicateEmail
-		}
+	if input.Email == nil {
+		return nil
 	}
-
+	users, err := us.repo.GetList(ctx, model.UserSearch{
+		Email: input.Email,
+	})
+	if err != nil {
+		return err
+	}
+	if len(users) > 0 && users[0].ID.String() != user.ID.String() {
+		return model.ErrUserDuplicateEmail
+	}
 	return nil
 }
 
@@ -65,10 +65,7 @@ func (us UserService) Update(ctx context.Context, user model.User, input model.U
 }
 
 func (us UserService) Delete(ctx context.Context, user model.User) error {
-	if err := us.repo.Delete(ctx, model.UserSearch{ID: &user.ID}); err != nil {
-		return err
-	}
-	return nil
+	return us.repo.Delete(ctx, model.UserSearch{ID: &user.ID})
 }
 
 func (us UserService) GetAll(ctx context.Context) ([]model.User, error) {

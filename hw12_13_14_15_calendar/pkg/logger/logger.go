@@ -64,10 +64,10 @@ func ParseLevel(level string) (Level, error) {
 		l = LevelFatal
 	case "debug":
 		l = LevelDebug
-	}
-	if l == LevelNone {
+	default:
 		return LevelNone, ErrorUnknownLevel
 	}
+
 	return l, nil
 }
 

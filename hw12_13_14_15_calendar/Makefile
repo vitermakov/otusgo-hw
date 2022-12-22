@@ -25,10 +25,16 @@ version: build
 test:
 	go test -race ./internal/... ./pkg/...
 
+migrate-install:
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+
+migrate: migrate-install
+	goose postgres "user=otus password=otus_db dbname=calendar sslmode=disable" -dir ./migrations up
+
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
 
 lint: install-lint-deps
 	golangci-lint run ./...
 
-.PHONY: build run build-img run-img version test lint
+.PHONY: build run build-img run-img version migrate test lint

@@ -1,10 +1,11 @@
 package errx
 
 const (
-	TypeLogic   byte = 1 // логическая ошибка
-	TypePerms   byte = 2 // ошибка прав доступа
-	TypeInvalid byte = 3 // ошибка валидации
-	TypeFatal   byte = 4 // критическая внешняя ошибка
+	TypeNone    = iota
+	TypeLogic   // логическая ошибка
+	TypePerms   // ошибка прав доступа
+	TypeInvalid // ошибка валидации
+	TypeFatal   // критическая внешняя ошибка
 )
 
 type Base struct {
@@ -48,17 +49,6 @@ type Invalid struct {
 }
 
 func (err Invalid) Error() string {
-	/*
-		var result string
-		messages := err.Errors()
-		for _, message := range messages {
-			if len(result) == 0 {
-				result = message.String()
-			} else {
-				result += "; " + message.String()
-			}
-		}
-	*/
 	return err.message
 }
 
