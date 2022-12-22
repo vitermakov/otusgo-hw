@@ -72,7 +72,7 @@ func TestLogrusAdapter(t *testing.T) {
 			FileName:  "abra/cadabra",
 			IsTesting: true,
 		})
-		require.True(t, errors.Is(err, ErrorOpenLogFile))
+		require.ErrorIs(t, err, ErrorOpenLogFile)
 	})
 	t.Run("logger ok", func(t *testing.T) {
 		logger, err := NewLogrus(Config{
