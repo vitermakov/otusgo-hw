@@ -3,8 +3,8 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"runtime/debug"
@@ -15,8 +15,8 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
+	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest/rqres"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
-	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/response"
 )
 
 const (
@@ -59,7 +59,7 @@ type Server struct {
 	router      *mux.Router
 }
 
-type HandlerFunc func(r *http.Request) rs.Response
+type HandlerFunc func(r *rs.Request) rs.Response
 
 func NewServer(cfg Config, authSrv AuthService, logger logger.Logger) *Server {
 	return &Server{
@@ -114,17 +114,22 @@ func (s *Server) DELETE(pattern string, handler HandlerFunc) {
 }
 
 func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+	return func(writer http.ResponseWriter, rq *http.Request) {
 		var response rs.Response
-		if request.Method == "OPTIONS" {
+		if rq.Method == "OPTIONS" {
 			writer.WriteHeader(http.StatusOK)
 			return
 		}
+		ctx, cancel := context.WithTimeout(rq.Context(), 30*time.Second)
+		defer cancel()
+		rq.WithContext(ctx)
+
+		request := &rs.Request{Request: rq, Params: mux.Vars(rq)}
 		doneChan := make(chan bool)
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					response = rs.FromError(errx.FatalNew(fmt.Sprintf("%+v\n%+v", r, string(debug.Stack()))))
+					response = rs.FromError(errx.FatalNew(fmt.Errorf("%+v\n%+v", r, string(debug.Stack()))))
 					close(doneChan)
 				}
 			}()
@@ -133,8 +138,9 @@ func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
 		}()
 		select {
 		case <-request.Context().Done():
-			response = rs.FromError(errx.FatalNew("Abort in timeout"))
-			log.Println("Abort in timeout", request.Method, request.URL)
+			err := errors.New("abort in timeout")
+			response = rs.FromError(errx.FatalNew(err))
+			s.Logger.Error("Abort in timeout (%ds). %s %s, ", s.engine.IdleTimeout.Milliseconds(), request.Method, request.URL)
 		case <-doneChan:
 		}
 		s.showResponse(writer, response)
@@ -194,7 +200,7 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		response := rs.FromError(errx.PermsNew("нет доступа"))
+		response := rs.FromError(errx.PermsNew(fmt.Errorf("нет доступа")))
 		s.showResponse(w, response)
 	})
 }

@@ -9,12 +9,12 @@ const (
 )
 
 type Base struct {
-	message string
-	kind    byte
+	err  error
+	kind byte
 }
 
 func (err Base) Error() string {
-	return err.message
+	return err.err.Error()
 }
 
 func (err Base) Kind() byte {
@@ -31,16 +31,16 @@ func (err Logic) Code() int {
 	return err.code
 }
 
-func LogicNew(message string, code int) Logic {
-	return Logic{Base{message, TypeLogic}, code}
+func LogicNew(err error, code int) Logic {
+	return Logic{Base{err, TypeLogic}, code}
 }
 
-func PermsNew(message string) Base {
-	return Base{message, TypePerms}
+func PermsNew(err error) Base {
+	return Base{err, TypePerms}
 }
 
-func FatalNew(message string) Base {
-	return Base{message, TypeFatal}
+func FatalNew(err error) Base {
+	return Base{err, TypeFatal}
 }
 
 type Invalid struct {

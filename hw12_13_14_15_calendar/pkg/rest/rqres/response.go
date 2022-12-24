@@ -1,4 +1,4 @@
-package response
+package rqres
 
 import (
 	"net/http"
