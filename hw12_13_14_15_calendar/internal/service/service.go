@@ -12,9 +12,9 @@ type Event interface {
 	Add(context.Context, model.EventCreate) (*model.Event, error)
 	Update(context.Context, model.Event, model.EventUpdate) error
 	Delete(context.Context, model.Event) error
-	GetEventsOnDay(context.Context, model.User, time.Time) ([]model.Event, error)
-	GetEventsOnWeek(context.Context, model.User, time.Time) ([]model.Event, error)
-	GetEventsOnMonth(context.Context, model.User, time.Time) ([]model.Event, error)
+	GetEventsOnDay(context.Context, time.Time) ([]model.Event, error)
+	GetEventsOnWeek(context.Context, time.Time) ([]model.Event, error)
+	GetEventsOnMonth(context.Context, time.Time) ([]model.Event, error)
 	GetByID(context.Context, uuid.UUID) (*model.Event, error)
 }
 

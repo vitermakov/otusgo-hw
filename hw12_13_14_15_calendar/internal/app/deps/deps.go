@@ -1,4 +1,4 @@
-package app
+package deps
 
 import (
 	"database/sql"
@@ -50,7 +50,7 @@ func NewRepos(store config.Storage, res *Resources) (*Repos, error) {
 // Deps зависимости.
 type Deps struct {
 	Repos  *Repos
-	logger logger.Logger
+	Logger logger.Logger
 }
 
 // Services регистр сервисов.
@@ -63,12 +63,12 @@ type Services struct {
 
 func NewServices(deps *Deps) *Services {
 	repo := deps.Repos
-	userServ := service.NewUserService(repo.User, deps.logger)
+	userServ := service.NewUserService(repo.User, deps.Logger)
 
 	return &Services{
-		Event:  service.NewEventService(repo.Event, deps.logger),
+		Event:  service.NewEventService(repo.Event, deps.Logger),
 		User:   userServ,
-		Logger: deps.logger,
+		Logger: deps.Logger,
 		Auth:   service.NewAuthService(userServ),
 	}
 }

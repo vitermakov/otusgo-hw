@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
+	handler "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	stdlog "log"
-	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -15,15 +16,14 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
-	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/response"
 )
 
 type Application struct {
 	config    config.Config
 	logger    logger.Logger
-	resources *Resources
-	deps      *Deps
-	services  *Services
+	resources *deps.Resources
+	deps      *deps.Deps
+	services  *deps.Services
 }
 
 func (app *Application) initialize(ctx context.Context) error {
@@ -37,7 +37,7 @@ func (app *Application) initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	app.resources = &Resources{}
+	app.resources = &deps.Resources{}
 	if app.config.Storage.Type == "pgsql" {
 		pgCfg := app.config.Storage.PGConn
 		dsnURL := url.URL{
@@ -71,14 +71,14 @@ func (app *Application) initialize(ctx context.Context) error {
 		}()
 	}
 
-	repos, err := NewRepos(app.config.Storage, app.resources)
+	repos, err := deps.NewRepos(app.config.Storage, app.resources)
 	if err != nil {
 		return fmt.Errorf("error init data layer %w", err)
 	}
-	app.deps = &Deps{Repos: repos, logger: app.logger}
+	app.deps = &deps.Deps{Repos: repos, Logger: app.logger}
 
 	// TODO: все остальное делаем в ДЗ №13.
-	app.services = NewServices(app.deps)
+	app.services = deps.NewServices(app.deps)
 
 	return nil
 }
@@ -100,15 +100,6 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 
 	restServer := rest.NewServer(rest.Config{}, app.services.Auth, app.logger)
 
-	// TODO: убрать отсюда
-	restServer.GET("/hello", func(r *http.Request) rs.Response {
-		return rs.OK("zer-gud", r.Context().Value(rest.CtxKey{}))
-	})
-	restServer.GET("/panic", func(r *http.Request) rs.Response {
-		panic("testing panic")
-		// return rs.OK("unreachable", nil)
-	})
-
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -124,6 +115,8 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	}()
 
 	go func() {
+		handlers := handler.NewHandlers(app.services, app.deps.Logger)
+		handlers.InitRoutes(restServer)
 		if err := restServer.Start(); err != nil {
 			app.logger.Error("failed to start http server: " + err.Error())
 			cancel()

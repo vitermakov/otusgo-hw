@@ -92,7 +92,8 @@ func (es EventService) Update(ctx context.Context, event model.Event, input mode
 	return es.repo.Update(ctx, input, model.EventSearch{ID: &event.ID})
 }
 
-func (es EventService) GetEventsOnDay(ctx context.Context, user model.User, date time.Time) ([]model.Event, error) {
+func (es EventService) GetEventsOnDay(ctx context.Context, date time.Time) ([]model.Event, error) {
+	user, _ := es.user.GetCurrent(ctx)
 	dateRgn := model.DateRgnOnDay(date)
 	return es.repo.GetList(ctx, model.EventSearch{
 		OwnerID:   &user.ID,
@@ -100,7 +101,8 @@ func (es EventService) GetEventsOnDay(ctx context.Context, user model.User, date
 	})
 }
 
-func (es EventService) GetEventsOnWeek(ctx context.Context, user model.User, date time.Time) ([]model.Event, error) {
+func (es EventService) GetEventsOnWeek(ctx context.Context, date time.Time) ([]model.Event, error) {
+	user, _ := es.user.GetCurrent(ctx)
 	dateRgn := model.DateRgnOnWeek(date)
 	return es.repo.GetList(ctx, model.EventSearch{
 		OwnerID:   &user.ID,
@@ -108,7 +110,8 @@ func (es EventService) GetEventsOnWeek(ctx context.Context, user model.User, dat
 	})
 }
 
-func (es EventService) GetEventsOnMonth(ctx context.Context, user model.User, date time.Time) ([]model.Event, error) {
+func (es EventService) GetEventsOnMonth(ctx context.Context, date time.Time) ([]model.Event, error) {
+	user, _ := es.user.GetCurrent(ctx)
 	dateRgn := model.DateRgnOnMonth(date)
 	return es.repo.GetList(ctx, model.EventSearch{
 		OwnerID:   &user.ID,
