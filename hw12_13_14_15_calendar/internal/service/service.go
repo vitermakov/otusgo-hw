@@ -9,7 +9,7 @@ import (
 )
 
 // Event сервис управления пользователями. Во всех случаях считаем,
-// что добавлять, удалять... можно только "свои" события
+// что добавлять, удалять... можно только "свои" события.
 type Event interface {
 	Add(context.Context, model.EventCreate) (*model.Event, error)
 	Update(context.Context, model.Event, model.EventUpdate) error

@@ -93,10 +93,10 @@ func TestEventUpdateValidate(t *testing.T) {
 		okTitle         = "okEvent"
 		zeroDate        time.Time
 		okDate          = time.Now()
-		wrongDuration   = -4
-		okDuration      = 4
-		wrongNotifyTerm = -10
-		okNotifyTerm    = 20
+		wrongDuration   = -4 * time.Hour
+		okDuration      = 45 * time.Minute
+		wrongNotifyTerm = -10 * 24 * time.Hour
+		okNotifyTerm    = 20 * 24 * time.Hour
 	)
 	testCases := []struct {
 		name     string

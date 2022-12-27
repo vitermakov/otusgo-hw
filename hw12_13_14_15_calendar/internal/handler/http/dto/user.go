@@ -48,6 +48,7 @@ func FromUserModel(item model.User) User {
 		Email: item.Email,
 	}
 }
+
 func FromUserSlice(items []model.User) []User {
 	if items == nil {
 		return nil

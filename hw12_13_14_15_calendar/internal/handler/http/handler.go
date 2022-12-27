@@ -23,8 +23,8 @@ func NewHandlers(services *deps.Services, logger logger.Logger) *Handlers {
 
 func (h *Handlers) InitRoutes(server *rest.Server) {
 	server.GET("/events/list/{rangeType}", h.Events.ListOnDate)
-	server.GET("/events/{eventId}", h.Events.GetItem)
+	server.GET("/events/{eventID}", h.Events.GetItem)
 	server.POST("/events", h.Events.Create)
-	server.PUT("/events/{eventId}", h.Events.Update)
-	server.DELETE("/events/{eventId}", h.Events.Delete)
+	server.PUT("/events/{eventID}", h.Events.Update)
+	server.DELETE("/events/{eventID}", h.Events.Delete)
 }

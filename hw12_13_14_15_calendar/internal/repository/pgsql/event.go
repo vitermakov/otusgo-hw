@@ -27,9 +27,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		Set("id", guid.String()).
 		Set("title", input.Title).
 		Set("date", input.Date).
-		Set("duration", time.Duration(input.Duration)*time.Minute).
-		Set("description", input.Description).
-		Set("notify_term", input.NotifyTerm)
+		Set("duration", input.Duration)
 	if input.OwnerID.ID() > 0 {
 		stmt.Set("owner_id", input.OwnerID.String())
 	}
@@ -37,7 +35,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", time.Duration(*input.NotifyTerm)*time.Hour*24)
+		stmt.Set("notify_term", *input.NotifyTerm)
 	}
 	err := stmt.QueryRowAndClose(ctx, er.pool)
 	if err != nil {
@@ -61,13 +59,13 @@ func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search 
 		stmt.Set("date", *input.Date)
 	}
 	if input.Duration != nil {
-		stmt.Set("duration", time.Duration(*input.Duration)*time.Minute)
+		stmt.Set("duration", *input.Duration)
 	}
 	if input.Description != nil {
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", time.Duration(*input.NotifyTerm)*time.Hour*24)
+		stmt.Set("notify_term", *input.NotifyTerm)
 	}
 	_, err := stmt.ExecAndClose(ctx, er.pool)
 	return err

@@ -2,12 +2,13 @@ package jsontype
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Customtype_Bool_Unmarshal_And_Marshal(t *testing.T) {
-
 	type InputBool struct {
 		BoolTrue  Bool `json:"booltrue"`
 		BoolFalse Bool `json:"boolfalse"`
@@ -31,18 +32,42 @@ func Test_Customtype_Bool_Unmarshal_And_Marshal(t *testing.T) {
 
 	if err = json.Unmarshal([]byte(jsonString), &input); assert.NoError(t, err) {
 		for _, val = range input {
-			assert.Equal(t, val.BoolTrue, Bool(true))
-			assert.Equal(t, val.BoolFalse, Bool(false))
+			require.Equal(t, val.BoolTrue, Bool(true))
+			require.Equal(t, val.BoolFalse, Bool(false))
 		}
 
-		if make_json, err := json.Marshal(input); assert.NoError(t, err) {
-			assert.Equal(t, string(make_json), `[{"booltrue":true,"boolfalse":false},{"booltrue":true,"boolfalse":false},{"booltrue":true,"boolfalse":false},{"booltrue":true,"boolfalse":false},{"booltrue":true,"boolfalse":false},{"booltrue":true,"boolfalse":false},{"booltrue":true,"boolfalse":false},{"booltrue":true,"boolfalse":false}]`)
+		expectedJSON := `[{
+			"booltrue":true,
+			"boolfalse":false
+		},{
+			"booltrue":true,
+			"boolfalse":false
+		},{
+			"booltrue":true,
+			"boolfalse":false
+		},{
+			"booltrue":true,
+			"boolfalse":false
+		},{
+			"booltrue":true,
+			"boolfalse":false
+		},{
+			"booltrue":true,
+			"boolfalse":false
+		},{
+			"booltrue":true,
+			"boolfalse":false
+		},{
+			"booltrue":true,
+			"boolfalse":false
+		}]`
+		if makeJSON, err := json.Marshal(input); assert.NoError(t, err) {
+			assert.JSONEq(t, string(makeJSON), expectedJSON)
 		}
 	}
 }
 
 func Test_Customtype_Bool_Unmarshal_Error(t *testing.T) {
-
 	type InputBool struct {
 		BoolTrue  Bool `json:"booltrue"`
 		BoolFalse Bool `json:"boolfalse"`

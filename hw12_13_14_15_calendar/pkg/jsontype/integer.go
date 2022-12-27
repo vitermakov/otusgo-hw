@@ -1,12 +1,16 @@
 package jsontype
 
-type Int int
-type Int32 int32
-type Int64 int64
+type (
+	Int   int
+	Int32 int32
+	Int64 int64
+)
 
-type Uint uint
-type Uint32 uint32
-type Uint64 uint64
+type (
+	Uint   uint
+	Uint32 uint32
+	Uint64 uint64
+)
 
 func (value *Int) UnmarshalJSON(data []byte) (err error) {
 	var val int

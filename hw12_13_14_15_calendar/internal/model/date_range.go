@@ -64,7 +64,7 @@ func DateRgnFromDates(from time.Time, to time.Time) DateRange {
 
 func DateRgnOn(kind RangeKind, date time.Time) DateRange {
 	alignDate(kind, &date)
-	switch kind {
+	switch kind { //nolint:exhaustive // по дефолту DateRange{}
 	case RangeTypeDay:
 		return DateRange{DateStart: date, Duration: time.Hour * 24}
 	case RangeTypeWeek:
@@ -75,10 +75,10 @@ func DateRgnOn(kind RangeKind, date time.Time) DateRange {
 	return DateRange{}
 }
 
-// alignDate выравнивание даты по началу дня, недели (по понедельнику), месяцу (первому числу)
+// alignDate выравнивание даты по началу дня, недели (по понедельнику), месяцу (первому числу).
 func alignDate(kind RangeKind, date *time.Time) {
 	y, m, d, l := date.Year(), date.Month(), date.Day(), date.Location()
-	switch kind {
+	switch kind { //nolint:exhaustive // другие варианты ошибочны
 	case RangeTypeWeek:
 		wd := int(date.Weekday()) - 1
 		if wd < 0 {

@@ -73,9 +73,9 @@ func (ec EventCreate) Validate() error {
 type EventUpdate struct {
 	Title       *string
 	Date        *time.Time
-	Duration    *int
+	Duration    *time.Duration
 	Description *string
-	NotifyTerm  *int
+	NotifyTerm  *time.Duration
 }
 
 // Validate базовая валидация структуры.

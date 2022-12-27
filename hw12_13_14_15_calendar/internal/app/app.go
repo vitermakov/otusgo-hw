@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
-	handler "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	stdlog "log"
 	"net/url"
 	"sync"
@@ -14,6 +12,8 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib" // pgx driver for database/sql
 	"github.com/leporo/sqlf"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
+	handler "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
 )

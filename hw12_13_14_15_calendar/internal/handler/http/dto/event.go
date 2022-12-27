@@ -1,21 +1,22 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/jsontype"
-	"time"
 )
 
 type EventCreate struct {
 	Title       jsontype.String  `json:"title"`
-	Date        jsontype.String  `json:"Date"`
+	Date        jsontype.String  `json:"date"`
 	Duration    jsontype.Int     `json:"duration"`    // в минутах.
 	Description *jsontype.String `json:"description"` // опционально.
 	NotifyTerm  *jsontype.Int    `json:"notifyTerm"`  // в днях, опционально.
 }
 
 // Model возвращает связанную модель если какие-то поля заполены
-// в неверном формате, то не возвращаем ошибку, ошибка идет далее
+// в неверном формате, то не возвращаем ошибку, ошибка идет далее.
 func (ec EventCreate) Model() model.EventCreate {
 	input := model.EventCreate{
 		Title:    string(ec.Title),
@@ -41,7 +42,7 @@ type EventUpdate struct {
 	Date        *jsontype.String `json:"date"`
 	Duration    *jsontype.Int    `json:"duration"` // в минутах.
 	Description *jsontype.String `json:"description"`
-	NotifyTerm  *jsontype.Int    `json:"notify_term"`
+	NotifyTerm  *jsontype.Int    `json:"notifyTerm"`
 }
 
 func (eu EventUpdate) Model() model.EventUpdate {
@@ -57,7 +58,7 @@ func (eu EventUpdate) Model() model.EventUpdate {
 		}
 	}
 	if eu.Duration != nil {
-		val := int(*eu.Duration)
+		val := time.Duration(*eu.Duration) * time.Minute
 		input.Duration = &val
 	}
 	if eu.Description != nil {
@@ -65,7 +66,7 @@ func (eu EventUpdate) Model() model.EventUpdate {
 		input.Description = &val
 	}
 	if eu.NotifyTerm != nil {
-		val := int(*eu.NotifyTerm)
+		val := time.Duration(*eu.NotifyTerm) * time.Hour * 24
 		input.NotifyTerm = &val
 	}
 	return input
@@ -78,9 +79,9 @@ type Event struct {
 	Duration    int       `json:"duration"`
 	Owner       *User     `json:"owner,omitempty"`
 	Description string    `json:"dDescription"`
-	NotifyTerm  int       `json:"notify_term"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	NotifyTerm  int       `json:"notifyTerm"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 func FromEventModel(item model.Event) Event {
@@ -99,6 +100,7 @@ func FromEventModel(item model.Event) Event {
 	}
 	return event
 }
+
 func FromEventSlice(items []model.Event) []Event {
 	if items == nil {
 		return nil

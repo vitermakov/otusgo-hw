@@ -24,5 +24,5 @@ var (
 	ErrEventDateBusy        = errors.New("указанная дата занята")
 	ErrEventNotFound        = errors.New("указанное событие не найдено")
 	ErrEventWrongNotifyTerm = errors.New("неверный интервал оповещения")
-	ErrEventNotFoundId      = errors.New("не найдено событие")
+	ErrEventNotFoundID      = errors.New("не найдено событие")
 )

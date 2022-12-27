@@ -122,7 +122,7 @@ func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(rq.Context(), 30*time.Second)
 		defer cancel()
-		rq.WithContext(ctx)
+		rq = rq.WithContext(ctx)
 
 		request := &rs.Request{Request: rq, Params: mux.Vars(rq)}
 		doneChan := make(chan bool)

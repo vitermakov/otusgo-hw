@@ -1,7 +1,9 @@
 package jsontype
 
-type Float32 float32
-type Float64 float64
+type (
+	Float32 float32
+	Float64 float64
+)
 
 func (value *Float32) UnmarshalJSON(data []byte) (err error) {
 	var val float32

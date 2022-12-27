@@ -1,12 +1,12 @@
 package jsontype
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_Customtype_Base_UnmarshalJSON(t *testing.T) {
-
 	var err error
 	var jsonString []string
 	var input int64

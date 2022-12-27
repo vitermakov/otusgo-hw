@@ -3,12 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/dto"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest/rqres"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
-	"time"
 )
 
 type Events struct {
@@ -30,14 +31,15 @@ func (e *Events) ListOnDate(request *rs.Request) rs.Response {
 
 func (e *Events) GetItem(request *rs.Request) rs.Response {
 	ctx := request.Context()
-	eventId, _ := uuid.Parse(request.Param("eventId"))
-	event, err := e.services.Event.GetByID(ctx, eventId)
+	eventID, _ := uuid.Parse(request.Param("eventID"))
+	event, err := e.services.Event.GetByID(ctx, eventID)
 	if err != nil {
 		e.logger.Error(err.Error())
 		return rs.FromError(err)
 	}
 	return rs.Data(dto.FromEventModel(*event))
 }
+
 func (e *Events) Create(request *rs.Request) rs.Response {
 	var input dto.EventCreate
 	if request.ContentLength > 0 {
@@ -58,12 +60,13 @@ func (e *Events) Create(request *rs.Request) rs.Response {
 		e.logger.Error(err.Error())
 		return rs.FromError(err)
 	}
-	e.logger.Info("событие добавлено: eventId=%s", event.ID.String())
+	e.logger.Info("событие добавлено: eventID=%s", event.ID.String())
 	return rs.OK("событие добавлено", dto.FromEventModel(*event))
 }
+
 func (e *Events) Update(request *rs.Request) rs.Response {
 	var input dto.EventUpdate
-	eventId, _ := uuid.Parse(request.Param("eventId"))
+	eventID, _ := uuid.Parse(request.Param("eventID"))
 	ctx := request.Context()
 	if request.ContentLength > 0 {
 		defer func() {
@@ -77,7 +80,7 @@ func (e *Events) Update(request *rs.Request) rs.Response {
 			return rs.FromError(errx.LogicNew(logErr, 1000))
 		}
 	}
-	event, err := e.services.Event.GetByID(ctx, eventId)
+	event, err := e.services.Event.GetByID(ctx, eventID)
 	if err != nil {
 		e.logger.Error(err.Error())
 		return rs.FromError(err)
@@ -88,13 +91,14 @@ func (e *Events) Update(request *rs.Request) rs.Response {
 		e.logger.Error(err.Error())
 		return rs.FromError(err)
 	}
-	e.logger.Info("событие изменено: eventId=%s", event.ID.String())
+	e.logger.Info("событие изменено: eventID=%s", event.ID.String())
 	return rs.OK("событие изменено", nil)
 }
+
 func (e *Events) Delete(request *rs.Request) rs.Response {
-	eventId, _ := uuid.Parse(request.Param("event_id"))
+	eventID, _ := uuid.Parse(request.Param("event_id"))
 	ctx := request.Context()
-	event, err := e.services.Event.GetByID(ctx, eventId)
+	event, err := e.services.Event.GetByID(ctx, eventID)
 	if err != nil {
 		e.logger.Error(err.Error())
 		return rs.FromError(err)
@@ -105,6 +109,6 @@ func (e *Events) Delete(request *rs.Request) rs.Response {
 		e.logger.Error(err.Error())
 		return rs.FromError(err)
 	}
-	e.logger.Info("событие удалено: eventId=%s", event.ID.String())
+	e.logger.Info("событие удалено: eventID=%s", event.ID.String())
 	return rs.OK("событие удалено", dto.FromEventModel(*event))
 }
