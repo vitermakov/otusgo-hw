@@ -1,11 +1,12 @@
 package errx
 
 const (
-	TypeNone    = iota
-	TypeLogic   // логическая ошибка
-	TypePerms   // ошибка прав доступа
-	TypeInvalid // ошибка валидации
-	TypeFatal   // критическая внешняя ошибка
+	TypeNone     = iota
+	TypeLogic    // логическая ошибка
+	TypePerms    // ошибка прав доступа
+	TypeNotFound // объект не найден
+	TypeInvalid  // ошибка валидации
+	TypeFatal    // критическая внешняя ошибка
 )
 
 type Base struct {
@@ -39,6 +40,16 @@ func PermsNew(err error) Base {
 	return Base{err, TypePerms}
 }
 
+// NotFound объект не найден по какому-то набору для поиска.
+type NotFound struct {
+	Base
+	Params interface{} // параметры поиска
+}
+
+func NotFoundNew(err error, params interface{}) NotFound {
+	return NotFound{Base{err, TypeNotFound}, params}
+}
+
 func FatalNew(err error) Base {
 	return Base{err, TypeFatal}
 }
@@ -64,6 +75,6 @@ func (err Invalid) Kind() byte {
 	return TypeInvalid
 }
 
-func InvalidNew(message string) Invalid {
-	return Invalid{message: message}
+func InvalidNew(message string, errors ValidationErrors) Invalid {
+	return Invalid{message: message, errors: errors}
 }

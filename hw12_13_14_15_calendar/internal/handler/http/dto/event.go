@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/jsontype"
 	"time"
@@ -10,8 +9,7 @@ import (
 type EventCreate struct {
 	Title       jsontype.String  `json:"title"`
 	Date        jsontype.String  `json:"Date"`
-	Duration    jsontype.Int     `json:"duration"` // в минутах.
-	OwnerID     *jsontype.String `json:"owner_id"`
+	Duration    jsontype.Int     `json:"duration"`    // в минутах.
 	Description *jsontype.String `json:"description"` // опционально.
 	NotifyTerm  *jsontype.Int    `json:"notifyTerm"`  // в днях, опционально.
 }
@@ -26,13 +24,6 @@ func (ec EventCreate) Model() model.EventCreate {
 	date, err := time.Parse(time.RFC3339, string(ec.Date))
 	if err == nil {
 		input.Date = date
-	}
-	if ec.OwnerID != nil {
-		val := string(*ec.OwnerID)
-		guid, err := uuid.Parse(val)
-		if err == nil {
-			input.OwnerID = guid
-		}
 	}
 	if ec.Description != nil {
 		val := string(*ec.Description)

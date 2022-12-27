@@ -67,7 +67,6 @@ func ParseLevel(level string) (Level, error) {
 	default:
 		return LevelNone, ErrorUnknownLevel
 	}
-
 	return l, nil
 }
 

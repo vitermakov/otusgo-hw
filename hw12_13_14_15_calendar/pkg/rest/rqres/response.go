@@ -1,6 +1,7 @@
 package rqres
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
@@ -249,17 +250,25 @@ func Internal(message string) *InternalResp {
 
 // FromError перевод ошибки в ответ сервера.
 func FromError(err error) Response {
-	switch err := err.(type) { //nolint:errorlint // no
-	case errx.Logic:
-		return BadRequest(err.Error(), err.Code())
-	case errx.Invalid:
-		return Invalid(err.Error(), err.Errors())
-	case errx.Base:
-		switch err.Kind() {
+	logErr := errx.Logic{}
+	if errors.As(err, &logErr) {
+		return BadRequest(logErr.Error(), logErr.Code())
+	}
+	invErr := errx.Invalid{}
+	if errors.As(err, &invErr) {
+		return Invalid(invErr.Error(), invErr.Errors())
+	}
+	nfErr := errx.NotFound{}
+	if errors.As(err, &nfErr) {
+		return NotFound(invErr.Error(), nfErr.Params)
+	}
+	base := errx.Base{}
+	if errors.As(err, &base) {
+		switch base.Kind() {
 		case errx.TypePerms:
 			return UnAuth()
 		case errx.TypeFatal:
-			return Internal(err.Error())
+			return Internal(base.Error())
 		}
 	}
 	return BadRequest(err.Error(), 400)

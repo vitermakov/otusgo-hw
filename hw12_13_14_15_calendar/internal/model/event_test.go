@@ -11,7 +11,7 @@ import (
 )
 
 func TestEventCreateValidate(t *testing.T) {
-	wrongNotifyTerm := -1
+	wrongNotifyTerm := -1 * time.Hour
 	testCases := []struct {
 		name     string
 		input    EventCreate

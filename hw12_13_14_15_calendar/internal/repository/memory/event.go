@@ -88,15 +88,15 @@ func (er *EventRepo) Delete(ctx context.Context, search model.EventSearch) error
 
 // GetList не учитываем пагинацию, сортировку.
 func (er *EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
-	var events, filtered []model.Event
+	var filtered []model.Event
 	er.mu.RLock()
-	events = er.events
-	er.mu.RUnlock()
-	for _, event := range events {
+	for _, event := range er.events {
 		if er.matchSearch(event, search) {
 			filtered = append(filtered, event)
 		}
 	}
+	er.mu.RUnlock()
+
 	return filtered, nil
 }
 

@@ -52,7 +52,7 @@ func TestEventMemoryRepo(t *testing.T) {
 			input := model.EventCreate{
 				Title:    event.Title,
 				Date:     event.Date,
-				Duration: int(event.Duration.Minutes()),
+				Duration: event.Duration,
 				OwnerID:  event.Owner.ID,
 			}
 			newUser, err := eventRepo.Add(ctx, input)

@@ -66,7 +66,7 @@ func NewServices(deps *Deps) *Services {
 	userServ := service.NewUserService(repo.User, deps.Logger)
 
 	return &Services{
-		Event:  service.NewEventService(repo.Event, deps.Logger),
+		Event:  service.NewEventService(repo.Event, deps.Logger, userServ),
 		User:   userServ,
 		Logger: deps.Logger,
 		Auth:   service.NewAuthService(userServ),

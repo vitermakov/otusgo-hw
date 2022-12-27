@@ -8,13 +8,14 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 )
 
+// Event сервис управления пользователями. Во всех случаях считаем,
+// что добавлять, удалять... можно только "свои" события
 type Event interface {
 	Add(context.Context, model.EventCreate) (*model.Event, error)
 	Update(context.Context, model.Event, model.EventUpdate) error
 	Delete(context.Context, model.Event) error
-	GetEventsOnDay(context.Context, time.Time) ([]model.Event, error)
-	GetEventsOnWeek(context.Context, time.Time) ([]model.Event, error)
-	GetEventsOnMonth(context.Context, time.Time) ([]model.Event, error)
+	GetUserEventsOn(context.Context, time.Time, model.RangeKind) ([]model.Event, error)
+	GetEvents(context.Context, model.EventSearch) ([]model.Event, error)
 	GetByID(context.Context, uuid.UUID) (*model.Event, error)
 }
 
