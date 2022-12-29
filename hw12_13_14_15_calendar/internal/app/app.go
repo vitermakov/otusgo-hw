@@ -77,7 +77,6 @@ func (app *Application) initialize(ctx context.Context) error {
 	}
 	app.deps = &deps.Deps{Repos: repos, Logger: app.logger}
 
-	// TODO: все остальное делаем в ДЗ №13.
 	app.services = deps.NewServices(app.deps)
 
 	return nil
@@ -98,7 +97,10 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	restServer := rest.NewServer(rest.Config{}, app.services.Auth, app.logger)
+	restServer := rest.NewServer(rest.Config{
+		Host: app.config.Servers.HTTP.Host,
+		Port: app.config.Servers.HTTP.Port,
+	}, app.services.Auth, app.logger)
 
 	var wg sync.WaitGroup
 
