@@ -27,7 +27,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		Set("id", guid.String()).
 		Set("title", input.Title).
 		Set("date", input.Date).
-		Set("duration", input.Duration)
+		Set("duration", fmt.Sprintf("%d minutes", int(input.Duration.Minutes())))
 	if input.OwnerID.ID() > 0 {
 		stmt.Set("owner_id", input.OwnerID.String())
 	}
@@ -35,9 +35,9 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", *input.NotifyTerm)
+		stmt.Set("notify_term", fmt.Sprintf("%d days", int(input.NotifyTerm.Hours()/24)))
 	}
-	err := stmt.QueryRowAndClose(ctx, er.pool)
+	_, err := stmt.ExecAndClose(ctx, er.pool)
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +59,13 @@ func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search 
 		stmt.Set("date", *input.Date)
 	}
 	if input.Duration != nil {
-		stmt.Set("duration", *input.Duration)
+		stmt.Set("duration", fmt.Sprintf("%d minutes", int(input.Duration.Minutes())))
 	}
 	if input.Description != nil {
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", *input.NotifyTerm)
+		stmt.Set("notify_term", fmt.Sprintf("%d days", int(input.NotifyTerm.Hours()/24)))
 	}
 	_, err := stmt.ExecAndClose(ctx, er.pool)
 	return err
@@ -82,10 +82,10 @@ func (er EventRepo) Delete(ctx context.Context, search model.EventSearch) error 
 
 // GetList не учитываем пагинацию, сортировку.
 func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
-	stmt := sqlf.From("events").Select("*")
+	stmt := sqlf.From("events").
+		Select("id, title, date, EXTRACT(EPOCH FROM duration)::int, description, EXTRACT(EPOCH FROM notify_term)::int, created_at, updated_at")
 	er.applySearch(stmt, search)
-	stmt.Select("(select row_to_json(u) from users as u where events.owner_id=u.uuid)")
-
+	stmt.Select("(select row_to_json(users) from users where events.owner_id=users.id) as owner")
 	events := make([]model.Event, 0)
 	rows, err := er.pool.QueryContext(ctx, stmt.String(), stmt.Args()...)
 	if err != nil {
@@ -94,6 +94,7 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 	defer func() {
 		_ = rows.Close()
 	}()
+
 	for rows.Next() {
 		event, err := er.prepareModel(rows)
 		if err != nil {
@@ -107,7 +108,6 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
 	var (
 		id          sql.NullString
-		ownerID     sql.NullString
 		duration    sql.NullInt64
 		description sql.NullString
 		notifyTerm  sql.NullInt64
@@ -115,7 +115,7 @@ func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
 		event       model.Event
 	)
 	if err := row.Scan(
-		&id, &event.Title, &event.Date, &duration, &ownerID, &description,
+		&id, &event.Title, &event.Date, &duration, &description,
 		&notifyTerm, &event.CreatedAt, &event.UpdatedAt, &userJSON); err != nil {
 		if err != nil {
 			return event, err
@@ -149,13 +149,13 @@ func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
 		event.Owner.ID = guid
 	}
 	if duration.Valid {
-		event.NotifyTerm = time.Duration(duration.Int64)
+		event.Duration = time.Duration(duration.Int64) * time.Second
 	}
 	if description.Valid {
 		event.Description = description.String
 	}
 	if notifyTerm.Valid {
-		event.NotifyTerm = time.Duration(notifyTerm.Int64)
+		event.NotifyTerm = time.Duration(notifyTerm.Int64) * time.Second
 	}
 	return event, nil
 }
@@ -165,10 +165,10 @@ func (er EventRepo) applySearch(stmt *sqlf.Stmt, search model.EventSearch) {
 		stmt.Where("events.id = ?", search.ID.String())
 	}
 	if search.NotID != nil {
-		stmt.Where("events.id != ?", search.ID.String())
+		stmt.Where("events.id != ?", search.NotID.String())
 	}
 	if search.OwnerID != nil {
-		stmt.Where("events.owner_id != ?", search.OwnerID.String())
+		stmt.Where("events.owner_id = ?", search.OwnerID.String())
 	}
 	if search.DateRange != nil {
 		if search.TacDuration {

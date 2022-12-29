@@ -78,7 +78,7 @@ type Event struct {
 	Date        time.Time `json:"date"`
 	Duration    int       `json:"duration"`
 	Owner       *User     `json:"owner,omitempty"`
-	Description string    `json:"dDescription"`
+	Description string    `json:"description"`
 	NotifyTerm  int       `json:"notifyTerm"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
@@ -88,6 +88,7 @@ func FromEventModel(item model.Event) Event {
 	event := Event{
 		ID:          item.ID.String(),
 		Title:       item.Title,
+		Date:        item.Date,
 		Duration:    int(item.Duration.Minutes()),
 		Description: item.Description,
 		NotifyTerm:  int(item.NotifyTerm.Hours() / 24),
