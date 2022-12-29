@@ -113,7 +113,7 @@ func (es EventService) Update(ctx context.Context, event model.Event, input mode
 		return err
 	}
 	if err = es.repo.Update(ctx, input, model.EventSearch{ID: &event.ID}); err != nil {
-		return errors.Wrap(errx.FatalNew(err), "ошибка обновления события")
+		return errx.FatalNew(err)
 	}
 	return nil
 }
@@ -141,7 +141,7 @@ func (es EventService) GetEvents(ctx context.Context, search model.EventSearch) 
 	events, err := es.repo.GetList(ctx, search)
 	if err != nil {
 		// неустранимая пользователем ошибка.
-		return nil, errors.Wrap(errx.FatalNew(err), "ошибка получения событий")
+		return nil, errx.FatalNew(err)
 	}
 	return events, nil
 }
@@ -153,7 +153,7 @@ func (es EventService) Delete(ctx context.Context, event model.Event) error {
 	}
 	if err = es.repo.Delete(ctx, model.EventSearch{ID: &event.ID}); err != nil {
 		// неустранимая пользователем ошибка.
-		return errors.Wrap(errx.FatalNew(err), "ошибка удаление события")
+		return errx.FatalNew(err)
 	}
 	return nil
 }
@@ -190,10 +190,11 @@ func (es EventService) getAuthorizedUser(ctx context.Context, checkUser *model.U
 	user, err := es.user.GetCurrent(ctx)
 	if err != nil {
 		// пользователь не авторизован.
+		nfErr := errx.NotFound{}
+		if errors.As(err, &nfErr) {
+			return nil, errx.LogicNew(model.ErrCalendarAccess, model.ErrCalendarAccessCode)
+		}
 		return nil, errx.FatalNew(err)
-	}
-	if user == nil {
-		return nil, errx.LogicNew(model.ErrCalendarAccess, model.ErrCalendarAccessCode)
 	}
 	if checkUser != nil && strings.Compare(user.ID.String(), checkUser.ID.String()) != 0 {
 		return nil, errx.LogicNew(model.ErrCalendarAccess, model.ErrCalendarAccessCode)
