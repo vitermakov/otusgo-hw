@@ -27,63 +27,62 @@ const (
 type CtxKey struct{}
 
 type Config struct {
-	host  string
-	port  int
-	debug bool
+	Host  string
+	Port  int
+	Debug bool
 }
 
-func (cfg Config) Host() string {
-	if len(cfg.host) > 0 {
-		return cfg.host
+func (cfg Config) GetHost() string {
+	if len(cfg.Host) > 0 {
+		return cfg.Host
 	}
 	return DefaultHost
 }
 
-func (cfg Config) Port() int {
-	if cfg.port > 0 {
-		return cfg.port
+func (cfg Config) GetPort() int {
+	if cfg.Port > 0 {
+		return cfg.Port
 	}
 	return DefaultPort
 }
 
-func (cfg Config) Debug() bool {
-	return cfg.debug
+func (cfg Config) IsDebug() bool {
+	return cfg.Debug
 }
 
 // Server простой Http-сервер для того, чтобы гонять Json через Http.
 type Server struct {
+	http.Server
 	Logger      logger.Logger
 	AuthService AuthService
-	config      Config
-	engine      *http.Server
 	router      *mux.Router
 }
 
 type HandlerFunc func(r *rs.Request) rs.Response
 
 func NewServer(cfg Config, authSrv AuthService, logger logger.Logger) *Server {
-	return &Server{
+	listenAddress := net.JoinHostPort(cfg.GetHost(), strconv.Itoa(cfg.GetPort()))
+	s := &Server{
 		Logger:      logger,
 		AuthService: authSrv,
 		router:      mux.NewRouter(),
-		config:      cfg,
 	}
-}
-
-func (s *Server) Start() error {
 	s.router.Use(
 		s.loggingMiddleware,
 		s.authMiddleware,
 	)
-	listenAddress := net.JoinHostPort(s.config.Host(), strconv.Itoa(s.config.Port()))
-	s.engine = &http.Server{
+	s.Server = http.Server{
 		Addr:              listenAddress,
 		Handler:           s.router,
 		ReadTimeout:       1 * time.Second,
 		WriteTimeout:      1 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
 	}
-	err := s.engine.ListenAndServe()
+	return s
+}
+
+func (s *Server) Start() error {
+	err := s.ListenAndServe()
 	if err != nil {
 		return err
 	}
@@ -91,29 +90,33 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	if err := s.engine.Shutdown(ctx); err != nil {
+	if err := s.Shutdown(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *Server) GET(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("GET")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("GET")
 }
 
 func (s *Server) POST(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("POST")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("POST")
 }
 
 func (s *Server) PUT(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("PUT")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("PUT")
 }
 
 func (s *Server) DELETE(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("DELETE")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("DELETE")
 }
 
-func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
+}
+
+func (s *Server) wrapHandler(handler HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, rq *http.Request) {
 		var response rs.Response
 		if rq.Method == "OPTIONS" {
@@ -123,13 +126,14 @@ func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(rq.Context(), 30*time.Second)
 		defer cancel()
 		rq = rq.WithContext(ctx)
-
 		request := &rs.Request{Request: rq, Params: mux.Vars(rq)}
 		doneChan := make(chan bool)
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					response = rs.FromError(errx.FatalNew(fmt.Errorf("%+v\n%+v", r, string(debug.Stack()))))
+					err := fmt.Errorf("%+v\n%+v", r, string(debug.Stack()))
+					s.Logger.Error(err.Error())
+					response = rs.FromError(errx.FatalNew(err))
 					close(doneChan)
 				}
 			}()
@@ -140,7 +144,7 @@ func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
 		case <-request.Context().Done():
 			err := errors.New("abort in timeout")
 			response = rs.FromError(errx.FatalNew(err))
-			s.Logger.Error("Abort in timeout (%ds). %s %s, ", s.engine.IdleTimeout.Milliseconds(), request.Method, request.URL)
+			s.Logger.Error("Abort in timeout (%ds). %s %s, ", 30, request.Method, request.URL)
 		case <-doneChan:
 		}
 		s.showResponse(writer, response)
@@ -188,19 +192,20 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 		authCredentials := r.Header.Get("Authorization")
 		user, err := s.AuthService.Authorize(ctx, authCredentials)
 		if err != nil {
-			panic(fmt.Sprintf("error auth-service: %v", err))
-		}
-		if user != nil {
-			r = r.WithContext(context.WithValue(ctx, CtxKey{}, map[string]string{ //nolint:go-staticcheck // fdddd
-				"id":    user.ID,
-				"name":  user.Name,
-				"login": user.Login,
-			}))
-			next.ServeHTTP(w, r)
+			response := rs.FromError(errx.FatalNew(fmt.Errorf("error auth-service: %v", err)))
+			s.showResponse(w, response)
 			return
 		}
-
-		response := rs.FromError(errx.PermsNew(fmt.Errorf("нет доступа")))
-		s.showResponse(w, response)
+		if user == nil {
+			response := rs.FromError(errx.PermsNew(fmt.Errorf("нет доступа")))
+			s.showResponse(w, response)
+			return
+		}
+		r = r.WithContext(context.WithValue(ctx, CtxKey{}, map[string]string{ //nolint:go-staticcheck // fdddd
+			"id":    user.ID,
+			"name":  user.Name,
+			"login": user.Login,
+		}))
+		next.ServeHTTP(w, r)
 	})
 }
