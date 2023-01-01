@@ -8,6 +8,13 @@ var (
 	ErrEventWrongDuration = errors.New("неверная длительность")
 )
 
+/*
+Если в результате сервисной фукции возвращается ошибка бизнес-логики errx.Logic,
+то в поле `code` будет вписан целочисленных код внутренней классификации ошибок.
+Это упростит тестирование REST.API, так как errx.Logic переходит в ответ rqres.BadRequest, и
+проверку можно осущетсвлять по коду
+*/
+
 const (
 	ErrCalendarAccessCode    = 1001
 	ErrCalendarDateRangeCode = 1002
