@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "internal/handler/grpc/pb/events";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+
+service events {
+  rpc Create(CreateEvent) returns(Event) {}
+  rpc Update(UpdateEvent) returns(google.protobuf.Empty) {}
+  rpc Delete(EventIDReq) returns(google.protobuf.Empty) {}
+  rpc GetByID(EventIDReq) returns (Event) {}
+  rpc GetListOnDate(ListOnDateReq) returns(Events) {}
+}
+
+message CreateEvent {
+  string Title = 2;
+  google.protobuf.Timestamp Date = 3;
+  google.protobuf.Duration Duration = 4;
+  string OwnerID = 5;
+  optional string Description = 6;
+  optional google.protobuf.Duration NotifyTerm = 7;
+}
+
+message UpdateEvent {
+  optional string Title = 2;
+  optional google.protobuf.Timestamp Date = 3;
+  optional google.protobuf.Duration Duration = 4;
+  optional string Description = 6;
+  optional google.protobuf.Duration NotifyTerm = 7;
+}
+
+message EventIDReq {
+  string ID  = 1;
+}
+
+message Event {
+  string ID = 1;
+  string Title = 2;
+  google.protobuf.Timestamp Date = 3;
+  google.protobuf.Duration Duration = 4;
+  string Description = 6;
+  google.protobuf.Duration NotifyTerm = 7;
+  google.protobuf.Timestamp CreatedAt = 8;
+  google.protobuf.Timestamp UpdatedAt = 9;
+}
+
+enum RangeType {
+  RANGE_TYPE_UNSPECIFIED = 0;
+  RANGE_TYPE_DAY = 1;
+  RANGE_TYPE_WEEK = 2;
+  RANGE_TYPE_MONTH = 3;
+}
+
+message ListOnDateReq {
+  google.protobuf.Timestamp Date = 1;
+  RangeType RangeType = 2;
+}
+message Events {
+  repeated Event List = 1;
+}
