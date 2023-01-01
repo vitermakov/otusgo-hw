@@ -26,6 +26,7 @@ message CreateEvent {
 }
 
 message UpdateEvent {
+  string ID  = 1;
   optional string Title = 2;
   optional google.protobuf.Timestamp Date = 3;
   optional google.protobuf.Duration Duration = 4;

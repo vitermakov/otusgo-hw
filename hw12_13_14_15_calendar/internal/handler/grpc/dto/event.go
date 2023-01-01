@@ -13,91 +13,87 @@ import (
 Тут оставим только преобразование из model.event.* и обратно
 */
 
-type EventCreate events.CreateEvent
-type EventUpdate events.UpdateEvent
-type EventIDReq events.EventIDReq
-type ListOnDateReq events.ListOnDateReq
-
-// Model возвращает связанную модель если какие-то поля заполены
+// EventCreateModel возвращает связанную модель если какие-то поля заполены
 // в неверном формате, то не возвращаем ошибку, ошибка проверяется в сервисах.
-func (ec *EventCreate) Model() model.EventCreate {
+func EventCreateModel(createEvent *events.CreateEvent) model.EventCreate {
 	// если ec == nil, возвращаем пустой model.EventCreate{}
-	if ec == nil {
+	if createEvent == nil {
 		return model.EventCreate{}
 	}
 	input := model.EventCreate{
-		Title:       ec.Title,
-		Duration:    ec.Duration.AsDuration(),
-		Date:        ec.Date.AsTime(),
-		Description: ec.Description,
+		Title:       createEvent.Title,
+		Duration:    createEvent.Duration.AsDuration(),
+		Date:        createEvent.Date.AsTime(),
+		Description: createEvent.Description,
 	}
-	if ec.Date != nil {
-		input.Date = ec.Date.AsTime()
+	if createEvent.Date != nil {
+		input.Date = createEvent.Date.AsTime()
 	}
-	if ec.Duration != nil {
-		input.Duration = ec.Duration.AsDuration()
+	if createEvent.Duration != nil {
+		input.Duration = createEvent.Duration.AsDuration()
 	}
-	if ec.Description != nil {
-		val := *ec.Description
+	if createEvent.Description != nil {
+		val := *createEvent.Description
 		input.Description = &val
 	}
-	if ec.NotifyTerm != nil {
-		val := ec.NotifyTerm.AsDuration()
+	if createEvent.NotifyTerm != nil {
+		val := createEvent.NotifyTerm.AsDuration()
 		input.NotifyTerm = &val
 	}
 	return input
 }
 
-func (eu *EventUpdate) Model() model.EventUpdate {
+func EventUpdateModel(updateEvent *events.UpdateEvent) (uuid.UUID, model.EventUpdate) {
 	// если ec == nil, возвращаем пустой model.EventCreate{}
-	if eu == nil {
-		return model.EventUpdate{}
+	if updateEvent == nil {
+		return uuid.UUID{}, model.EventUpdate{}
 	}
 	input := model.EventUpdate{}
-	if eu.Title != nil {
-		val := *eu.Title
+	if updateEvent.Title != nil {
+		val := *updateEvent.Title
 		input.Title = &val
 	}
-	if eu.Date != nil {
+	if updateEvent.Date != nil {
 		// ошибки здесь не проверяем.
-		val := eu.Date.AsTime()
+		val := updateEvent.Date.AsTime()
 		input.Date = &val
 	}
-	if eu.Duration != nil {
-		val := eu.Duration.AsDuration()
+	if updateEvent.Duration != nil {
+		val := updateEvent.Duration.AsDuration()
 		input.Duration = &val
 	}
-	if eu.Description != nil {
-		val := *eu.Description
+	if updateEvent.Description != nil {
+		val := *updateEvent.Description
 		input.Description = &val
 	}
-	if eu.NotifyTerm != nil {
-		val := eu.NotifyTerm.AsDuration()
+	if updateEvent.NotifyTerm != nil {
+		val := updateEvent.NotifyTerm.AsDuration()
 		input.NotifyTerm = &val
 	}
-	return input
+	guid, _ := uuid.Parse(updateEvent.ID)
+	return guid, input
 }
 
-func (eq *EventIDReq) Model() uuid.UUID {
-	if eq == nil {
+func EventIDReqModel(idReq *events.EventIDReq) uuid.UUID {
+	if idReq == nil {
 		return uuid.UUID{}
 	}
-	guid, _ := uuid.Parse(eq.ID)
+	guid, _ := uuid.Parse(idReq.ID)
 	return guid
 }
 
-func (lr *ListOnDateReq) Model() (time.Time, model.RangeKind) {
+func ListOnDateReqModel(req *events.ListOnDateReq) (time.Time, model.RangeKind) {
 	var (
 		date      time.Time
 		rangeType model.RangeKind
 	)
-	if lr == nil {
+	if req == nil {
 		return date, rangeType
 	}
-	if lr.Date != nil {
-		date = lr.Date.AsTime()
+	if req.Date != nil {
+		date = req.Date.AsTime()
 	}
-	rangeType = model.RangeKind(lr.RangeType.Number())
+	rangeType = model.RangeKind(req.RangeType.Number())
 
 	return date, rangeType
 }
