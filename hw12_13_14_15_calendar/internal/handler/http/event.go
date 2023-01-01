@@ -20,7 +20,6 @@ func (e *Events) GetListOnDate(request *rs.Request) rs.Response {
 	// проверка правильности date и rangeType будет в сервисе
 	rangeType, _ := model.ParseRangeType(request.Param("rangeType"))
 	date, _ := time.Parse(time.RFC3339, request.URL.Query().Get("date"))
-	fmt.Println(request.URL.Query().Get("date"))
 	events, err := e.services.Event.GetUserEventsOn(request.Context(), date, rangeType)
 	if err != nil {
 		err = fmt.Errorf("error events quering: %w", err)

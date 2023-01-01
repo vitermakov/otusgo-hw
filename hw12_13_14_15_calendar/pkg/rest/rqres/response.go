@@ -194,9 +194,9 @@ func (res InvalidResp) GetHTTPResp() interface{} {
 	}
 	if res.data != nil {
 		resp.Errors = make(map[string]string)
-		errors, ok := res.data.([]errx.ValidationError)
+		errs, ok := res.data.(errx.ValidationErrors)
 		if ok {
-			for _, message := range errors {
+			for _, message := range errs {
 				key := message.Field
 				_, ok = resp.Errors[key]
 				if !ok {

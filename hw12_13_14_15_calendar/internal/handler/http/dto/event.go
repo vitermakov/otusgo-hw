@@ -16,16 +16,13 @@ type EventCreate struct {
 }
 
 // Model возвращает связанную модель если какие-то поля заполены
-// в неверном формате, то не возвращаем ошибку, ошибка идет далее.
+// в неверном формате, то не возвращаем ошибку, ошибка проверяется в сервисах.
 func (ec EventCreate) Model() model.EventCreate {
 	input := model.EventCreate{
 		Title:    string(ec.Title),
 		Duration: time.Duration(ec.Duration) * time.Minute,
 	}
-	date, err := time.Parse(time.RFC3339, string(ec.Date))
-	if err == nil {
-		input.Date = date
-	}
+	input.Date, _ = time.Parse(time.RFC3339, string(ec.Date))
 	if ec.Description != nil {
 		val := string(*ec.Description)
 		input.Description = &val
@@ -52,10 +49,9 @@ func (eu EventUpdate) Model() model.EventUpdate {
 		input.Title = &val
 	}
 	if eu.Date != nil {
-		date, err := time.Parse(time.RFC3339, string(*eu.Date))
-		if err == nil {
-			input.Date = &date
-		}
+		// ошибки здесь не проверяем.
+		date, _ := time.Parse(time.RFC3339, string(*eu.Date))
+		input.Date = &date
 	}
 	if eu.Duration != nil {
 		val := time.Duration(*eu.Duration) * time.Minute

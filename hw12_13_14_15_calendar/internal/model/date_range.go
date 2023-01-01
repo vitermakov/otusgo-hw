@@ -84,7 +84,7 @@ func alignDate(kind RangeKind, date *time.Time) {
 		if wd < 0 {
 			wd = 6
 		}
-		*date = time.Date(y, m, d-wd, 0, 0, 0, 0, l).Add(-(time.Duration(wd) * time.Hour * 24))
+		*date = time.Date(y, m, d-wd, 0, 0, 0, 0, l)
 	case RangeTypeMonth:
 		*date = time.Date(y, m, 1, 0, 0, 0, 0, l)
 	default:
