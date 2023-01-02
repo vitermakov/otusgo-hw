@@ -5,6 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"testing"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
@@ -12,12 +18,8 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/dto"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"testing"
-	"time"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
 type EventsSuiteTest struct {
@@ -52,7 +54,7 @@ func (es *EventsSuiteTest) SetupTest() {
 	services := deps.NewServices(dependencies)
 	handlers := NewHandlers(services, logs)
 
-	restServer := rest.NewServer(rest.Config{}, services.Auth, logs)
+	restServer := rest.NewServer(servers.Config{}, services.Auth, logs)
 	handlers.InitRoutes(restServer)
 
 	es.testServer = httptest.NewServer(restServer)
@@ -145,11 +147,13 @@ func (es *EventsSuiteTest) TestCreate() {
 			expectedRespLogicCode: model.ErrEventDateBusyCode,
 		},
 	}
-	requestUrl := fmt.Sprintf("%s/events", es.testServer.URL)
+	requestURL := fmt.Sprintf("%s/events", es.testServer.URL)
 	for _, tc := range testCases {
 		es.Run(tc.name, func() {
 			var resp ErrorResponseDTO
-			req, err := http.NewRequest(http.MethodPost, requestUrl, bytes.NewBuffer(tc.jsonBody))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewBuffer(tc.jsonBody))
 			es.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
@@ -204,8 +208,10 @@ func (es *EventsSuiteTest) TestGetByID() {
 
 	for _, tc := range testCases {
 		es.Run(tc.name, func() {
-			requestUrl := fmt.Sprintf("%s/events/%s", es.testServer.URL, tc.ID)
-			req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, tc.ID)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 			es.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
@@ -259,10 +265,11 @@ func (es *EventsSuiteTest) TestUpdate() {
 			expectedRespLogicCode: http.StatusOK,
 			checkResponseBody: func(_ ErrorResponseDTO) {
 				var eventDto dto.Event
-
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+				defer cancel()
 				// убедиться что событие обновилось
-				requestUrl := fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
-				req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+				requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
+				req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 				es.Require().NoError(err)
 				req.Header.Set("Authorization", ValidUserEmail)
 
@@ -320,10 +327,12 @@ func (es *EventsSuiteTest) TestUpdate() {
 
 	for _, tc := range testCases {
 		es.Run(tc.name, func() {
-			requestUrl := fmt.Sprintf("%s/events/%s", es.testServer.URL, tc.ID)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, tc.ID)
 
 			var resp ErrorResponseDTO
-			req, err := http.NewRequest(http.MethodPut, requestUrl, bytes.NewBuffer(tc.jsonBody))
+			req, err := http.NewRequestWithContext(ctx, http.MethodPut, requestURL, bytes.NewBuffer(tc.jsonBody))
 			es.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
@@ -357,8 +366,10 @@ func (es *EventsSuiteTest) TestDelete() {
 			}`),
 	})
 	es.Run("removing exists event", func() {
-		requestUrl := fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
-		req, err := http.NewRequest(http.MethodDelete, requestUrl, nil)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
+		req, err := http.NewRequestWithContext(ctx, http.MethodDelete, requestURL, nil)
 		es.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 
@@ -371,8 +382,8 @@ func (es *EventsSuiteTest) TestDelete() {
 		es.Require().Equal(http.StatusOK, res.StatusCode)
 
 		// убедиться что события нет
-		requestUrl = fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
-		req, err = http.NewRequest(http.MethodGet, requestUrl, nil)
+		requestURL = fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
+		req, err = http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 		es.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 
@@ -386,8 +397,10 @@ func (es *EventsSuiteTest) TestDelete() {
 	})
 
 	es.Run("removing exists event", func() {
-		requestUrl := fmt.Sprintf("%s/events/%s", es.testServer.URL, uuid.New())
-		req, err := http.NewRequest(http.MethodDelete, requestUrl, nil)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, uuid.New())
+		req, err := http.NewRequestWithContext(ctx, http.MethodDelete, requestURL, nil)
 		es.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 
@@ -489,13 +502,15 @@ func (es *EventsSuiteTest) TestList() {
 	}
 	for _, tc := range testCases {
 		es.Run(tc.name, func() {
-			requestUrl := fmt.Sprintf(
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			requestURL := fmt.Sprintf(
 				"%s/events/list/%s?date=%s",
 				es.testServer.URL,
 				tc.rangeType,
 				url.QueryEscape(tc.date),
 			)
-			req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 			es.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
@@ -525,11 +540,13 @@ func TestEventsApi(t *testing.T) {
 
 func addEvents(es *EventsSuiteTest, jsonBodies [][]byte) []dto.Event {
 	es.T().Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 	var resp ErrorResponseDTO
 	result := make([]dto.Event, len(jsonBodies))
-	requestUrl := fmt.Sprintf("%s%s", es.testServer.URL, "/events")
+	requestURL := fmt.Sprintf("%s%s", es.testServer.URL, "/events")
 	for i, jsonBody := range jsonBodies {
-		req, err := http.NewRequest(http.MethodPost, requestUrl, bytes.NewBuffer(jsonBody))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewBuffer(jsonBody))
 		es.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 

@@ -2,11 +2,12 @@ package service
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
@@ -92,7 +93,7 @@ func (us UserService) getOne(ctx context.Context, search model.UserSearch) (*mod
 }
 
 func (us UserService) GetCurrent(ctx context.Context) (*model.User, error) {
-	ctxUser, ok := ctx.Value(rest.CtxKey{}).(map[string]string)
+	ctxUser, ok := ctx.Value(servers.CtxKey{}).(map[string]string)
 	if !ok {
 		return nil, model.ErrUserEmptyID
 	}

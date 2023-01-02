@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
 type Handler struct {

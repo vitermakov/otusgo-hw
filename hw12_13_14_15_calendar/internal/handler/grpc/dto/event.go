@@ -1,12 +1,13 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
 /*
@@ -115,7 +116,7 @@ func FromEventSlice(items []model.Event) *events.Events {
 	result := &events.Events{
 		List: nil,
 	}
-	if items == nil || len(items) == 0 {
+	if len(items) == 0 {
 		return result
 	}
 	result.List = make([]*events.Event, len(items))

@@ -83,7 +83,12 @@ func (er EventRepo) Delete(ctx context.Context, search model.EventSearch) error 
 // GetList не учитываем пагинацию, сортировку.
 func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
 	stmt := sqlf.From("events").
-		Select("id, title, date, EXTRACT(EPOCH FROM duration)::int, description, EXTRACT(EPOCH FROM notify_term)::int, created_at, updated_at")
+		Select(`id, title, date, 
+			EXTRACT(EPOCH FROM duration)::int, 
+			description, 
+			EXTRACT(EPOCH FROM notify_term)::int, 
+			created_at, updated_at`,
+		)
 	er.applySearch(stmt, search)
 	stmt.Select("(select row_to_json(users) from users where events.owner_id=users.id) as owner")
 	events := make([]model.Event, 0)

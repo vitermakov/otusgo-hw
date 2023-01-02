@@ -15,7 +15,8 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
 	handler "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
 type Application struct {
@@ -97,7 +98,7 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	restServer := rest.NewServer(rest.Config{
+	restServer := rest.NewServer(servers.Config{
 		Host: app.config.Servers.HTTP.Host,
 		Port: app.config.Servers.HTTP.Port,
 	}, app.services.Auth, app.logger)

@@ -15,52 +15,22 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest/rqres"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
+	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest/rqres"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
-
-const (
-	DefaultHost = "localhost"
-	DefaultPort = 8080
-)
-
-type CtxKey struct{}
-
-type Config struct {
-	Host  string
-	Port  int
-	Debug bool
-}
-
-func (cfg Config) GetHost() string {
-	if len(cfg.Host) > 0 {
-		return cfg.Host
-	}
-	return DefaultHost
-}
-
-func (cfg Config) GetPort() int {
-	if cfg.Port > 0 {
-		return cfg.Port
-	}
-	return DefaultPort
-}
-
-func (cfg Config) IsDebug() bool {
-	return cfg.Debug
-}
 
 // Server простой Http-сервер для того, чтобы гонять Json через Http.
 type Server struct {
 	http.Server
 	Logger      logger.Logger
-	AuthService AuthService
+	AuthService servers.AuthService
 	router      *mux.Router
 }
 
 type HandlerFunc func(r *rs.Request) rs.Response
 
-func NewServer(cfg Config, authSrv AuthService, logger logger.Logger) *Server {
+func NewServer(cfg servers.Config, authSrv servers.AuthService, logger logger.Logger) *Server {
 	listenAddress := net.JoinHostPort(cfg.GetHost(), strconv.Itoa(cfg.GetPort()))
 	s := &Server{
 		Logger:      logger,
@@ -82,11 +52,7 @@ func NewServer(cfg Config, authSrv AuthService, logger logger.Logger) *Server {
 }
 
 func (s *Server) Start() error {
-	err := s.ListenAndServe()
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.ListenAndServe()
 }
 
 func (s *Server) Stop(ctx context.Context) error {
@@ -192,7 +158,7 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 		authCredentials := r.Header.Get("Authorization")
 		user, err := s.AuthService.Authorize(ctx, authCredentials)
 		if err != nil {
-			response := rs.FromError(errx.FatalNew(fmt.Errorf("error auth-service: %v", err)))
+			response := rs.FromError(errx.FatalNew(fmt.Errorf("error auth-service: %w", err)))
 			s.showResponse(w, response)
 			return
 		}
@@ -201,7 +167,7 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 			s.showResponse(w, response)
 			return
 		}
-		r = r.WithContext(context.WithValue(ctx, CtxKey{}, map[string]string{ //nolint:go-staticcheck // fdddd
+		r = r.WithContext(context.WithValue(ctx, servers.CtxKey{}, map[string]string{ //nolint:go-staticcheck // fdddd
 			"id":    user.ID,
 			"name":  user.Name,
 			"login": user.Login,

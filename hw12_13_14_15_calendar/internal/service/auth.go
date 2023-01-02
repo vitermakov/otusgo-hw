@@ -3,16 +3,16 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
 type AuthService struct {
 	user User
 }
 
-func (as AuthService) Authorize(ctx context.Context, email string) (*rest.AuthUser, error) {
+func (as AuthService) Authorize(ctx context.Context, email string) (*servers.AuthUser, error) {
 	user, err := as.user.GetByEmail(ctx, email)
 	if err != nil {
 		// пользователь не найден?
@@ -22,13 +22,13 @@ func (as AuthService) Authorize(ctx context.Context, email string) (*rest.AuthUs
 		}
 		return nil, err
 	}
-	return &rest.AuthUser{
+	return &servers.AuthUser{
 		ID:    user.ID.String(),
 		Login: user.Email,
 		Name:  user.Name,
 	}, nil
 }
 
-func NewAuthService(user User) rest.AuthService {
+func NewAuthService(user User) servers.AuthService {
 	return &AuthService{user}
 }
