@@ -140,7 +140,7 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	}()
 
 	go func() {
-		grpc.InitHandlers(grpcServer, app.services, app.deps.Logger)
+		grpc.InitHandlers(grpcServer, app.services, app.deps)
 		if err := grpcServer.Start(); err != nil {
 			cancel()
 		}
