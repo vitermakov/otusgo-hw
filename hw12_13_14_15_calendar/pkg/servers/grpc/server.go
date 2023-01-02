@@ -20,7 +20,11 @@ type Server struct {
 }
 
 func NewServer(config servers.Config, authSrv servers.AuthService, logger logger.Logger) *Server {
-	return &Server{Server: grpc.NewServer(), config: config, Logger: logger, AuthService: authSrv}
+	unaryChain := grpc.ChainUnaryInterceptor(
+		NewLoggerInterceptor(logger).Unary(),
+		NewAuthInterceptor(authSrv).Unary(),
+	)
+	return &Server{Server: grpc.NewServer(unaryChain), config: config, Logger: logger, AuthService: authSrv}
 }
 
 func (s *Server) RegisterHandler(handlerFunc RegisterHandlerFunc) {

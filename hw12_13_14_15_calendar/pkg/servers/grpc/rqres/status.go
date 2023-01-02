@@ -20,7 +20,7 @@ func FromError(err error) *status.Status {
 		var sb strings.Builder
 		sb.WriteString(invErr.Error())
 		for _, ve := range invErr.Errors() {
-			sb.WriteString(fmt.Sprintf("[%s] %s", ve.Field, ve.Err.Error()))
+			sb.WriteString(fmt.Sprintf("\n\t[%s] %s", ve.Field, ve.Err.Error()))
 		}
 		return status.Newf(codes.InvalidArgument, sb.String())
 	}
