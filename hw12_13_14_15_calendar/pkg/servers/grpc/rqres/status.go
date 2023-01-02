@@ -10,6 +10,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+/*
+Преобразование err->*status.Status именно в указанном виде применяться не будет, сделано для упращения обработки.
+*/
+
 func FromError(err error) *status.Status {
 	logErr := errx.Logic{}
 	if errors.As(err, &logErr) {
@@ -20,9 +24,9 @@ func FromError(err error) *status.Status {
 		var sb strings.Builder
 		sb.WriteString(invErr.Error())
 		for _, ve := range invErr.Errors() {
-			sb.WriteString(fmt.Sprintf("\n\t[%s] %s", ve.Field, ve.Err.Error()))
+			sb.WriteString(fmt.Sprintf("; [%s] %s", ve.Field, ve.Err.Error()))
 		}
-		return status.Newf(codes.InvalidArgument, sb.String())
+		return status.New(codes.InvalidArgument, sb.String())
 	}
 	nfErr := errx.NotFound{}
 	if errors.As(err, &nfErr) {
