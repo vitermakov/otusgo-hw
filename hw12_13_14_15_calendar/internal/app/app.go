@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	stdlog "log"
 	"net/url"
 	"sync"
@@ -16,6 +17,7 @@ import (
 	handler "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
+	grpcServ "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
@@ -103,8 +105,14 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 		Port: app.config.Servers.HTTP.Port,
 	}, app.services.Auth, app.logger)
 
+	grpcServer := grpcServ.NewServer(servers.Config{
+		Host: app.config.Servers.GRPC.Host,
+		Port: app.config.Servers.GRPC.Port,
+	}, app.services.Auth, app.logger)
+
 	var wg sync.WaitGroup
 
+	// TODO: выделить отдельный механизм для завершающих процедур, убрать в close()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -112,16 +120,28 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		if err := restServer.Stop(ctx); err != nil {
-			app.logger.Error("failed to stop http server: " + err.Error())
-		}
+		_ = restServer.Stop(ctx)
 	}()
 
 	go func() {
 		handlers := handler.NewHandlers(app.services, app.deps.Logger)
 		handlers.InitRoutes(restServer)
 		if err := restServer.Start(); err != nil {
-			app.logger.Error("failed to start http server: " + err.Error())
+			cancel()
+		}
+	}()
+
+	// TODO: выделить отдельный механизм для завершающих процедур, убрать в close()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
+		grpcServer.Stop()
+	}()
+
+	go func() {
+		grpc.InitHandlers(grpcServer, app.services, app.deps.Logger)
+		if err := grpcServer.Start(); err != nil {
 			cancel()
 		}
 	}()
