@@ -3,11 +3,12 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"strings"
-	"time"
 )
 
 type LoggerInterceptor struct {

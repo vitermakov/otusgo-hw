@@ -2,6 +2,11 @@ package grpc
 
 import (
 	"context"
+	"net"
+	"strconv"
+	"testing"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
@@ -18,10 +23,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"net"
-	"strconv"
-	"testing"
-	"time"
 )
 
 const (
@@ -86,7 +87,7 @@ func (es *EventsSuiteTest) TearDownTest() {
 
 func (es *EventsSuiteTest) TestCreate() {
 	dateOk, _ := time.Parse(time.RFC3339, "2023-02-19T20:00:00.417Z")
-	descOk := "№348239"
+	descOk := "№348234"
 	termOk := time.Hour * 24 * 180
 	termWrong := time.Hour * 24 * -1
 	dateDup, _ := time.Parse(time.RFC3339, "2023-02-19T19:30:00.417Z")
@@ -134,7 +135,7 @@ func (es *EventsSuiteTest) TestCreate() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
-			event, err := es.evClient.Create(auth(es, ctx), tc.inputCreate)
+			event, err := es.evClient.Create(auth(ctx, es), tc.inputCreate)
 			e, ok := status.FromError(err)
 			es.True(ok, "error is not status")
 			es.Equal(tc.expectedCode, e.Code())
@@ -149,7 +150,7 @@ func (es *EventsSuiteTest) TestGetByID() {
 	dateOk, _ := time.Parse(time.RFC3339, "2023-02-19T20:00:00.417Z")
 	descOk := "№348239"
 	termOk := time.Hour * 24 * 180
-	items := addEvents(es, []events.CreateEvent{
+	items := addEvents(es, []*events.CreateEvent{
 		{
 			Title:       "Test event",
 			Date:        timestamppb.New(dateOk),
@@ -183,7 +184,7 @@ func (es *EventsSuiteTest) TestGetByID() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
-			event, err := es.evClient.GetByID(auth(es, ctx), &events.EventIDReq{ID: tc.ID})
+			event, err := es.evClient.GetByID(auth(ctx, es), &events.EventIDReq{ID: tc.ID})
 			e, ok := status.FromError(err)
 			es.True(ok, "error is not status")
 			es.Equal(tc.expectedCode, e.Code())
@@ -199,7 +200,7 @@ func (es *EventsSuiteTest) TestUpdate() {
 	desc1 := "№665"
 	date2, _ := time.Parse(time.RFC3339, "2023-02-19T10:00:00.417Z")
 	desc2 := "№666"
-	items := addEvents(es, []events.CreateEvent{
+	items := addEvents(es, []*events.CreateEvent{
 		{
 			Title:       "Test event",
 			Date:        timestamppb.New(date1),
@@ -256,7 +257,7 @@ func (es *EventsSuiteTest) TestUpdate() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
-			_, err := es.evClient.Update(auth(es, ctx), tc.inputUpdate)
+			_, err := es.evClient.Update(auth(ctx, es), tc.inputUpdate)
 			e, ok := status.FromError(err)
 			es.True(ok, "error is not status")
 			es.Equal(tc.expectedCode, e.Code())
@@ -268,7 +269,7 @@ func (es *EventsSuiteTest) TestDelete() {
 	dateOk, _ := time.Parse(time.RFC3339, "2023-02-19T20:00:00.417Z")
 	descOk := "№348239"
 	termOk := time.Hour * 24 * 180
-	items := addEvents(es, []events.CreateEvent{
+	items := addEvents(es, []*events.CreateEvent{
 		{
 			Title:       "Test event",
 			Date:        timestamppb.New(dateOk),
@@ -281,13 +282,13 @@ func (es *EventsSuiteTest) TestDelete() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		_, err := es.evClient.Delete(auth(es, ctx), &events.EventIDReq{ID: items[0].ID})
+		_, err := es.evClient.Delete(auth(ctx, es), &events.EventIDReq{ID: items[0].ID})
 		e, ok := status.FromError(err)
 		es.True(ok, "error is not status")
 		es.Equal(codes.OK, e.Code())
 
 		// убедиться что события нет
-		_, err = es.evClient.GetByID(auth(es, ctx), &events.EventIDReq{ID: items[0].ID})
+		_, err = es.evClient.GetByID(auth(ctx, es), &events.EventIDReq{ID: items[0].ID})
 		e, ok = status.FromError(err)
 		es.True(ok, "error is not status")
 		es.Equal(codes.NotFound, e.Code())
@@ -297,7 +298,7 @@ func (es *EventsSuiteTest) TestDelete() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		_, err := es.evClient.Delete(auth(es, ctx), &events.EventIDReq{ID: uuid.New().String()})
+		_, err := es.evClient.Delete(auth(ctx, es), &events.EventIDReq{ID: uuid.New().String()})
 		e, ok := status.FromError(err)
 		es.True(ok, "error is not status")
 		es.Equal(codes.NotFound, e.Code())
@@ -311,7 +312,7 @@ func (es *EventsSuiteTest) TestList() {
 	date4, _ := time.Parse(time.RFC3339, "2023-03-10T10:00:00.417Z")
 	date5, _ := time.Parse(time.RFC3339, "2023-03-22T20:00:00.417Z")
 
-	items := addEvents(es, []events.CreateEvent{
+	items := addEvents(es, []*events.CreateEvent{
 		{
 			Title:    "Test event 1",
 			Date:     timestamppb.New(date1),
@@ -401,7 +402,7 @@ func (es *EventsSuiteTest) TestList() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
-			items, err := es.evClient.GetListOnDate(auth(es, ctx), &events.ListOnDateReq{
+			items, err := es.evClient.GetListOnDate(auth(ctx, es), &events.ListOnDateReq{
 				Date:      tc.date,
 				RangeType: tc.rangeType,
 			})
@@ -424,7 +425,7 @@ func TestEventsApi(t *testing.T) {
 	suite.Run(t, new(EventsSuiteTest))
 }
 
-func addEvents(es *EventsSuiteTest, items []events.CreateEvent) []*events.Event {
+func addEvents(es *EventsSuiteTest, items []*events.CreateEvent) []*events.Event {
 	es.T().Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -436,7 +437,7 @@ func addEvents(es *EventsSuiteTest, items []events.CreateEvent) []*events.Event 
 
 	ctx = metadata.NewOutgoingContext(ctx, meta)
 	for i, inputCreate := range items {
-		event, err := es.evClient.Create(ctx, &inputCreate)
+		event, err := es.evClient.Create(ctx, inputCreate)
 		e, ok := status.FromError(err)
 		es.True(ok, "error is not status")
 		es.Equal(codes.OK, e.Code())
@@ -447,7 +448,8 @@ func addEvents(es *EventsSuiteTest, items []events.CreateEvent) []*events.Event 
 
 	return result
 }
-func auth(es *EventsSuiteTest, ctx context.Context) context.Context {
+
+func auth(ctx context.Context, es *EventsSuiteTest) context.Context {
 	es.T().Helper()
 	meta := metadata.New(nil)
 	meta.Append("authorization", ValidUserEmail)
