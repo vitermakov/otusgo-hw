@@ -67,7 +67,7 @@ func (es *EventsSuiteTest) SetupTest() {
 	es.Require().NoError(err)
 }
 
-func (es *EventsSuiteTest) TeardownTest() {
+func (es *EventsSuiteTest) TearDownTest() {
 	es.testServer.Close()
 }
 
