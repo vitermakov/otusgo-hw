@@ -24,10 +24,10 @@ type Event struct {
 type EventCreate struct {
 	Title       string
 	Date        time.Time
-	Duration    time.Duration // в минутах.
+	Duration    time.Duration
 	OwnerID     uuid.UUID
 	Description *string        // опционально.
-	NotifyTerm  *time.Duration // в днях, опционально.
+	NotifyTerm  *time.Duration // опционально.
 }
 
 // Validate базовая валидация структуры.

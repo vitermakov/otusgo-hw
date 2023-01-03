@@ -100,15 +100,17 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	restServer := rest.NewServer(servers.Config{
-		Host: app.config.Servers.HTTP.Host,
-		Port: app.config.Servers.HTTP.Port,
-	}, app.services.Auth, app.logger)
+	restServer := rest.NewServer(servers.NewConfig(
+		app.config.Servers.HTTP.Host,
+		app.config.Servers.HTTP.Port,
+		false,
+	), app.services.Auth, app.logger)
 
-	grpcServer := grpcServ.NewServer(servers.Config{
-		Host: app.config.Servers.GRPC.Host,
-		Port: app.config.Servers.GRPC.Port,
-	}, app.services.Auth, app.logger)
+	grpcServer := grpcServ.NewServer(servers.NewConfig(
+		app.config.Servers.GRPC.Host,
+		app.config.Servers.GRPC.Port,
+		false,
+	), app.services.Auth, app.logger)
 
 	var wg sync.WaitGroup
 

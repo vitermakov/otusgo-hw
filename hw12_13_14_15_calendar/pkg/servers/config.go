@@ -1,32 +1,40 @@
 package servers
 
 const (
-	DefaultHost = "localhost"
-	DefaultPort = 8080
+	defaultHost = "localhost"
+	defaultPort = 8080
 )
 
 type CtxKey struct{}
 
 type Config struct {
-	Host  string
-	Port  int
-	Debug bool
+	host  string
+	port  int
+	debug bool
 }
 
 func (cfg Config) GetHost() string {
-	if len(cfg.Host) > 0 {
-		return cfg.Host
+	if len(cfg.host) > 0 {
+		return cfg.host
 	}
-	return DefaultHost
+	return defaultHost
 }
 
 func (cfg Config) GetPort() int {
-	if cfg.Port > 0 {
-		return cfg.Port
+	if cfg.port > 0 {
+		return cfg.port
 	}
-	return DefaultPort
+	return defaultPort
 }
 
 func (cfg Config) IsDebug() bool {
-	return cfg.Debug
+	return cfg.debug
+}
+
+func NewConfig(host string, port int, debug bool) Config {
+	return Config{
+		host:  host,
+		port:  port,
+		debug: debug,
+	}
 }

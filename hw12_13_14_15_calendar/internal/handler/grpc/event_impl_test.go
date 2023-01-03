@@ -37,10 +37,11 @@ type EventsSuiteTest struct {
 }
 
 func (es *EventsSuiteTest) SetupTest() {
-	cfg := servers.Config{
-		Host: "127.0.0.1",
-		Port: 50051,
-	}
+	cfg := servers.NewConfig(
+		"127.0.0.1",
+		50051,
+		false,
+	)
 	// логгер будет писать в stdout и stderr, а мы будем это перехватывать.
 	logs, err := logger.NewLogrus(logger.Config{
 		Level: logger.LevelInfo,
