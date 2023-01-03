@@ -44,11 +44,11 @@ func (es *EventsSuiteTest) SetupTest() {
 	logs, err := logger.NewLogrus(logger.Config{
 		Level: logger.LevelInfo,
 	})
-	es.Require().NoError(err)
+	es.Suite.Require().NoError(err)
 
 	// слой репозиториев мы не будем мокать, а будем использовать реализацию memory.
 	repos, err := deps.NewRepos(config.Storage{Type: "memory"}, &deps.Resources{})
-	es.Require().NoError(err)
+	es.Suite.Require().NoError(err)
 
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
 	services := deps.NewServices(dependencies)
@@ -64,7 +64,7 @@ func (es *EventsSuiteTest) SetupTest() {
 		Name:  ValidUserEmail,
 		Email: ValidUserEmail,
 	})
-	es.Require().NoError(err)
+	es.Suite.Require().NoError(err)
 }
 
 func (es *EventsSuiteTest) TearDownTest() {
@@ -95,12 +95,12 @@ func (es *EventsSuiteTest) TestCreate() {
 			checkResponseBody: func(resp ErrorResponseDTO) {
 				var eventDto dto.Event
 				err := json.Unmarshal(resp.Data, &eventDto)
-				es.Require().NoError(err)
+				es.Suite.Require().NoError(err)
 
 				_, err = uuid.Parse(eventDto.ID)
-				es.Require().NoError(err)
-				es.Require().Equal(45, eventDto.Duration)
-				es.Require().Equal(180, eventDto.NotifyTerm)
+				es.Suite.Require().NoError(err)
+				es.Suite.Require().Equal(45, eventDto.Duration)
+				es.Suite.Require().Equal(180, eventDto.NotifyTerm)
 			},
 		}, {
 			name: "crushed json",
@@ -119,7 +119,7 @@ func (es *EventsSuiteTest) TestCreate() {
 			expectedRespStatus:    "error",
 			expectedRespLogicCode: http.StatusUnprocessableEntity,
 			checkResponseBody: func(resp ErrorResponseDTO) {
-				es.Require().Len(resp.Errors, 3)
+				es.Suite.Require().Len(resp.Errors, 3)
 			},
 		}, {
 			name: "event wrong data",
@@ -133,7 +133,7 @@ func (es *EventsSuiteTest) TestCreate() {
 			expectedRespStatus:    "error",
 			expectedRespLogicCode: http.StatusUnprocessableEntity,
 			checkResponseBody: func(resp ErrorResponseDTO) {
-				es.Require().Len(resp.Errors, 3)
+				es.Suite.Require().Len(resp.Errors, 3)
 			},
 		}, {
 			name: "duplicate entry",
@@ -149,25 +149,25 @@ func (es *EventsSuiteTest) TestCreate() {
 	}
 	requestURL := fmt.Sprintf("%s/events", es.testServer.URL)
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			var resp ErrorResponseDTO
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 			req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewBuffer(tc.jsonBody))
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
 			res, err := http.DefaultClient.Do(req)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			defer func() {
 				_ = res.Body.Close()
 			}()
 			err = json.NewDecoder(res.Body).Decode(&resp)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 
-			es.Require().Equal(tc.expectedCode, res.StatusCode)
-			es.Require().Equal(tc.expectedRespStatus, resp.Status)
-			es.Require().Equal(tc.expectedRespLogicCode, resp.Code)
+			es.Suite.Require().Equal(tc.expectedCode, res.StatusCode)
+			es.Suite.Require().Equal(tc.expectedRespStatus, resp.Status)
+			es.Suite.Require().Equal(tc.expectedRespLogicCode, resp.Code)
 
 			if tc.checkResponseBody != nil {
 				tc.checkResponseBody(resp)
@@ -207,21 +207,21 @@ func (es *EventsSuiteTest) TestGetByID() {
 	}
 
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 			requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, tc.ID)
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
 			res, err := http.DefaultClient.Do(req)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			defer func() {
 				_ = res.Body.Close()
 			}()
 
-			es.Require().Equal(tc.expectedCode, res.StatusCode)
+			es.Suite.Require().Equal(tc.expectedCode, res.StatusCode)
 		})
 	}
 }
@@ -270,25 +270,25 @@ func (es *EventsSuiteTest) TestUpdate() {
 				// убедиться что событие обновилось
 				requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
 				req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
-				es.Require().NoError(err)
+				es.Suite.Require().NoError(err)
 				req.Header.Set("Authorization", ValidUserEmail)
 
 				res, err := http.DefaultClient.Do(req)
-				es.Require().NoError(err)
+				es.Suite.Require().NoError(err)
 				defer func() {
 					_ = res.Body.Close()
 				}()
-				es.Require().Equal(http.StatusOK, res.StatusCode)
+				es.Suite.Require().Equal(http.StatusOK, res.StatusCode)
 				err = json.NewDecoder(res.Body).Decode(&eventDto)
-				es.Require().NoError(err)
+				es.Suite.Require().NoError(err)
 
-				es.Require().Equal(events[0].ID, eventDto.ID)
-				es.Require().Equal("Test event 1 updated", eventDto.Title)
+				es.Suite.Require().Equal(events[0].ID, eventDto.ID)
+				es.Suite.Require().Equal("Test event 1 updated", eventDto.Title)
 				d, _ := time.Parse(time.RFC3339, "2023-02-19T19:00:00.417Z")
-				es.Require().Equal(d, eventDto.Date)
-				es.Require().Equal(60, eventDto.Duration)
-				es.Require().Equal("Test description", eventDto.Description)
-				es.Require().Equal(240, eventDto.NotifyTerm)
+				es.Suite.Require().Equal(d, eventDto.Date)
+				es.Suite.Require().Equal(60, eventDto.Duration)
+				es.Suite.Require().Equal("Test description", eventDto.Description)
+				es.Suite.Require().Equal(240, eventDto.NotifyTerm)
 			},
 		}, {
 			name: "event move to occupied date",
@@ -320,33 +320,33 @@ func (es *EventsSuiteTest) TestUpdate() {
 			expectedRespStatus:    "error",
 			expectedRespLogicCode: http.StatusUnprocessableEntity,
 			checkResponseBody: func(resp ErrorResponseDTO) {
-				es.Require().Len(resp.Errors, 4)
+				es.Suite.Require().Len(resp.Errors, 4)
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 			requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, tc.ID)
 
 			var resp ErrorResponseDTO
 			req, err := http.NewRequestWithContext(ctx, http.MethodPut, requestURL, bytes.NewBuffer(tc.jsonBody))
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
 			res, err := http.DefaultClient.Do(req)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			defer func() {
 				_ = res.Body.Close()
 			}()
 			err = json.NewDecoder(res.Body).Decode(&resp)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 
-			es.Require().Equal(tc.expectedCode, res.StatusCode)
-			es.Require().Equal(tc.expectedRespStatus, resp.Status)
-			es.Require().Equal(tc.expectedRespLogicCode, resp.Code)
+			es.Suite.Require().Equal(tc.expectedCode, res.StatusCode)
+			es.Suite.Require().Equal(tc.expectedRespStatus, resp.Status)
+			es.Suite.Require().Equal(tc.expectedRespLogicCode, resp.Code)
 
 			if tc.checkResponseBody != nil {
 				tc.checkResponseBody(resp)
@@ -365,52 +365,52 @@ func (es *EventsSuiteTest) TestDelete() {
 				"notifyTerm": "180"
 			}`),
 	})
-	es.Run("removing exists event", func() {
+	es.Suite.Run("removing exists event", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
 		req, err := http.NewRequestWithContext(ctx, http.MethodDelete, requestURL, nil)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 
 		res, err := http.DefaultClient.Do(req)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		defer func() {
 			_ = res.Body.Close()
 		}()
 
-		es.Require().Equal(http.StatusOK, res.StatusCode)
+		es.Suite.Require().Equal(http.StatusOK, res.StatusCode)
 
 		// убедиться что события нет
 		requestURL = fmt.Sprintf("%s/events/%s", es.testServer.URL, events[0].ID)
 		req, err = http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 
 		res, err = http.DefaultClient.Do(req)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		defer func() {
 			_ = res.Body.Close()
 		}()
 
-		es.Require().Equal(http.StatusNotFound, res.StatusCode)
+		es.Suite.Require().Equal(http.StatusNotFound, res.StatusCode)
 	})
 
-	es.Run("removing exists event", func() {
+	es.Suite.Run("removing exists event", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		requestURL := fmt.Sprintf("%s/events/%s", es.testServer.URL, uuid.New())
 		req, err := http.NewRequestWithContext(ctx, http.MethodDelete, requestURL, nil)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 
 		res, err := http.DefaultClient.Do(req)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		defer func() {
 			_ = res.Body.Close()
 		}()
 
-		es.Require().Equal(http.StatusNotFound, res.StatusCode)
+		es.Suite.Require().Equal(http.StatusNotFound, res.StatusCode)
 	})
 }
 
@@ -501,7 +501,7 @@ func (es *EventsSuiteTest) TestList() {
 		},
 	}
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 			requestURL := fmt.Sprintf(
@@ -511,24 +511,24 @@ func (es *EventsSuiteTest) TestList() {
 				url.QueryEscape(tc.date),
 			)
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			req.Header.Set("Authorization", ValidUserEmail)
 
 			res, err := http.DefaultClient.Do(req)
-			es.Require().NoError(err)
+			es.Suite.Require().NoError(err)
 			defer func() {
 				_ = res.Body.Close()
 			}()
-			es.Require().Equal(tc.expectedCode, res.StatusCode)
+			es.Suite.Require().Equal(tc.expectedCode, res.StatusCode)
 			if tc.expectedCode == http.StatusOK {
 				var resp []dto.Event
 				actualIDs := make([]string, 0)
 				err = json.NewDecoder(res.Body).Decode(&resp)
-				es.Require().NoError(err)
+				es.Suite.Require().NoError(err)
 				for _, event := range resp {
 					actualIDs = append(actualIDs, event.ID)
 				}
-				es.Require().Equal(tc.expectedIDs, actualIDs)
+				es.Suite.Require().Equal(tc.expectedIDs, actualIDs)
 			}
 		})
 	}
@@ -539,7 +539,7 @@ func TestEventsApi(t *testing.T) {
 }
 
 func addEvents(es *EventsSuiteTest, jsonBodies [][]byte) []dto.Event {
-	es.T().Helper()
+	es.Suite.T().Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	var resp ErrorResponseDTO
@@ -547,19 +547,19 @@ func addEvents(es *EventsSuiteTest, jsonBodies [][]byte) []dto.Event {
 	requestURL := fmt.Sprintf("%s%s", es.testServer.URL, "/events")
 	for i, jsonBody := range jsonBodies {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewBuffer(jsonBody))
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		req.Header.Set("Authorization", ValidUserEmail)
 
 		res, err := http.DefaultClient.Do(req)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 		err = json.NewDecoder(res.Body).Decode(&resp)
 		_ = res.Body.Close()
-		es.Require().NoError(err)
-		es.Require().Equal(http.StatusOK, res.StatusCode)
+		es.Suite.Require().NoError(err)
+		es.Suite.Require().Equal(http.StatusOK, res.StatusCode)
 
 		var eventDto dto.Event
 		err = json.Unmarshal(resp.Data, &eventDto)
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 
 		result[i] = eventDto
 	}

@@ -41,7 +41,7 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
-	err = s.Serve(socket)
+	err = s.Server.Serve(socket)
 	if err == nil || errors.Is(err, grpc.ErrServerStopped) {
 		return nil
 	}

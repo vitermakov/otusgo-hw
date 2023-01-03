@@ -45,11 +45,11 @@ func (es *EventsSuiteTest) SetupTest() {
 	logs, err := logger.NewLogrus(logger.Config{
 		Level: logger.LevelInfo,
 	})
-	es.Require().NoError(err)
+	es.Suite.Require().NoError(err)
 
 	// слой репозиториев мы не будем мокать, а будем использовать реализацию memory.
 	repos, err := deps.NewRepos(config.Storage{Type: "memory"}, &deps.Resources{})
-	es.Require().NoError(err)
+	es.Suite.Require().NoError(err)
 
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
 	services := deps.NewServices(dependencies)
@@ -58,7 +58,7 @@ func (es *EventsSuiteTest) SetupTest() {
 
 	go func() {
 		err := es.grpcServer.Start()
-		es.Require().NoError(err)
+		es.Suite.Require().NoError(err)
 	}()
 	// сервер запускается не сразу
 	for i := 0; i < 10; i++ {
@@ -70,14 +70,14 @@ func (es *EventsSuiteTest) SetupTest() {
 			break
 		}
 	}
-	es.Require().NoError(err)
+	es.Suite.Require().NoError(err)
 	es.evClient = events.NewEventsClient(es.conn)
 	// для того, чтобы пользователь авторизовался
 	_, err = services.User.Add(context.Background(), model.UserCreate{
 		Name:  ValidUserEmail,
 		Email: ValidUserEmail,
 	})
-	es.Require().NoError(err)
+	es.Suite.Require().NoError(err)
 }
 
 func (es *EventsSuiteTest) TearDownTest() {
@@ -131,16 +131,16 @@ func (es *EventsSuiteTest) TestCreate() {
 		},
 	}
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
 			event, err := es.evClient.Create(auth(ctx, es), tc.inputCreate)
 			e, ok := status.FromError(err)
-			es.True(ok, "error is not status")
-			es.Equal(tc.expectedCode, e.Code())
+			es.Suite.True(ok, "error is not status")
+			es.Suite.Equal(tc.expectedCode, e.Code())
 			if e.Code() == codes.OK {
-				es.NotEmpty(event)
+				es.Suite.NotEmpty(event)
 			}
 		})
 	}
@@ -180,16 +180,16 @@ func (es *EventsSuiteTest) TestGetByID() {
 	}
 
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
 			event, err := es.evClient.GetByID(auth(ctx, es), &events.EventIDReq{ID: tc.ID})
 			e, ok := status.FromError(err)
-			es.True(ok, "error is not status")
-			es.Equal(tc.expectedCode, e.Code())
+			es.Suite.True(ok, "error is not status")
+			es.Suite.Equal(tc.expectedCode, e.Code())
 			if e.Code() == codes.OK {
-				es.Equal(tc.ID, event.ID)
+				es.Suite.Equal(tc.ID, event.ID)
 			}
 		})
 	}
@@ -253,14 +253,14 @@ func (es *EventsSuiteTest) TestUpdate() {
 	}
 
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
 			_, err := es.evClient.Update(auth(ctx, es), tc.inputUpdate)
 			e, ok := status.FromError(err)
-			es.True(ok, "error is not status")
-			es.Equal(tc.expectedCode, e.Code())
+			es.Suite.True(ok, "error is not status")
+			es.Suite.Equal(tc.expectedCode, e.Code())
 		})
 	}
 }
@@ -278,30 +278,30 @@ func (es *EventsSuiteTest) TestDelete() {
 			NotifyTerm:  durationpb.New(termOk),
 		},
 	})
-	es.Run("removing exists event", func() {
+	es.Suite.Run("removing exists event", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
 		_, err := es.evClient.Delete(auth(ctx, es), &events.EventIDReq{ID: items[0].ID})
 		e, ok := status.FromError(err)
-		es.True(ok, "error is not status")
-		es.Equal(codes.OK, e.Code())
+		es.Suite.True(ok, "error is not status")
+		es.Suite.Equal(codes.OK, e.Code())
 
 		// убедиться что события нет
 		_, err = es.evClient.GetByID(auth(ctx, es), &events.EventIDReq{ID: items[0].ID})
 		e, ok = status.FromError(err)
-		es.True(ok, "error is not status")
-		es.Equal(codes.NotFound, e.Code())
+		es.Suite.True(ok, "error is not status")
+		es.Suite.Equal(codes.NotFound, e.Code())
 	})
 
-	es.Run("removing exists event", func() {
+	es.Suite.Run("removing exists event", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
 		_, err := es.evClient.Delete(auth(ctx, es), &events.EventIDReq{ID: uuid.New().String()})
 		e, ok := status.FromError(err)
-		es.True(ok, "error is not status")
-		es.Equal(codes.NotFound, e.Code())
+		es.Suite.True(ok, "error is not status")
+		es.Suite.Equal(codes.NotFound, e.Code())
 	})
 }
 
@@ -398,7 +398,7 @@ func (es *EventsSuiteTest) TestList() {
 		},
 	}
 	for _, tc := range testCases {
-		es.Run(tc.name, func() {
+		es.Suite.Run(tc.name, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
@@ -407,15 +407,15 @@ func (es *EventsSuiteTest) TestList() {
 				RangeType: tc.rangeType,
 			})
 			e, ok := status.FromError(err)
-			es.True(ok, "error is not status")
-			es.Equal(tc.expectedCode, e.Code())
+			es.Suite.True(ok, "error is not status")
+			es.Suite.Equal(tc.expectedCode, e.Code())
 
 			if tc.expectedCode == codes.OK {
 				actualIDs := make([]string, 0)
 				for _, event := range items.List {
 					actualIDs = append(actualIDs, event.ID)
 				}
-				es.Require().Equal(tc.expectedIDs, actualIDs)
+				es.Suite.Require().Equal(tc.expectedIDs, actualIDs)
 			}
 		})
 	}
@@ -426,7 +426,7 @@ func TestEventsApi(t *testing.T) {
 }
 
 func addEvents(es *EventsSuiteTest, items []*events.CreateEvent) []*events.Event {
-	es.T().Helper()
+	es.Suite.T().Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -439,9 +439,9 @@ func addEvents(es *EventsSuiteTest, items []*events.CreateEvent) []*events.Event
 	for i, inputCreate := range items {
 		event, err := es.evClient.Create(ctx, inputCreate)
 		e, ok := status.FromError(err)
-		es.True(ok, "error is not status")
-		es.Equal(codes.OK, e.Code())
-		es.NotEmpty(event)
+		es.Suite.True(ok, "error is not status")
+		es.Suite.Equal(codes.OK, e.Code())
+		es.Suite.NotEmpty(event)
 
 		result[i] = event
 	}
@@ -450,7 +450,7 @@ func addEvents(es *EventsSuiteTest, items []*events.CreateEvent) []*events.Event
 }
 
 func auth(ctx context.Context, es *EventsSuiteTest) context.Context {
-	es.T().Helper()
+	es.Suite.T().Helper()
 	meta := metadata.New(nil)
 	meta.Append("authorization", ValidUserEmail)
 	return metadata.NewOutgoingContext(ctx, meta)
