@@ -160,18 +160,18 @@ func (es EventService) Delete(ctx context.Context, event model.Event) error {
 
 func (es EventService) GetByID(ctx context.Context, eventID uuid.UUID) (*model.Event, error) {
 	event, err := es.getOne(ctx, model.EventSearch{ID: &eventID})
-	if err != nil {
-		// если ошибка - NotFound, добавим параметр eventId.
-		nfErr := errx.NotFound{}
-		if errors.As(err, &nfErr) {
-			nfErr.Params = map[string]uuid.UUID{
-				"eventId": eventID,
-			}
-			return nil, nfErr
-		}
-		return nil, err
+	if err == nil {
+		return event, nil
 	}
-	return event, nil
+	// если ошибка - NotFound, добавим параметр eventId.
+	nfErr := errx.NotFound{}
+	if errors.As(err, &nfErr) {
+		nfErr.Params = map[string]uuid.UUID{
+			"eventId": eventID,
+		}
+		return nil, nfErr
+	}
+	return nil, err
 }
 
 func (es EventService) getOne(ctx context.Context, search model.EventSearch) (*model.Event, error) {

@@ -271,5 +271,5 @@ func FromError(err error) Response {
 			return Internal(base.Error())
 		}
 	}
-	return BadRequest(err.Error(), 400)
+	return BadRequest(err.Error(), http.StatusBadRequest)
 }

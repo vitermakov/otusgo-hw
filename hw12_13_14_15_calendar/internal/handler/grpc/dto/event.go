@@ -45,7 +45,7 @@ func EventCreateModel(createEvent *events.CreateEvent) model.EventCreate {
 }
 
 func EventUpdateModel(updateEvent *events.UpdateEvent) (uuid.UUID, model.EventUpdate) {
-	// если ec == nil, возвращаем пустой model.EventCreate{}
+	// если ec == nil, возвращаем пустой model.EventUpdate{}
 	if updateEvent == nil {
 		return uuid.UUID{}, model.EventUpdate{}
 	}

@@ -2,35 +2,32 @@ package dto
 
 import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/jsontype"
 )
 
 type UserCreate struct {
-	Name  jsontype.String `json:"name"`
-	Email jsontype.String `json:"email"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 func (uc UserCreate) Model() model.UserCreate {
 	return model.UserCreate{
-		Name:  string(uc.Name),
-		Email: string(uc.Email),
+		Name:  uc.Name,
+		Email: uc.Email,
 	}
 }
 
 type UserUpdate struct {
-	Name  *jsontype.String `json:"name"`
-	Email *jsontype.String `json:"email"`
+	Name  *string `json:"name"`
+	Email *string `json:"email"`
 }
 
 func (uu UserUpdate) Model() model.UserUpdate {
 	input := model.UserUpdate{}
 	if uu.Name != nil {
-		val := string(*uu.Name)
-		input.Name = &val
+		input.Name = uu.Name
 	}
 	if uu.Email != nil {
-		val := string(*uu.Email)
-		input.Email = &val
+		input.Email = uu.Email
 	}
 	return input
 }

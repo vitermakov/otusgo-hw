@@ -122,7 +122,7 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		_ = restServer.Stop(ctx)
+		restServer.Stop(ctx)
 	}()
 
 	go func() {

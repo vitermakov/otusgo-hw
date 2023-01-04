@@ -1,6 +1,7 @@
 package errx
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -10,7 +11,7 @@ type ValidationError struct {
 }
 
 func (ve ValidationError) Error() string {
-	return ve.Err.Error()
+	return fmt.Sprintf("{%s} - %s", ve.Field, ve.Err.Error())
 }
 
 type ValidationErrors []ValidationError
@@ -20,9 +21,11 @@ func (vs ValidationErrors) Error() string {
 		return ""
 	}
 	err := strings.Builder{}
-	for _, i := range vs {
-		str := i.Error()
-		err.WriteString(str + "\n")
+	for i, ve := range vs {
+		err.WriteString(ve.Error())
+		if i > 0 {
+			err.WriteString("; ")
+		}
 	}
 	return err.String()
 }

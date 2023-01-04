@@ -17,9 +17,16 @@ type Events struct {
 }
 
 func (e *Events) GetListOnDate(request *rs.Request) rs.Response {
+	const actionName = "получение списка событий"
 	// проверка правильности date и rangeType будет в сервисе
-	rangeType, _ := model.ParseRangeType(request.Param("rangeType"))
-	date, _ := time.Parse(time.RFC3339, request.URL.Query().Get("date"))
+	rangeType, err := model.ParseRangeType(request.Param("rangeType"))
+	if err != nil {
+		e.handleError(actionName, fmt.Errorf("неверный rangeType %w", err))
+	}
+	date, err := time.Parse(time.RFC3339, request.URL.Query().Get("date"))
+	if err != nil {
+		e.handleError(actionName, fmt.Errorf("неверная дата %w", err))
+	}
 	events, err := e.services.Event.GetUserEventsOn(request.Context(), date, rangeType)
 	if err != nil {
 		err = fmt.Errorf("error events quering: %w", err)
@@ -30,17 +37,21 @@ func (e *Events) GetListOnDate(request *rs.Request) rs.Response {
 }
 
 func (e *Events) GetByID(request *rs.Request) rs.Response {
+	const actionName = "получение события по ID"
 	ctx := request.Context()
-	eventID, _ := uuid.Parse(request.Param("eventID"))
+	eventID, err := uuid.Parse(request.Param("eventID"))
+	if err != nil {
+		return e.handleError(actionName, fmt.Errorf("неверный eventID: %w", err))
+	}
 	event, err := e.services.Event.GetByID(ctx, eventID)
 	if err != nil {
-		e.logger.Error(err.Error())
-		return rs.FromError(err)
+		return e.handleError(actionName, err)
 	}
 	return rs.Data(dto.FromEventModel(*event))
 }
 
 func (e *Events) Create(request *rs.Request) rs.Response {
+	const actionName = "добавление события"
 	var input dto.EventCreate
 	if request.ContentLength > 0 {
 		defer func() {
@@ -49,12 +60,15 @@ func (e *Events) Create(request *rs.Request) rs.Response {
 			}
 		}()
 		if err := json.NewDecoder(request.Body).Decode(&input); err != nil {
-			logErr := fmt.Errorf("добавление события - неверные входные данные: %w", err)
-			e.logger.Error(logErr.Error())
-			return rs.FromError(errx.LogicNew(logErr, 1000))
+			return e.handleError(actionName, fmt.Errorf("ошибка парсинга входных данных: %w", err))
 		}
 	}
-	event, err := e.services.Event.Add(request.Context(), input.Model())
+	inputCreate, vErrs := input.Model()
+	if vErrs != nil {
+		err := errx.InvalidNew("неверные данные", vErrs)
+		return e.handleError(actionName, err)
+	}
+	event, err := e.services.Event.Add(request.Context(), inputCreate)
 	if err != nil {
 		err := fmt.Errorf("ошибка добавления события: %w", err)
 		e.logger.Error(err.Error())
@@ -65,10 +79,13 @@ func (e *Events) Create(request *rs.Request) rs.Response {
 }
 
 func (e *Events) Update(request *rs.Request) rs.Response {
+	const actionName = "изменение события"
 	var input dto.EventUpdate
-	eventID, _ := uuid.Parse(request.Param("eventID"))
+	eventID, err := uuid.Parse(request.Param("eventID"))
+	if err != nil {
+		return e.handleError(actionName, fmt.Errorf("неверный eventID: %w", err))
+	}
 	ctx := request.Context()
-
 	if request.ContentLength > 0 {
 		defer func() {
 			if err := request.Body.Close(); err != nil {
@@ -76,39 +93,40 @@ func (e *Events) Update(request *rs.Request) rs.Response {
 			}
 		}()
 		if err := json.NewDecoder(request.Body).Decode(&input); err != nil {
-			logErr := fmt.Errorf("изменение события - неверные входные данные: %w", err)
-			e.logger.Error(logErr.Error())
-			return rs.FromError(errx.LogicNew(logErr, 1000))
+			return e.handleError(actionName, fmt.Errorf("ошибка парсинга входных данных: %w", err))
 		}
+	}
+	inputUpdate, vErrs := input.Model()
+	if vErrs != nil {
+		err = errx.InvalidNew("неверные данные", vErrs)
+		return e.handleError(actionName, err)
 	}
 	event, err := e.services.Event.GetByID(ctx, eventID)
 	if err != nil {
-		e.logger.Error(err.Error())
-		return rs.FromError(err)
+		return e.handleError(actionName, err)
 	}
-	err = e.services.Event.Update(request.Context(), *event, input.Model())
+	err = e.services.Event.Update(request.Context(), *event, inputUpdate)
 	if err != nil {
-		err := fmt.Errorf("ошибка изменения события: %w", err)
-		e.logger.Error(err.Error())
-		return rs.FromError(err)
+		return e.handleError(actionName, err)
 	}
 	e.logger.Info("событие изменено: eventID=%s", event.ID.String())
 	return rs.OK("событие изменено", nil)
 }
 
 func (e *Events) Delete(request *rs.Request) rs.Response {
-	eventID, _ := uuid.Parse(request.Param("eventID"))
+	const actionName = "удаление события"
+	eventID, err := uuid.Parse(request.Param("eventID"))
+	if err != nil {
+		return e.handleError(actionName, fmt.Errorf("неверный eventID: %w", err))
+	}
 	ctx := request.Context()
 	event, err := e.services.Event.GetByID(ctx, eventID)
 	if err != nil {
-		e.logger.Error(err.Error())
-		return rs.FromError(err)
+		return e.handleError(actionName, err)
 	}
 	err = e.services.Event.Delete(request.Context(), *event)
 	if err != nil {
-		err := fmt.Errorf("ошибка удаления события: %w", err)
-		e.logger.Error(err.Error())
-		return rs.FromError(err)
+		return e.handleError(actionName, err)
 	}
 	e.logger.Info("событие удалено: eventID=%s", event.ID.String())
 	return rs.OK("событие удалено", dto.FromEventModel(*event))

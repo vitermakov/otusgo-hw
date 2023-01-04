@@ -85,9 +85,9 @@ func (es *EventsSuiteTest) TestCreate() {
 			jsonBody: []byte(`{
 			  	"title": "Встреча в Zoom",
 			  	"date": "2023-02-19T20:00:00.417Z",
-			  	"duration": "45",
+			  	"duration": "45m",
 				"description": "№348239",
-				"notifyTerm": "180"
+				"notifyTerm": "3h"
 			}`),
 			expectedCode:          http.StatusOK,
 			expectedRespStatus:    "success",
@@ -99,19 +99,21 @@ func (es *EventsSuiteTest) TestCreate() {
 
 				_, err = uuid.Parse(eventDto.ID)
 				es.Suite.Require().NoError(err)
-				es.Suite.Require().Equal(45, eventDto.Duration)
-				es.Suite.Require().Equal(180, eventDto.NotifyTerm)
+				d, _ := time.ParseDuration("45m")
+				es.Suite.Require().Equal(d.String(), eventDto.Duration)
+				nt, _ := time.ParseDuration("3h")
+				es.Suite.Require().Equal(nt.String(), eventDto.NotifyTerm)
 			},
 		}, {
 			name: "crushed json",
 			jsonBody: []byte(`{
 			  "title": "Встреча в Zoom №348239",
 			  "date": "2023-02-19T20:00:00.417Z",
-			  "duration": 45,
+			  "duration": "45m",
 			}`),
 			expectedCode:          http.StatusBadRequest,
 			expectedRespStatus:    "error",
-			expectedRespLogicCode: 1000,
+			expectedRespLogicCode: http.StatusBadRequest,
 		}, {
 			name:                  "event empty",
 			jsonBody:              nil,
@@ -119,15 +121,15 @@ func (es *EventsSuiteTest) TestCreate() {
 			expectedRespStatus:    "error",
 			expectedRespLogicCode: http.StatusUnprocessableEntity,
 			checkResponseBody: func(resp ErrorResponseDTO) {
-				es.Suite.Require().Len(resp.Errors, 3)
+				es.Suite.Require().Len(resp.Errors, 2)
 			},
 		}, {
 			name: "event wrong data",
 			jsonBody: []byte(`{
 			  	"title": "Test event",
 			  	"date": "----2023-02-19T20:00:00.417Z-----",
-			  	"duration": -45,
-				"notifyTerm": -6
+			  	"duration": "45q",
+				"notifyTerm": "6q"
 			}`),
 			expectedCode:          http.StatusUnprocessableEntity,
 			expectedRespStatus:    "error",
@@ -140,7 +142,7 @@ func (es *EventsSuiteTest) TestCreate() {
 			jsonBody: []byte(`{
 			  "title": "Встреча в Zoom №348239",
 			  "date": "2023-02-19T19:30:00.417Z",
-			  "duration": 50
+			  "duration": "50m"
 			}`),
 			expectedCode:          http.StatusBadRequest,
 			expectedRespStatus:    "error",
@@ -181,9 +183,9 @@ func (es *EventsSuiteTest) TestGetByID() {
 		[]byte(`{
 			"title": "Test event",
 			"date": "2023-02-19T20:00:00.417Z",
-			"duration": "45",
+			"duration": "45m",
 			"description": "№348239",
-			"notifyTerm": "180"
+			"notifyTerm": "3h"
 		}`),
 	})
 	testCases := []struct {
@@ -198,7 +200,7 @@ func (es *EventsSuiteTest) TestGetByID() {
 		}, {
 			name:         "wrong event ID",
 			ID:           "ascascas",
-			expectedCode: http.StatusNotFound,
+			expectedCode: http.StatusBadRequest,
 		}, {
 			name:         "not exists event",
 			ID:           uuid.New().String(),
@@ -231,13 +233,13 @@ func (es *EventsSuiteTest) TestUpdate() {
 		[]byte(`{
 			"title": "Test event 1",
 			"date": "2023-02-19T20:00:00.417Z",
-			"duration": "45",
+			"duration": "45m",
 			"description": "№665"
 		}`),
 		[]byte(`{
 			"title": "Test event 2",
 			"date": "2023-02-19T10:00:00.417Z",
-			"duration": "60",
+			"duration": "60m",
 			"description": "№666"
 		}`),
 	})
@@ -255,9 +257,9 @@ func (es *EventsSuiteTest) TestUpdate() {
 			jsonBody: []byte(`{
 			  	"title": "Test event 1 updated",
 			  	"date": "2023-02-19T19:00:00.417Z",
-			  	"duration": 60,
+			  	"duration": "60m",
 				"description": "Test description",
-				"notifyTerm": 240
+				"notifyTerm": "4h"
 			}`),
 			ID:                    events[0].ID,
 			expectedCode:          http.StatusOK,
@@ -286,15 +288,17 @@ func (es *EventsSuiteTest) TestUpdate() {
 				es.Suite.Require().Equal("Test event 1 updated", eventDto.Title)
 				d, _ := time.Parse(time.RFC3339, "2023-02-19T19:00:00.417Z")
 				es.Suite.Require().Equal(d, eventDto.Date)
-				es.Suite.Require().Equal(60, eventDto.Duration)
+				du, _ := time.ParseDuration("60m")
+				es.Suite.Require().Equal(du.String(), eventDto.Duration)
 				es.Suite.Require().Equal("Test description", eventDto.Description)
-				es.Suite.Require().Equal(240, eventDto.NotifyTerm)
+				nt, _ := time.ParseDuration("4h")
+				es.Suite.Require().Equal(nt.String(), eventDto.NotifyTerm)
 			},
 		}, {
 			name: "event move to occupied date",
 			jsonBody: []byte(`{
 			  	"date": "2023-02-19T10:30:00.417Z",
-			  	"duration": 60
+			  	"duration": "60m"
 			}`),
 			ID:                    events[0].ID,
 			expectedCode:          http.StatusBadRequest,
@@ -306,21 +310,21 @@ func (es *EventsSuiteTest) TestUpdate() {
 			ID:                    events[1].ID,
 			expectedCode:          http.StatusBadRequest,
 			expectedRespStatus:    "error",
-			expectedRespLogicCode: 1000,
+			expectedRespLogicCode: http.StatusBadRequest,
 		}, {
 			name: "event wrong data",
 			jsonBody: []byte(`{
 			  	"title": "",
 			  	"date": "-34t---",
-			  	"duration": -45,
-				"notifyTerm": -6
+			  	"duration": "45o",
+				"notifyTerm": "6o"
 			}`),
 			ID:                    events[1].ID,
 			expectedCode:          http.StatusUnprocessableEntity,
 			expectedRespStatus:    "error",
 			expectedRespLogicCode: http.StatusUnprocessableEntity,
 			checkResponseBody: func(resp ErrorResponseDTO) {
-				es.Suite.Require().Len(resp.Errors, 4)
+				es.Suite.Require().Len(resp.Errors, 3)
 			},
 		},
 	}
@@ -360,9 +364,9 @@ func (es *EventsSuiteTest) TestDelete() {
 		[]byte(`{
 				"title": "Test event",
 				"date": "2023-02-19T20:00:00.417Z",
-				"duration": "45",
+				"duration": "45m",
 				"description": "№348239",
-				"notifyTerm": "180"
+				"notifyTerm": "3h"
 			}`),
 	})
 	es.Suite.Run("removing exists event", func() {
@@ -419,29 +423,29 @@ func (es *EventsSuiteTest) TestList() {
 		[]byte(`{
 				"title": "Test event 1",
 				"date": "2023-02-19T20:00:00.417Z",
-				"duration": 45
+				"duration": "45m"
 			}`),
 		[]byte(`{
 				"title": "Test event 2",
 				"date": "2023-02-19T09:00:00.417Z",
-				"duration": "90"
+				"duration": "90m"
 			}`),
 		[]byte(`{
 				"title": "Test event 3",
 				"date": "2023-02-13T15:00:00.417Z",
-				"duration": "60"
+				"duration": "60m"
 			}`),
 		[]byte(`{
 				"title": "Test event",
 				"date": "2023-03-10T10:00:00.417Z",
-				"duration": "45"
+				"duration": "45m"
 			}`),
 		[]byte(`{
 				"title": "Test event",
 				"date": "2023-03-22T20:00:00.417Z",
-				"duration": "45",
+				"duration": "45m",
 				"description": "№348239",
-				"notifyTerm": "180"
+				"notifyTerm": "3h"
 			}`),
 	})
 

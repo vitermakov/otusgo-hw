@@ -1,5 +1,10 @@
 package errx
 
+import (
+	"fmt"
+	"net/http"
+)
+
 const (
 	TypeNone     = iota
 	TypeLogic    // логическая ошибка
@@ -33,6 +38,9 @@ func (err Logic) Code() int {
 }
 
 func LogicNew(err error, code int) Logic {
+	if code <= 0 {
+		code = http.StatusBadRequest
+	}
 	return Logic{Base{err, TypeLogic}, code}
 }
 
@@ -55,12 +63,15 @@ func FatalNew(err error) Base {
 }
 
 type Invalid struct {
-	message string
-	errors  ValidationErrors
+	title  string
+	errors ValidationErrors
 }
 
 func (err Invalid) Error() string {
-	return err.message
+	if !err.Fails() {
+		return ""
+	}
+	return fmt.Sprintf("%s: %s", err.title, err.errors.Error())
 }
 
 func (err Invalid) Errors() []ValidationError {
@@ -75,6 +86,6 @@ func (err Invalid) Kind() byte {
 	return TypeInvalid
 }
 
-func InvalidNew(message string, errors ValidationErrors) Invalid {
-	return Invalid{message: message, errors: errors}
+func InvalidNew(title string, errors ValidationErrors) Invalid {
+	return Invalid{title: title, errors: errors}
 }
