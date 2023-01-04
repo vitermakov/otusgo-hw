@@ -14,7 +14,6 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
 	grpcServ "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -37,11 +36,10 @@ type EventsSuiteTest struct {
 }
 
 func (es *EventsSuiteTest) SetupTest() {
-	cfg := servers.NewConfig(
-		"127.0.0.1",
-		50051,
-		false,
-	)
+	cfg := config.Server{
+		Host: "127.0.0.1",
+		Port: 50051,
+	}
 	// логгер будет писать в stdout и stderr, а мы будем это перехватывать.
 	logs, err := logger.NewLogrus(logger.Config{
 		Level: logger.LevelInfo,
@@ -54,8 +52,7 @@ func (es *EventsSuiteTest) SetupTest() {
 
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
 	services := deps.NewServices(dependencies)
-	es.grpcServer = grpcServ.NewServer(cfg, services.Auth, logs)
-	InitHandlers(es.grpcServer, services, dependencies)
+	es.grpcServer = NewHandledServer(cfg, services, dependencies)
 
 	go func() {
 		err := es.grpcServer.Start()
@@ -65,7 +62,7 @@ func (es *EventsSuiteTest) SetupTest() {
 	for i := 0; i < 10; i++ {
 		<-time.After(time.Millisecond * 10)
 		es.conn, err = grpc.Dial(
-			net.JoinHostPort(cfg.GetHost(), strconv.Itoa(cfg.GetPort())),
+			net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err == nil {
 			break

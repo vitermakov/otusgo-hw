@@ -1,4 +1,4 @@
-package handler
+package http
 
 import (
 	"bytes"
@@ -18,8 +18,6 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/dto"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
 type EventsSuiteTest struct {
@@ -52,10 +50,8 @@ func (es *EventsSuiteTest) SetupTest() {
 
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
 	services := deps.NewServices(dependencies)
-	handlers := NewHandlers(services, logs)
 
-	restServer := rest.NewServer(servers.Config{}, services.Auth, logs)
-	handlers.InitRoutes(restServer)
+	restServer := NewHandledServer(config.Server{}, services, dependencies)
 
 	es.testServer = httptest.NewServer(restServer)
 

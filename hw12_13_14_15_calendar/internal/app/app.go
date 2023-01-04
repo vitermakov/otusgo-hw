@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	stdlog "log"
 	"net/url"
 	"sync"
@@ -14,11 +15,7 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
-	handler "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
-	grpcServ "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/grpc"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
 type Application struct {
@@ -100,17 +97,8 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	restServer := rest.NewServer(servers.NewConfig(
-		app.config.Servers.HTTP.Host,
-		app.config.Servers.HTTP.Port,
-		false,
-	), app.services.Auth, app.logger)
-
-	grpcServer := grpcServ.NewServer(servers.NewConfig(
-		app.config.Servers.GRPC.Host,
-		app.config.Servers.GRPC.Port,
-		false,
-	), app.services.Auth, app.logger)
+	restServer := http.NewHandledServer(app.config.Servers.HTTP, app.services, app.deps)
+	grpcServer := grpc.NewHandledServer(app.config.Servers.GRPC, app.services, app.deps)
 
 	var wg sync.WaitGroup
 
@@ -126,8 +114,6 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	}()
 
 	go func() {
-		handlers := handler.NewHandlers(app.services, app.deps.Logger)
-		handlers.InitRoutes(restServer)
 		if err := restServer.Start(); err != nil {
 			cancel()
 		}
@@ -142,7 +128,6 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	}()
 
 	go func() {
-		grpc.InitHandlers(grpcServer, app.services, app.deps)
 		if err := grpcServer.Start(); err != nil {
 			cancel()
 		}
