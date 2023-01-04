@@ -24,10 +24,10 @@ type Event struct {
 type EventCreate struct {
 	Title       string
 	Date        time.Time
-	Duration    int // в минутах.
+	Duration    time.Duration
 	OwnerID     uuid.UUID
-	Description *string // опционально.
-	NotifyTerm  *int    // в днях, опционально.
+	Description *string        // опционально.
+	NotifyTerm  *time.Duration // опционально.
 }
 
 // Validate базовая валидация структуры.
@@ -73,9 +73,9 @@ func (ec EventCreate) Validate() error {
 type EventUpdate struct {
 	Title       *string
 	Date        *time.Time
-	Duration    *int
+	Duration    *time.Duration
 	Description *string
-	NotifyTerm  *int
+	NotifyTerm  *time.Duration
 }
 
 // Validate базовая валидация структуры.

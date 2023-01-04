@@ -3,8 +3,8 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"runtime/debug"
@@ -15,116 +15,97 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/gorilla/mux"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
+	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest/rqres"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
-	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/response"
 )
-
-const (
-	DefaultHost = "localhost"
-	DefaultPort = 8080
-)
-
-type CtxKey struct{}
-
-type Config struct {
-	host  string
-	port  int
-	debug bool
-}
-
-func (cfg Config) Host() string {
-	if len(cfg.host) > 0 {
-		return cfg.host
-	}
-	return DefaultHost
-}
-
-func (cfg Config) Port() int {
-	if cfg.port > 0 {
-		return cfg.port
-	}
-	return DefaultPort
-}
-
-func (cfg Config) Debug() bool {
-	return cfg.debug
-}
 
 // Server простой Http-сервер для того, чтобы гонять Json через Http.
 type Server struct {
+	http.Server
 	Logger      logger.Logger
-	AuthService AuthService
-	config      Config
-	engine      *http.Server
+	AuthService servers.AuthService
 	router      *mux.Router
 }
 
-type HandlerFunc func(r *http.Request) rs.Response
+type HandlerFunc func(r *rs.Request) rs.Response
 
-func NewServer(cfg Config, authSrv AuthService, logger logger.Logger) *Server {
-	return &Server{
+func NewServer(cfg servers.Config, authSrv servers.AuthService, logger logger.Logger) *Server {
+	listenAddress := net.JoinHostPort(cfg.GetHost(), strconv.Itoa(cfg.GetPort()))
+	s := &Server{
 		Logger:      logger,
 		AuthService: authSrv,
 		router:      mux.NewRouter(),
-		config:      cfg,
 	}
-}
-
-func (s *Server) Start() error {
 	s.router.Use(
 		s.loggingMiddleware,
 		s.authMiddleware,
 	)
-	listenAddress := net.JoinHostPort(s.config.Host(), strconv.Itoa(s.config.Port()))
-	s.engine = &http.Server{
+	s.Server = http.Server{
 		Addr:              listenAddress,
 		Handler:           s.router,
 		ReadTimeout:       1 * time.Second,
 		WriteTimeout:      1 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
 	}
-	err := s.engine.ListenAndServe()
-	if err != nil {
-		return err
-	}
-	return nil
+	return s
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	if err := s.engine.Shutdown(ctx); err != nil {
-		return err
+func (s *Server) Start() error {
+	s.Logger.Info("HTTP server starting")
+	err := s.Server.ListenAndServe()
+	if err == nil || errors.Is(err, http.ErrServerClosed) {
+		return nil
 	}
-	return nil
+	s.Logger.Error("Failed to start HTTP server: %w", err)
+	return err
+}
+
+func (s *Server) Stop(ctx context.Context) {
+	if err := s.Server.Shutdown(ctx); err != nil {
+		s.Logger.Error("Failed to stop HTTP server: %w", err)
+	}
+	s.Logger.Info("HTTP server stopped")
 }
 
 func (s *Server) GET(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("GET")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("GET")
 }
 
 func (s *Server) POST(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("POST")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("POST")
 }
 
 func (s *Server) PUT(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("PUT")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("PUT")
 }
 
 func (s *Server) DELETE(pattern string, handler HandlerFunc) {
-	s.router.HandleFunc(pattern, s.WrapHandler(handler)).Methods("DELETE")
+	s.router.HandleFunc(pattern, s.wrapHandler(handler)).Methods("DELETE")
 }
 
-func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
+}
+
+func (s *Server) wrapHandler(handler HandlerFunc) http.HandlerFunc {
+	return func(writer http.ResponseWriter, rq *http.Request) {
 		var response rs.Response
-		if request.Method == "OPTIONS" {
+		if rq.Method == "OPTIONS" {
 			writer.WriteHeader(http.StatusOK)
 			return
 		}
+		ctx, cancel := context.WithTimeout(rq.Context(), 30*time.Second)
+		defer cancel()
+		rq = rq.WithContext(ctx)
+		request := &rs.Request{Request: rq, Params: mux.Vars(rq)}
 		doneChan := make(chan bool)
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					response = rs.FromError(errx.FatalNew(fmt.Sprintf("%+v\n%+v", r, string(debug.Stack()))))
+					err := fmt.Errorf("%+v\n%+v", r, string(debug.Stack()))
+					s.Logger.Error(err.Error())
+					response = rs.FromError(errx.FatalNew(err))
 					close(doneChan)
 				}
 			}()
@@ -133,8 +114,9 @@ func (s *Server) WrapHandler(handler HandlerFunc) http.HandlerFunc {
 		}()
 		select {
 		case <-request.Context().Done():
-			response = rs.FromError(errx.FatalNew("Abort in timeout"))
-			log.Println("Abort in timeout", request.Method, request.URL)
+			err := errors.New("abort in timeout")
+			response = rs.FromError(errx.FatalNew(err))
+			s.Logger.Error("Abort in timeout (%ds). %s %s, ", 30, request.Method, request.URL)
 		case <-doneChan:
 		}
 		s.showResponse(writer, response)
@@ -182,19 +164,20 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 		authCredentials := r.Header.Get("Authorization")
 		user, err := s.AuthService.Authorize(ctx, authCredentials)
 		if err != nil {
-			panic(fmt.Sprintf("error auth-service: %v", err))
-		}
-		if user != nil {
-			r = r.WithContext(context.WithValue(ctx, CtxKey{}, map[string]string{ //nolint:go-staticcheck // fdddd
-				"id":    user.ID,
-				"name":  user.Name,
-				"login": user.Login,
-			}))
-			next.ServeHTTP(w, r)
+			response := rs.FromError(errx.FatalNew(fmt.Errorf("error auth-service: %w", err)))
+			s.showResponse(w, response)
 			return
 		}
-
-		response := rs.FromError(errx.PermsNew("нет доступа"))
-		s.showResponse(w, response)
+		if user == nil {
+			response := rs.FromError(errx.PermsNew(fmt.Errorf("нет доступа")))
+			s.showResponse(w, response)
+			return
+		}
+		r = r.WithContext(context.WithValue(ctx, servers.CtxKey{}, map[string]string{ //nolint:go-staticcheck // fdddd
+			"id":    user.ID,
+			"name":  user.Name,
+			"login": user.Login,
+		}))
+		next.ServeHTTP(w, r)
 	})
 }

@@ -1,4 +1,4 @@
-package app
+package deps
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository/pgsql"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/service"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
 )
 
 // Resources ресурсы внешних систем, таких как СУБД, очереди.
@@ -50,7 +50,7 @@ func NewRepos(store config.Storage, res *Resources) (*Repos, error) {
 // Deps зависимости.
 type Deps struct {
 	Repos  *Repos
-	logger logger.Logger
+	Logger logger.Logger
 }
 
 // Services регистр сервисов.
@@ -58,17 +58,17 @@ type Services struct {
 	Event  service.Event
 	User   service.User
 	Logger logger.Logger
-	Auth   rest.AuthService
+	Auth   servers.AuthService
 }
 
 func NewServices(deps *Deps) *Services {
 	repo := deps.Repos
-	userServ := service.NewUserService(repo.User, deps.logger)
+	userServ := service.NewUserService(repo.User, deps.Logger)
 
 	return &Services{
-		Event:  service.NewEventService(repo.Event, deps.logger),
+		Event:  service.NewEventService(repo.Event, deps.Logger, userServ),
 		User:   userServ,
-		Logger: deps.logger,
+		Logger: deps.Logger,
 		Auth:   service.NewAuthService(userServ),
 	}
 }

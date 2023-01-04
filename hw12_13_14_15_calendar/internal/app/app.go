@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	stdlog "log"
-	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -13,17 +13,17 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib" // pgx driver for database/sql
 	"github.com/leporo/sqlf"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
-	rs "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/response"
 )
 
 type Application struct {
 	config    config.Config
 	logger    logger.Logger
-	resources *Resources
-	deps      *Deps
-	services  *Services
+	resources *deps.Resources
+	deps      *deps.Deps
+	services  *deps.Services
 }
 
 func (app *Application) initialize(ctx context.Context) error {
@@ -37,7 +37,7 @@ func (app *Application) initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	app.resources = &Resources{}
+	app.resources = &deps.Resources{}
 	if app.config.Storage.Type == "pgsql" {
 		pgCfg := app.config.Storage.PGConn
 		dsnURL := url.URL{
@@ -71,14 +71,13 @@ func (app *Application) initialize(ctx context.Context) error {
 		}()
 	}
 
-	repos, err := NewRepos(app.config.Storage, app.resources)
+	repos, err := deps.NewRepos(app.config.Storage, app.resources)
 	if err != nil {
 		return fmt.Errorf("error init data layer %w", err)
 	}
-	app.deps = &Deps{Repos: repos, logger: app.logger}
+	app.deps = &deps.Deps{Repos: repos, Logger: app.logger}
 
-	// TODO: все остальное делаем в ДЗ №13.
-	app.services = NewServices(app.deps)
+	app.services = deps.NewServices(app.deps)
 
 	return nil
 }
@@ -98,19 +97,12 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	restServer := rest.NewServer(rest.Config{}, app.services.Auth, app.logger)
-
-	// TODO: убрать отсюда
-	restServer.GET("/hello", func(r *http.Request) rs.Response {
-		return rs.OK("zer-gud", r.Context().Value(rest.CtxKey{}))
-	})
-	restServer.GET("/panic", func(r *http.Request) rs.Response {
-		panic("testing panic")
-		// return rs.OK("unreachable", nil)
-	})
+	restServer := http.NewHandledServer(app.config.Servers.HTTP, app.services, app.deps)
+	grpcServer := grpc.NewHandledServer(app.config.Servers.GRPC, app.services, app.deps)
 
 	var wg sync.WaitGroup
 
+	// TODO: выделить отдельный механизм для завершающих процедур, убрать в close()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -118,14 +110,25 @@ func (app *Application) run(ctx context.Context) error { //nolint:unparam // wil
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		if err := restServer.Stop(ctx); err != nil {
-			app.logger.Error("failed to stop http server: " + err.Error())
-		}
+		restServer.Stop(ctx)
 	}()
 
 	go func() {
 		if err := restServer.Start(); err != nil {
-			app.logger.Error("failed to start http server: " + err.Error())
+			cancel()
+		}
+	}()
+
+	// TODO: выделить отдельный механизм для завершающих процедур, убрать в close()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
+		grpcServer.Stop()
+	}()
+
+	go func() {
+		if err := grpcServer.Start(); err != nil {
 			cancel()
 		}
 	}()

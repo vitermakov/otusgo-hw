@@ -65,15 +65,15 @@ func (ur *UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
 
 // GetList не учитываем пагинацию, сортировку.
 func (ur *UserRepo) GetList(ctx context.Context, search model.UserSearch) ([]model.User, error) {
-	var users, filtered []model.User
+	var filtered []model.User
 	ur.mu.RLock()
-	users = ur.users
-	ur.mu.RUnlock()
-	for _, user := range users {
+	for _, user := range ur.users {
 		if ur.matchSearch(user, search) {
 			filtered = append(filtered, user)
 		}
 	}
+	ur.mu.RUnlock()
+
 	return filtered, nil
 }
 

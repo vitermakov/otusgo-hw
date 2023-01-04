@@ -25,7 +25,7 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 		ID:        uuid.New(),
 		Title:     input.Title,
 		Date:      input.Date,
-		Duration:  time.Duration(input.Duration) * time.Minute,
+		Duration:  input.Duration,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -36,7 +36,7 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 		event.Description = *input.Description
 	}
 	if input.NotifyTerm != nil {
-		event.NotifyTerm = time.Duration(*input.NotifyTerm) * time.Hour * 24
+		event.NotifyTerm = *input.NotifyTerm
 	}
 	er.mu.Lock()
 	er.events = append(er.events, event)
@@ -58,13 +58,13 @@ func (er *EventRepo) Update(ctx context.Context, input model.EventUpdate, search
 			event.Date = *input.Date
 		}
 		if input.Duration != nil {
-			event.Duration = time.Duration(*input.Duration) * time.Minute
+			event.Duration = *input.Duration
 		}
 		if input.Description != nil {
 			event.Description = *input.Description
 		}
 		if input.NotifyTerm != nil {
-			event.NotifyTerm = time.Duration(*input.NotifyTerm) * time.Hour * 24
+			event.NotifyTerm = *input.NotifyTerm
 		}
 		event.UpdatedAt = time.Now()
 		er.events[i] = event
@@ -88,15 +88,15 @@ func (er *EventRepo) Delete(ctx context.Context, search model.EventSearch) error
 
 // GetList не учитываем пагинацию, сортировку.
 func (er *EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
-	var events, filtered []model.Event
+	var filtered []model.Event
 	er.mu.RLock()
-	events = er.events
-	er.mu.RUnlock()
-	for _, event := range events {
+	for _, event := range er.events {
 		if er.matchSearch(event, search) {
 			filtered = append(filtered, event)
 		}
 	}
+	er.mu.RUnlock()
+
 	return filtered, nil
 }
 

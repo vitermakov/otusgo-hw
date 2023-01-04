@@ -1,20 +1,26 @@
 package errx
 
+import (
+	"fmt"
+	"net/http"
+)
+
 const (
-	TypeNone    = iota
-	TypeLogic   // логическая ошибка
-	TypePerms   // ошибка прав доступа
-	TypeInvalid // ошибка валидации
-	TypeFatal   // критическая внешняя ошибка
+	TypeNone     = iota
+	TypeLogic    // логическая ошибка
+	TypePerms    // ошибка прав доступа
+	TypeNotFound // объект не найден
+	TypeInvalid  // ошибка валидации
+	TypeFatal    // критическая внешняя ошибка
 )
 
 type Base struct {
-	message string
-	kind    byte
+	err  error
+	kind byte
 }
 
 func (err Base) Error() string {
-	return err.message
+	return err.err.Error()
 }
 
 func (err Base) Kind() byte {
@@ -31,25 +37,41 @@ func (err Logic) Code() int {
 	return err.code
 }
 
-func LogicNew(message string, code int) Logic {
-	return Logic{Base{message, TypeLogic}, code}
+func LogicNew(err error, code int) Logic {
+	if code <= 0 {
+		code = http.StatusBadRequest
+	}
+	return Logic{Base{err, TypeLogic}, code}
 }
 
-func PermsNew(message string) Base {
-	return Base{message, TypePerms}
+func PermsNew(err error) Base {
+	return Base{err, TypePerms}
 }
 
-func FatalNew(message string) Base {
-	return Base{message, TypeFatal}
+// NotFound объект не найден по какому-то набору для поиска.
+type NotFound struct {
+	Base
+	Params interface{} // параметры поиска
+}
+
+func NotFoundNew(err error, params interface{}) NotFound {
+	return NotFound{Base{err, TypeNotFound}, params}
+}
+
+func FatalNew(err error) Base {
+	return Base{err, TypeFatal}
 }
 
 type Invalid struct {
-	message string
-	errors  ValidationErrors
+	title  string
+	errors ValidationErrors
 }
 
 func (err Invalid) Error() string {
-	return err.message
+	if !err.Fails() {
+		return ""
+	}
+	return fmt.Sprintf("%s: %s", err.title, err.errors.Error())
 }
 
 func (err Invalid) Errors() []ValidationError {
@@ -64,6 +86,6 @@ func (err Invalid) Kind() byte {
 	return TypeInvalid
 }
 
-func InvalidNew(message string) Invalid {
-	return Invalid{message: message}
+func InvalidNew(title string, errors ValidationErrors) Invalid {
+	return Invalid{title: title, errors: errors}
 }

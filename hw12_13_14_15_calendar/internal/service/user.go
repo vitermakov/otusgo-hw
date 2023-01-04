@@ -7,7 +7,8 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/rest"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
 type UserService struct {
@@ -83,20 +84,20 @@ func (us UserService) GetByEmail(ctx context.Context, email string) (*model.User
 func (us UserService) getOne(ctx context.Context, search model.UserSearch) (*model.User, error) {
 	users, err := us.repo.GetList(ctx, search)
 	if err != nil {
-		return nil, err
+		return nil, errx.FatalNew(err)
 	}
 	if len(users) == 0 {
-		return nil, model.ErrUserNotFound
+		return nil, errx.NotFoundNew(model.ErrUserNotFound, nil)
 	}
 	return &users[0], nil
 }
 
 func (us UserService) GetCurrent(ctx context.Context) (*model.User, error) {
-	ctxUser, ok := ctx.Value(rest.CtxKey{}).(map[string]interface{})
+	ctxUser, ok := ctx.Value(servers.CtxKey{}).(map[string]string)
 	if !ok {
 		return nil, model.ErrUserEmptyID
 	}
-	rawID, ok := ctxUser["id"].(string)
+	rawID, ok := ctxUser["id"]
 	if !ok {
 		return nil, model.ErrUserEmptyID
 	}
