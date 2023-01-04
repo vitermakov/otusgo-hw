@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	stdlog "log"
 	"net/url"
 	"sync"
@@ -15,6 +14,7 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 )
 
