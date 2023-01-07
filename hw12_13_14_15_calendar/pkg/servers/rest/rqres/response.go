@@ -194,7 +194,7 @@ func (res InvalidResp) GetHTTPResp() interface{} {
 	}
 	if res.data != nil {
 		resp.Errors = make(map[string]string)
-		errs, ok := res.data.(errx.ValidationErrors)
+		errs, ok := res.data.(errx.NamedErrors)
 		if ok {
 			for _, message := range errs {
 				key := message.Field
@@ -210,7 +210,7 @@ func (res InvalidResp) GetHTTPResp() interface{} {
 	return resp
 }
 
-func Invalid(message string, errs errx.ValidationErrors) *InvalidResp {
+func Invalid(message string, errs errx.NamedErrors) *InvalidResp {
 	if message == "" {
 		message = "Ошибка при проверке данных"
 	}

@@ -12,12 +12,12 @@ func TestUserCreateValidate(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    UserCreate
-		expected errx.ValidationErrors
+		expected errx.NamedErrors
 	}{
 		{
 			name:  "bad user create",
 			input: UserCreate{},
-			expected: []errx.ValidationError{
+			expected: []errx.NamedError{
 				{
 					Field: "Name",
 					Err:   ErrUserEmptyName,
@@ -32,7 +32,7 @@ func TestUserCreateValidate(t *testing.T) {
 				Name:  "Test User",
 				Email: "dfvs%dvsdv",
 			},
-			expected: []errx.ValidationError{
+			expected: []errx.NamedError{
 				{
 					Field: "Email",
 					Err:   ErrUserWrongEmail,
@@ -55,7 +55,7 @@ func TestUserCreateValidate(t *testing.T) {
 			if tc.expected == nil {
 				require.NoError(t, err)
 			} else {
-				var validationError errx.ValidationErrors
+				var validationError errx.NamedErrors
 				require.True(t, errors.As(err, &validationError))
 				require.ElementsMatch(t, validationError, tc.expected)
 			}
@@ -74,7 +74,7 @@ func TestUserUpdateValidate(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    UserUpdate
-		expected errx.ValidationErrors
+		expected errx.NamedErrors
 	}{
 		{
 			name:     "ok empty user update",
@@ -86,7 +86,7 @@ func TestUserUpdateValidate(t *testing.T) {
 				Name:  &emptyName,
 				Email: &emptyEmail,
 			},
-			expected: []errx.ValidationError{
+			expected: []errx.NamedError{
 				{
 					Field: "Name",
 					Err:   ErrUserEmptyName,
@@ -101,7 +101,7 @@ func TestUserUpdateValidate(t *testing.T) {
 				Name:  &okName,
 				Email: &wrongEmail,
 			},
-			expected: []errx.ValidationError{
+			expected: []errx.NamedError{
 				{
 					Field: "Email",
 					Err:   ErrUserWrongEmail,
@@ -124,7 +124,7 @@ func TestUserUpdateValidate(t *testing.T) {
 			if tc.expected == nil {
 				require.NoError(t, err)
 			} else {
-				var validationError errx.ValidationErrors
+				var validationError errx.NamedErrors
 				require.True(t, errors.As(err, &validationError))
 				require.ElementsMatch(t, validationError, tc.expected)
 			}
