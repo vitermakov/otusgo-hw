@@ -1,0 +1,26 @@
+{
+  "serviceId": "sender",
+  "serviceName": "Otus Calendar Sender",
+  "logger": {
+    "fileName": "./logs/sender.log",
+    "level": "info"
+  },
+  "notify": {
+    "queueListen": "userEvents"
+  },
+  "mpq": {
+    "type": "rabbitMq",
+    "rabbitMq": {
+      "host": "127.0.0.1",
+      "user": "otus",
+      "password": "otus_mq",
+      "port": 5672
+    }
+  },
+  "mailer": {
+    "type": "stdout",
+    "defaultFrom": "support@otus.ru",
+    "templatePath": "./templates/mail"
+  }
+}
+
