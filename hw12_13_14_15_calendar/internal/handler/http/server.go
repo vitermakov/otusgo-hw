@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
+	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/calendar"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )

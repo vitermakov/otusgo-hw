@@ -23,18 +23,18 @@ type EventCreate struct {
 }
 
 // Model возвращает связанную модель model.EventCreate.
-func (ec EventCreate) Model() (model.EventCreate, errx.ValidationErrors) {
-	var errs errx.ValidationErrors
+func (ec EventCreate) Model() (model.EventCreate, errx.NamedErrors) {
+	var errs errx.NamedErrors
 	input := model.EventCreate{
 		Title: ec.Title,
 	}
 	if date, err := time.Parse(time.RFC3339, ec.Date); err != nil {
-		errs.Add(errx.ValidationError{Field: "date", Err: errors.Wrap(ErrDateWrongFormat, err.Error())})
+		errs.Add(errx.NamedError{Field: "date", Err: errors.Wrap(ErrDateWrongFormat, err.Error())})
 	} else {
 		input.Date = date
 	}
 	if duration, err := time.ParseDuration(ec.Duration); err != nil {
-		errs.Add(errx.ValidationError{Field: "duration", Err: errors.Wrap(ErrDurationWrongFormat, err.Error())})
+		errs.Add(errx.NamedError{Field: "duration", Err: errors.Wrap(ErrDurationWrongFormat, err.Error())})
 	} else {
 		input.Duration = duration
 	}
@@ -44,7 +44,7 @@ func (ec EventCreate) Model() (model.EventCreate, errx.ValidationErrors) {
 	}
 	if ec.NotifyTerm != nil {
 		if notifyTerm, err := time.ParseDuration(*ec.NotifyTerm); err != nil {
-			errs.Add(errx.ValidationError{Field: "notifyTerm", Err: errors.Wrap(ErrNotifyTermWrongFormat, err.Error())})
+			errs.Add(errx.NamedError{Field: "notifyTerm", Err: errors.Wrap(ErrNotifyTermWrongFormat, err.Error())})
 		} else {
 			input.NotifyTerm = &notifyTerm
 		}
@@ -63,8 +63,8 @@ type EventUpdate struct {
 	NotifyTerm  *string `json:"notifyTerm"` // с единицей измерения.
 }
 
-func (eu EventUpdate) Model() (model.EventUpdate, errx.ValidationErrors) {
-	var errs errx.ValidationErrors
+func (eu EventUpdate) Model() (model.EventUpdate, errx.NamedErrors) {
+	var errs errx.NamedErrors
 	input := model.EventUpdate{}
 	if eu.Title != nil {
 		input.Title = eu.Title
@@ -72,14 +72,14 @@ func (eu EventUpdate) Model() (model.EventUpdate, errx.ValidationErrors) {
 	if eu.Date != nil {
 		date, err := time.Parse(time.RFC3339, *eu.Date)
 		if err != nil {
-			errs.Add(errx.ValidationError{Field: "Date", Err: errors.Wrap(ErrDateWrongFormat, err.Error())})
+			errs.Add(errx.NamedError{Field: "Date", Err: errors.Wrap(ErrDateWrongFormat, err.Error())})
 		} else {
 			input.Date = &date
 		}
 	}
 	if eu.Duration != nil {
 		if duration, err := time.ParseDuration(*eu.Duration); err != nil {
-			errs.Add(errx.ValidationError{Field: "duration", Err: errors.Wrap(ErrDurationWrongFormat, err.Error())})
+			errs.Add(errx.NamedError{Field: "duration", Err: errors.Wrap(ErrDurationWrongFormat, err.Error())})
 		} else {
 			input.Duration = &duration
 		}
@@ -89,7 +89,7 @@ func (eu EventUpdate) Model() (model.EventUpdate, errx.ValidationErrors) {
 	}
 	if eu.NotifyTerm != nil {
 		if notifyTerm, err := time.ParseDuration(*eu.NotifyTerm); err != nil {
-			errs.Add(errx.ValidationError{Field: "notifyTerm", Err: errors.Wrap(ErrNotifyTermWrongFormat, err.Error())})
+			errs.Add(errx.NamedError{Field: "notifyTerm", Err: errors.Wrap(ErrNotifyTermWrongFormat, err.Error())})
 		} else {
 			input.NotifyTerm = &notifyTerm
 		}
