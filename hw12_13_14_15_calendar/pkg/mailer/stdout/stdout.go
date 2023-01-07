@@ -34,7 +34,7 @@ func (ml *Mailer) SendMail(tplName string, mail mailer.Mail) error {
 	}
 	headers := mailer.BuildHeaders(mail)
 
-	_, err = fmt.Fprintf(os.Stdout, "%s\r\n%s", headers, body)
+	_, err = fmt.Fprintf(os.Stdout, "%s\r\n%s\n\n", headers, body)
 
 	return err
 }
