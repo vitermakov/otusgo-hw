@@ -9,6 +9,7 @@ import (
 
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/calendar"
 )
 
 var configFile string
@@ -23,7 +24,8 @@ func main() {
 		printVersion()
 		return
 	}
-	cfg, err := config.New(configFile)
+	var cfg calendar.Config
+	err := config.New(configFile, &cfg)
 	if err != nil {
 		log.Fatalf("error reading configuaration from '%s': %v", configFile, err)
 	}
@@ -32,6 +34,5 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	calendarApp := app.New(cfg)
-	calendarApp.Main(ctx)
+	app.Execute(ctx, app.NewCalendar(cfg))
 }
