@@ -147,7 +147,6 @@ func (es *EventsSuiteTest) TestCreate() {
 	}
 	requestURL := fmt.Sprintf("%s/events", es.testServer.URL)
 	for _, tc := range testCases {
-		&deps.Resources{}
 		es.Suite.Run(tc.name, func() {
 			var resp ErrorResponseDTO
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
