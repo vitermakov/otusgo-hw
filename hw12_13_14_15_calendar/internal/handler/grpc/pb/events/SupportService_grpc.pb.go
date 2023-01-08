@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SupportClient interface {
 	GetNotifications(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Notifies, error)
-	SetNotified(ctx context.Context, in *NotifyIDList, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	SetNotified(ctx context.Context, in *NotificationIDReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	CleanupOldEvents(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -45,7 +45,7 @@ func (c *supportClient) GetNotifications(ctx context.Context, in *emptypb.Empty,
 	return out, nil
 }
 
-func (c *supportClient) SetNotified(ctx context.Context, in *NotifyIDList, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *supportClient) SetNotified(ctx context.Context, in *NotificationIDReq, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/api.support/SetNotified", in, out, opts...)
 	if err != nil {
@@ -68,7 +68,7 @@ func (c *supportClient) CleanupOldEvents(ctx context.Context, in *emptypb.Empty,
 // for forward compatibility
 type SupportServer interface {
 	GetNotifications(context.Context, *emptypb.Empty) (*Notifies, error)
-	SetNotified(context.Context, *NotifyIDList) (*emptypb.Empty, error)
+	SetNotified(context.Context, *NotificationIDReq) (*emptypb.Empty, error)
 	CleanupOldEvents(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	mustEmbedUnimplementedSupportServer()
 }
@@ -80,7 +80,7 @@ type UnimplementedSupportServer struct {
 func (UnimplementedSupportServer) GetNotifications(context.Context, *emptypb.Empty) (*Notifies, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNotifications not implemented")
 }
-func (UnimplementedSupportServer) SetNotified(context.Context, *NotifyIDList) (*emptypb.Empty, error) {
+func (UnimplementedSupportServer) SetNotified(context.Context, *NotificationIDReq) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetNotified not implemented")
 }
 func (UnimplementedSupportServer) CleanupOldEvents(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
@@ -118,7 +118,7 @@ func _Support_GetNotifications_Handler(srv interface{}, ctx context.Context, dec
 }
 
 func _Support_SetNotified_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NotifyIDList)
+	in := new(NotificationIDReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func _Support_SetNotified_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/api.support/SetNotified",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SupportServer).SetNotified(ctx, req.(*NotifyIDList))
+		return srv.(SupportServer).SetNotified(ctx, req.(*NotificationIDReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

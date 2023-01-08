@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
+	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/calendar"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/dto"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
@@ -45,7 +45,7 @@ func (es *EventsSuiteTest) SetupTest() {
 	es.Suite.Require().NoError(err)
 
 	// слой репозиториев мы не будем мокать, а будем использовать реализацию memory.
-	repos, err := deps.NewRepos(config.Storage{Type: "memory"}, &deps.Resources{})
+	repos, err := deps.NewRepos(config.Storage{Type: "memory"}, nil)
 	es.Suite.Require().NoError(err)
 
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
@@ -147,6 +147,7 @@ func (es *EventsSuiteTest) TestCreate() {
 	}
 	requestURL := fmt.Sprintf("%s/events", es.testServer.URL)
 	for _, tc := range testCases {
+		&deps.Resources{}
 		es.Suite.Run(tc.name, func() {
 			var resp ErrorResponseDTO
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)

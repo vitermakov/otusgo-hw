@@ -10,7 +10,7 @@ import "google/protobuf/empty.proto";
 
 service support {
   rpc GetNotifications(google.protobuf.Empty) returns(Notifies) {}
-  rpc SetNotified(NotifyIDList) returns(google.protobuf.Empty) {}
+  rpc SetNotified(NotificationIDReq) returns(google.protobuf.Empty) {}
   rpc CleanupOldEvents(google.protobuf.Empty) returns(google.protobuf.Empty) {}
 }
 
@@ -27,6 +27,6 @@ message Notifies {
   repeated Notification List = 1;
 }
 
-message NotifyIDList {
-  repeated string IDList = 1;
+message NotificationIDReq {
+  string ID = 1;
 }
