@@ -3,6 +3,7 @@ module github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar
 go 1.16
 
 require (
+	github.com/benbjohnson/clock v1.3.0
 	github.com/felixge/httpsnoop v1.0.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0

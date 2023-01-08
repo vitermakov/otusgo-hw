@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/benbjohnson/clock"
 	"github.com/leporo/sqlf"
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/calendar"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/calendar"
@@ -66,7 +67,11 @@ func (ca *Calendar) Initialize(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error init data layer %w", err)
 	}
-	ca.deps = &deps.Deps{Repos: repos, Logger: ca.logger}
+	ca.deps = &deps.Deps{
+		Repos:  repos,
+		Logger: ca.logger,
+		Clock:  clock.New(),
+	}
 
 	ca.services = deps.NewServices(ca.deps)
 

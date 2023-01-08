@@ -127,5 +127,20 @@ func (er *EventRepo) matchSearch(event model.Event, search model.EventSearch) bo
 			return false
 		}
 	}
+	if search.DateLess != nil && event.Date.After(*search.DateLess) {
+		return false
+	}
+	if search.NeedNotifyTerm != nil {
+		if event.NotifyTerm.Seconds() == 0 {
+
+		}
+		if event.Date.After(*search.DateLess) {
+			return false
+		}
+	}
 	return true
+}
+
+func (er *EventRepo) BlockEvents4Notify(ctx context.Context, now time.Time) ([]model.Event, error) {
+	return nil, nil
 }

@@ -184,3 +184,7 @@ func (er EventRepo) applySearch(stmt *sqlf.Stmt, search model.EventSearch) {
 		stmt.Where("events.date < ?", search.DateRange.GetTo())
 	}
 }
+
+func (er EventRepo) BlockEvents4Notify(ctx context.Context, t time.Time) ([]model.Event, error) {
+	return nil, nil
+}

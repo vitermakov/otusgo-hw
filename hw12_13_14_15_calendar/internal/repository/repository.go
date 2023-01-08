@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 )
@@ -15,6 +16,7 @@ type Event interface {
 	Delete(context.Context, model.EventSearch) error
 	// GetList не учитываем пагинацию и сортировку.
 	GetList(context.Context, model.EventSearch) ([]model.Event, error)
+	BlockEvents4Notify(context.Context, time.Time) ([]model.Event, error)
 }
 
 // User репозиторий для управления пользователями.

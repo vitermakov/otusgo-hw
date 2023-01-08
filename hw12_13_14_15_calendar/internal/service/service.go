@@ -8,9 +8,9 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 )
 
-// Event сервис управления пользователями. Во всех случаях считаем,
+// EventCRUD сервис управления пользователями. Во всех случаях считаем,
 // что добавлять, удалять... можно только "свои" события.
-type Event interface {
+type EventCRUD interface {
 	Add(context.Context, model.EventCreate) (*model.Event, error)
 	Update(context.Context, model.Event, model.EventUpdate) error
 	Delete(context.Context, model.Event) error
@@ -29,4 +29,15 @@ type User interface {
 	GetByEmail(context.Context, string) (*model.User, error)
 	// GetCurrent user_id передается в контекстe
 	GetCurrent(context.Context) (*model.User, error)
+}
+
+// EventNotify сервис управления оповещениями
+type EventNotify interface {
+	GetNotifications(context.Context) ([]model.Notification, error)
+	MarkEventsNotified(context.Context, uuid.UUID) error
+}
+
+// EventClean удаление устаревших объектов календаря
+type EventClean interface {
+	CleanupOldEvents(context.Context) error
 }
