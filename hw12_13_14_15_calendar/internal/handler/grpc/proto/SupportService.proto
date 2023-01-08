@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "internal/handler/grpc/pb/events";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+
+service support {
+  rpc GetNotifications(google.protobuf.Empty) returns(Notifies) {}
+  rpc SetNotified(NotifyIDList) returns(google.protobuf.Empty) {}
+  rpc CleanupOldEvents(google.protobuf.Empty) returns(google.protobuf.Empty) {}
+}
+
+message Notification {
+  string ID = 1;
+  string Title = 2;
+  google.protobuf.Timestamp Date = 3;
+  google.protobuf.Duration Duration = 4;
+  string UserName = 5;
+  string UserEmail = 6;
+}
+
+message Notifies {
+  repeated Notification List = 1;
+}
+
+message NotifyIDList {
+  repeated string IDList = 1;
+}

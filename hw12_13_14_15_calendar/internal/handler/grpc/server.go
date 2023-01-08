@@ -18,6 +18,7 @@ func NewHandledServer(config config.Server, services *deps.Services, deps *deps.
 
 	server.RegisterHandler(func(s *grpc.Server) {
 		events.RegisterEventsServer(s, EventHandlerImpl{services: services, logger: deps.Logger})
+		events.RegisterSupportServer(s, SupportHandlerImpl{services: services, logger: deps.Logger})
 	})
 
 	return server
