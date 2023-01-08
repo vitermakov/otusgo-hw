@@ -9,15 +9,16 @@ import (
 
 // Event модель события.
 type Event struct {
-	ID          uuid.UUID
-	Title       string
-	Date        time.Time
-	Duration    time.Duration
-	Owner       *User
-	Description string
-	NotifyTerm  time.Duration
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID           uuid.UUID
+	Title        string
+	Date         time.Time
+	Duration     time.Duration
+	Owner        *User
+	Description  string
+	NotifyTerm   time.Duration
+	NotifyStatus NotifyStatus
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // EventCreate модель создания события.
@@ -32,33 +33,33 @@ type EventCreate struct {
 
 // Validate базовая валидация структуры.
 func (ec EventCreate) Validate() error {
-	var errs errx.ValidationErrors
+	var errs errx.NamedErrors
 	if ec.Title == "" {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Title",
 			Err:   ErrEventEmptyTitle,
 		})
 	}
 	if ec.Date.IsZero() {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Date",
 			Err:   ErrEventZeroDate,
 		})
 	}
 	if ec.Duration <= 0 {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Duration",
 			Err:   ErrEventWrongDuration,
 		})
 	}
 	if ec.OwnerID.ID() == 0 {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "OwnerID",
 			Err:   ErrEventOwnerID,
 		})
 	}
 	if ec.NotifyTerm != nil && *ec.NotifyTerm <= 0 {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "NotifyTerm",
 			Err:   ErrEventWrongNotifyTerm,
 		})
@@ -76,31 +77,32 @@ type EventUpdate struct {
 	Duration    *time.Duration
 	Description *string
 	NotifyTerm  *time.Duration
+	Notified    *bool
 }
 
 // Validate базовая валидация структуры.
 func (ec EventUpdate) Validate() error {
-	var errs errx.ValidationErrors
+	var errs errx.NamedErrors
 	if ec.Title != nil && *ec.Title == "" {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Title",
 			Err:   ErrEventEmptyTitle,
 		})
 	}
 	if ec.Date != nil && ec.Date.IsZero() {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Date",
 			Err:   ErrEventZeroDate,
 		})
 	}
 	if ec.Duration != nil && *ec.Duration <= 0 {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Duration",
 			Err:   ErrEventWrongDuration,
 		})
 	}
 	if ec.NotifyTerm != nil && *ec.NotifyTerm <= 0 {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "NotifyTerm",
 			Err:   ErrEventWrongNotifyTerm,
 		})
@@ -114,11 +116,13 @@ func (ec EventUpdate) Validate() error {
 // EventSearch модель поиска. Исходя из условия задачи и всех ее аспектов искать события
 // необходимо по идентификатору и промежутку дат (с учетом и без учета продолжительности).
 type EventSearch struct {
-	ID          *uuid.UUID
-	NotID       *uuid.UUID
-	OwnerID     *uuid.UUID
-	DateRange   *DateRange
-	TacDuration bool // учитывать продолжительность мероприятий.
+	ID             *uuid.UUID
+	NotID          *uuid.UUID
+	OwnerID        *uuid.UUID
+	DateRange      *DateRange
+	TacDuration    bool       // учитывать продолжительность мероприятий.
+	DateLess       *time.Time // выбрать события с запланированной датой, меньшей указанной.
+	NeedNotifyTerm *time.Time // необходимые к оповещению на указанную дату.
 }
 
 func EventSearchID(guid string) (EventSearch, error) {
