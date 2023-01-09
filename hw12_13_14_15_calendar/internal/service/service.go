@@ -27,17 +27,17 @@ type User interface {
 	GetAll(context.Context) ([]model.User, error)
 	GetByID(context.Context, uuid.UUID) (*model.User, error)
 	GetByEmail(context.Context, string) (*model.User, error)
-	// GetCurrent user_id передается в контекстe
+	// GetCurrent user_id передается в контексте.
 	GetCurrent(context.Context) (*model.User, error)
 }
 
-// EventNotify сервис управления оповещениями
+// EventNotify сервис управления оповещениями.
 type EventNotify interface {
 	GetNotifications(context.Context) ([]model.Notification, error)
-	MarkEventsNotified(context.Context, uuid.UUID) error
+	MarkEventNotified(context.Context, uuid.UUID) error
 }
 
-// EventClean удаление устаревших объектов календаря
+// EventClean удаление устаревших объектов календаря.
 type EventClean interface {
-	CleanupOldEvents(context.Context) error
+	CleanupOldEvents(context.Context, time.Duration) (int64, error)
 }

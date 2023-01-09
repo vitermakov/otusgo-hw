@@ -27,7 +27,8 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		Set("id", guid.String()).
 		Set("title", input.Title).
 		Set("date", input.Date).
-		Set("duration", fmt.Sprintf("%d minutes", int(input.Duration.Minutes())))
+		Set("duration", fmt.Sprintf("%d minutes", int(input.Duration.Minutes()))).
+		Set("notify_status", model.NotifyStatusNone.String())
 	if input.OwnerID.ID() > 0 {
 		stmt.Set("owner_id", input.OwnerID.String())
 	}
@@ -48,7 +49,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 	return &events[0], nil
 }
 
-func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search model.EventSearch) error {
+func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search model.EventSearch) (int64, error) {
 	stmt := sqlf.Update("events").
 		Set("updated_at", time.Now())
 	er.applySearch(stmt, search)
@@ -67,17 +68,24 @@ func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search 
 	if input.NotifyTerm != nil {
 		stmt.Set("notify_term", fmt.Sprintf("%d days", int(input.NotifyTerm.Hours()/24)))
 	}
-	_, err := stmt.ExecAndClose(ctx, er.pool)
-	return err
+	if input.NotifyStatus != nil {
+		stmt.Set("notify_status", input.NotifyStatus.String())
+	}
+	res, err := stmt.ExecAndClose(ctx, er.pool)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
-func (er EventRepo) Delete(ctx context.Context, search model.EventSearch) error {
+func (er EventRepo) Delete(ctx context.Context, search model.EventSearch) (int64, error) {
 	stmt := sqlf.DeleteFrom("events")
 	er.applySearch(stmt, search)
-	if _, err := stmt.ExecAndClose(ctx, er.pool); err != nil {
-		return err
+	res, err := stmt.ExecAndClose(ctx, er.pool)
+	if err != nil {
+		return 0, err
 	}
-	return nil
+	return res.RowsAffected()
 }
 
 // GetList не учитываем пагинацию, сортировку.
@@ -87,7 +95,7 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 			EXTRACT(EPOCH FROM duration)::int, 
 			description, 
 			EXTRACT(EPOCH FROM notify_term)::int, 
-			created_at, updated_at`,
+			notify_status, created_at, updated_at`,
 		)
 	er.applySearch(stmt, search)
 	stmt.Select("(select row_to_json(users) from users where events.owner_id=users.id) as owner")
@@ -112,16 +120,14 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 
 func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
 	var (
-		id          sql.NullString
-		duration    sql.NullInt64
-		description sql.NullString
-		notifyTerm  sql.NullInt64
-		userJSON    sql.NullString
-		event       model.Event
+		id, description, userJSON, notifyStatus sql.NullString
+		duration                                sql.NullInt64
+		notifyTerm                              sql.NullInt64
+		event                                   model.Event
 	)
 	if err := row.Scan(
 		&id, &event.Title, &event.Date, &duration, &description,
-		&notifyTerm, &event.CreatedAt, &event.UpdatedAt, &userJSON); err != nil {
+		&notifyTerm, &notifyStatus, &event.CreatedAt, &event.UpdatedAt, &userJSON); err != nil {
 		if err != nil {
 			return event, err
 		}
@@ -159,8 +165,12 @@ func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
 	if description.Valid {
 		event.Description = description.String
 	}
-	if notifyTerm.Valid {
-		event.NotifyTerm = time.Duration(notifyTerm.Int64) * time.Second
+	if notifyStatus.Valid {
+		nf, err := model.ParseNotifyStatus(notifyStatus.String)
+		if err != nil {
+			return event, fmt.Errorf("error reading event owner: %w", err)
+		}
+		event.NotifyStatus = nf
 	}
 	return event, nil
 }
@@ -183,8 +193,61 @@ func (er EventRepo) applySearch(stmt *sqlf.Stmt, search model.EventSearch) {
 		}
 		stmt.Where("events.date < ?", search.DateRange.GetTo())
 	}
+	if search.DateLess != nil {
+		stmt.Where("events.date < ?", *search.DateLess)
+	}
+	if search.NeedNotifyTerm != nil {
+		stmt.Where("events.notify_term IS NOT NULL")
+		stmt.Where("events.notify_status = ?", model.NotifyStatusNone.String())
+		stmt.Where("events.date - events.notify_term < ?", *search.NeedNotifyTerm)
+		stmt.Where("events.date > ?", *search.NeedNotifyTerm)
+	}
 }
 
-func (er EventRepo) BlockEvents4Notify(ctx context.Context, t time.Time) ([]model.Event, error) {
-	return nil, nil
+func (er EventRepo) BlockEvents4Notify(ctx context.Context, now time.Time) ([]model.Event, error) {
+	stmt := sqlf.From("events").
+		Select(`id, title, date, 
+			EXTRACT(EPOCH FROM duration)::int, 
+			description, 
+			EXTRACT(EPOCH FROM notify_term)::int, 
+			notify_status, created_at, updated_at`,
+		)
+	er.applySearch(stmt, model.EventSearch{
+		NeedNotifyTerm: &now,
+	})
+	stmt.Select("(select row_to_json(users) from users where events.owner_id=users.id) as owner")
+
+	events := make([]model.Event, 0)
+
+	tx, err := er.pool.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+	query := stmt.String() + " FOR UPDATE"
+	rows, err := tx.QueryContext(ctx, query, stmt.Args()...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+	for rows.Next() {
+		event, err := er.prepareModel(rows)
+		if err != nil {
+			return nil, err
+		}
+		query = "UPDATE events SET notify_status=$1 WHERE id=$2"
+		_, err = tx.ExecContext(ctx, query, model.NotifyStatusBlocked.String(), event.ID.String())
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return events, nil
 }

@@ -12,8 +12,8 @@ import (
 // Делаем методы максимально общими.
 type Event interface {
 	Add(context.Context, model.EventCreate) (*model.Event, error)
-	Update(context.Context, model.EventUpdate, model.EventSearch) error
-	Delete(context.Context, model.EventSearch) error
+	Update(context.Context, model.EventUpdate, model.EventSearch) (int64, error)
+	Delete(context.Context, model.EventSearch) (int64, error)
 	// GetList не учитываем пагинацию и сортировку.
 	GetList(context.Context, model.EventSearch) ([]model.Event, error)
 	BlockEvents4Notify(context.Context, time.Time) ([]model.Event, error)
@@ -22,8 +22,8 @@ type Event interface {
 // User репозиторий для управления пользователями.
 type User interface {
 	Add(context.Context, model.UserCreate) (*model.User, error)
-	Update(context.Context, model.UserUpdate, model.UserSearch) error
-	Delete(context.Context, model.UserSearch) error
+	Update(context.Context, model.UserUpdate, model.UserSearch) (int64, error)
+	Delete(context.Context, model.UserSearch) (int64, error)
 	// GetList не учитываем пагинацию и сортировку.
 	GetList(context.Context, model.UserSearch) ([]model.User, error)
 }

@@ -32,7 +32,7 @@ func (e SupportHandlerImpl) GetNotifications(ctx context.Context, _ *emptypb.Emp
 
 func (e SupportHandlerImpl) SetNotified(ctx context.Context, IDReq *events.NotificationIDReq) (*emptypb.Empty, error) {
 	eventID := dto.NotificationIDReqModel(IDReq)
-	err := e.services.EventNotify.MarkEventsNotified(ctx, eventID)
+	err := e.services.EventNotify.MarkEventNotified(ctx, eventID)
 	if err != nil {
 		err := fmt.Errorf("ошибка подтверждения оповещения события: %w", err)
 		e.logger.Error(err.Error())
@@ -43,14 +43,14 @@ func (e SupportHandlerImpl) SetNotified(ctx context.Context, IDReq *events.Notif
 	return &emptypb.Empty{}, nil
 }
 
-func (e SupportHandlerImpl) CleanupOldEvents(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	err := e.services.EventClean.CleanupOldEvents(ctx)
+func (e SupportHandlerImpl) CleanupOldEvents(ctx context.Context, cleanupReq *events.CleanupReq) (*emptypb.Empty, error) {
+	n, err := e.services.EventClean.CleanupOldEvents(ctx, cleanupReq.StoreTime.AsDuration())
 	if err != nil {
 		err := fmt.Errorf("ошибка удаления старых события: %w", err)
 		e.logger.Error(err.Error())
 		s := rqres.FromError(err)
 		return nil, status.Error(s.Code(), s.Message())
 	}
-	e.logger.Info("удаления старых событий: успешно")
+	e.logger.Info("успешно удалено старых событий: %d", n)
 	return &emptypb.Empty{}, nil
 }

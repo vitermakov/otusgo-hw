@@ -22,12 +22,13 @@ func NewEventRepo() repository.Event {
 
 func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Event, error) {
 	event := model.Event{
-		ID:        uuid.New(),
-		Title:     input.Title,
-		Date:      input.Date,
-		Duration:  input.Duration,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:           uuid.New(),
+		Title:        input.Title,
+		Date:         input.Date,
+		Duration:     input.Duration,
+		NotifyStatus: model.NotifyStatusNone,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 	if input.OwnerID.ID() > 0 {
 		event.Owner = &model.User{ID: input.OwnerID}
@@ -45,12 +46,15 @@ func (er *EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.E
 	return &event, nil
 }
 
-func (er *EventRepo) Update(ctx context.Context, input model.EventUpdate, search model.EventSearch) error {
+func (er *EventRepo) Update(ctx context.Context, input model.EventUpdate, search model.EventSearch) (int64, error) {
 	er.mu.Lock()
+	defer er.mu.Unlock()
+	var n int64
 	for i, event := range er.events {
 		if !er.matchSearch(event, search) {
 			continue
 		}
+		n++
 		if input.Title != nil {
 			event.Title = *input.Title
 		}
@@ -66,15 +70,19 @@ func (er *EventRepo) Update(ctx context.Context, input model.EventUpdate, search
 		if input.NotifyTerm != nil {
 			event.NotifyTerm = *input.NotifyTerm
 		}
+		if input.NotifyStatus != nil {
+			event.NotifyStatus = *input.NotifyStatus
+		}
 		event.UpdatedAt = time.Now()
 		er.events[i] = event
 	}
-	er.mu.Unlock()
-	return nil
+	return n, nil
 }
 
-func (er *EventRepo) Delete(ctx context.Context, search model.EventSearch) error {
+func (er *EventRepo) Delete(ctx context.Context, search model.EventSearch) (int64, error) {
 	er.mu.Lock()
+	defer er.mu.Unlock()
+	var n int64
 	result := make([]model.Event, 0)
 	for _, event := range er.events {
 		if !er.matchSearch(event, search) {
@@ -82,8 +90,7 @@ func (er *EventRepo) Delete(ctx context.Context, search model.EventSearch) error
 		}
 	}
 	er.events = result
-	er.mu.Unlock()
-	return nil
+	return n, nil
 }
 
 // GetList не учитываем пагинацию, сортировку.
@@ -142,5 +149,15 @@ func (er *EventRepo) matchSearch(event model.Event, search model.EventSearch) bo
 }
 
 func (er *EventRepo) BlockEvents4Notify(ctx context.Context, now time.Time) ([]model.Event, error) {
-	return nil, nil
+	var filtered []model.Event
+	search := model.EventSearch{NeedNotifyTerm: &now}
+	er.mu.Lock()
+	defer er.mu.Unlock()
+	for i, event := range er.events {
+		if er.matchSearch(event, search) {
+			er.events[i].NotifyStatus = model.NotifyStatusBlocked
+			filtered = append(filtered, event)
+		}
+	}
+	return filtered, nil
 }

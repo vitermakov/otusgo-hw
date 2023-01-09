@@ -11,7 +11,7 @@ import "google/protobuf/empty.proto";
 service support {
   rpc GetNotifications(google.protobuf.Empty) returns(Notifies) {}
   rpc SetNotified(NotificationIDReq) returns(google.protobuf.Empty) {}
-  rpc CleanupOldEvents(google.protobuf.Empty) returns(google.protobuf.Empty) {}
+  rpc CleanupOldEvents(CleanupReq) returns(google.protobuf.Empty) {}
 }
 
 message Notification {
@@ -29,4 +29,8 @@ message Notifies {
 
 message NotificationIDReq {
   string ID = 1;
+}
+
+message CleanupReq {
+  google.protobuf.Duration StoreTime = 1;
 }

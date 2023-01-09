@@ -25,7 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 type SupportClient interface {
 	GetNotifications(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Notifies, error)
 	SetNotified(ctx context.Context, in *NotificationIDReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	CleanupOldEvents(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CleanupOldEvents(ctx context.Context, in *CleanupReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type supportClient struct {
@@ -54,7 +54,7 @@ func (c *supportClient) SetNotified(ctx context.Context, in *NotificationIDReq, 
 	return out, nil
 }
 
-func (c *supportClient) CleanupOldEvents(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *supportClient) CleanupOldEvents(ctx context.Context, in *CleanupReq, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/api.support/CleanupOldEvents", in, out, opts...)
 	if err != nil {
@@ -69,7 +69,7 @@ func (c *supportClient) CleanupOldEvents(ctx context.Context, in *emptypb.Empty,
 type SupportServer interface {
 	GetNotifications(context.Context, *emptypb.Empty) (*Notifies, error)
 	SetNotified(context.Context, *NotificationIDReq) (*emptypb.Empty, error)
-	CleanupOldEvents(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	CleanupOldEvents(context.Context, *CleanupReq) (*emptypb.Empty, error)
 	mustEmbedUnimplementedSupportServer()
 }
 
@@ -83,7 +83,7 @@ func (UnimplementedSupportServer) GetNotifications(context.Context, *emptypb.Emp
 func (UnimplementedSupportServer) SetNotified(context.Context, *NotificationIDReq) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetNotified not implemented")
 }
-func (UnimplementedSupportServer) CleanupOldEvents(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+func (UnimplementedSupportServer) CleanupOldEvents(context.Context, *CleanupReq) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CleanupOldEvents not implemented")
 }
 func (UnimplementedSupportServer) mustEmbedUnimplementedSupportServer() {}
@@ -136,7 +136,7 @@ func _Support_SetNotified_Handler(srv interface{}, ctx context.Context, dec func
 }
 
 func _Support_CleanupOldEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(CleanupReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func _Support_CleanupOldEvents_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/api.support/CleanupOldEvents",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SupportServer).CleanupOldEvents(ctx, req.(*emptypb.Empty))
+		return srv.(SupportServer).CleanupOldEvents(ctx, req.(*CleanupReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

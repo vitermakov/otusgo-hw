@@ -112,7 +112,7 @@ func (es EventCRUDService) Update(ctx context.Context, event model.Event, input 
 		}
 		return err
 	}
-	if err = es.repo.Update(ctx, input, model.EventSearch{ID: &event.ID}); err != nil {
+	if _, err = es.repo.Update(ctx, input, model.EventSearch{ID: &event.ID}); err != nil {
 		return errx.FatalNew(err)
 	}
 	return nil
@@ -151,7 +151,7 @@ func (es EventCRUDService) Delete(ctx context.Context, event model.Event) error 
 	if err != nil {
 		return err
 	}
-	if err = es.repo.Delete(ctx, model.EventSearch{ID: &event.ID}); err != nil {
+	if _, err = es.repo.Delete(ctx, model.EventSearch{ID: &event.ID}); err != nil {
 		// неустранимая пользователем ошибка.
 		return errx.FatalNew(err)
 	}

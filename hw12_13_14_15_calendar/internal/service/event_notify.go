@@ -7,6 +7,7 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/repository"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
 type EventNotifyService struct {
@@ -15,11 +16,37 @@ type EventNotifyService struct {
 	clock clock.Clock
 }
 
-func (e EventNotifyService) GetNotifications(ctx context.Context) ([]model.Notification, error) {
-	return nil, nil
+func (en EventNotifyService) GetNotifications(ctx context.Context) ([]model.Notification, error) {
+	events, err := en.repo.BlockEvents4Notify(ctx, en.clock.Now())
+	if err != nil {
+		// неустранимая пользователем ошибка.
+		return nil, errx.FatalNew(err)
+	}
+	result := make([]model.Notification, len(events))
+	for i, event := range events {
+		user := model.NotifyUser{}
+		if event.Owner != nil {
+			user.Name = event.Owner.Name
+			user.Email = event.Owner.Email
+		}
+		result[i] = model.Notification{
+			EventID:       event.ID,
+			EventTitle:    event.Title,
+			EventDate:     event.Date,
+			EventDuration: event.Duration,
+			NotifyUser:    user,
+		}
+	}
+	return result, nil
 }
 
-func (e EventNotifyService) MarkEventsNotified(ctx context.Context, eventID uuid.UUID) error {
+func (en EventNotifyService) MarkEventNotified(ctx context.Context, eventID uuid.UUID) error {
+	nf := model.NotifyStatusNotified
+	if _, err := en.repo.Update(ctx, model.EventUpdate{
+		NotifyStatus: &nf,
+	}, model.EventSearch{ID: &eventID}); err != nil {
+		return errx.FatalNew(err)
+	}
 	return nil
 }
 

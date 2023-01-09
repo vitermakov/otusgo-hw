@@ -32,12 +32,15 @@ func (ur *UserRepo) Add(ctx context.Context, input model.UserCreate) (*model.Use
 	return &user, nil
 }
 
-func (ur *UserRepo) Update(ctx context.Context, input model.UserUpdate, search model.UserSearch) error {
+func (ur *UserRepo) Update(ctx context.Context, input model.UserUpdate, search model.UserSearch) (int64, error) {
 	ur.mu.Lock()
+	defer ur.mu.Unlock()
+	var n int64
 	for i, user := range ur.users {
 		if !ur.matchSearch(user, search) {
 			continue
 		}
+		n++
 		if input.Name != nil {
 			user.Name = *input.Name
 		}
@@ -46,21 +49,23 @@ func (ur *UserRepo) Update(ctx context.Context, input model.UserUpdate, search m
 		}
 		ur.users[i] = user
 	}
-	ur.mu.Unlock()
-	return nil
+	return n, nil
 }
 
-func (ur *UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
+func (ur *UserRepo) Delete(ctx context.Context, search model.UserSearch) (int64, error) {
 	ur.mu.Lock()
+	defer ur.mu.Unlock()
+	var n int64
 	result := make([]model.User, 0)
 	for _, user := range ur.users {
 		if !ur.matchSearch(user, search) {
 			result = append(result, user)
+		} else {
+			n++
 		}
 	}
 	ur.users = result
-	ur.mu.Unlock()
-	return nil
+	return n, nil
 }
 
 // GetList не учитываем пагинацию, сортировку.

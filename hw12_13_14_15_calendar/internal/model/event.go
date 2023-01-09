@@ -72,12 +72,12 @@ func (ec EventCreate) Validate() error {
 
 // EventUpdate модель обновления события - обновлять можно не все поля.
 type EventUpdate struct {
-	Title       *string
-	Date        *time.Time
-	Duration    *time.Duration
-	Description *string
-	NotifyTerm  *time.Duration
-	Notified    *bool
+	Title        *string
+	Date         *time.Time
+	Duration     *time.Duration
+	Description  *string
+	NotifyTerm   *time.Duration
+	NotifyStatus *NotifyStatus
 }
 
 // Validate базовая валидация структуры.
