@@ -40,3 +40,31 @@ func FromNotificationSlice(items []model.Notification) *events.Notifies {
 	}
 	return result
 }
+
+func ToNotificationModel(item *events.Notification) model.Notification {
+	if item == nil {
+		return model.Notification{}
+	}
+	eventID, _ := uuid.Parse(item.ID)
+	return model.Notification{
+		EventID:       eventID,
+		EventTitle:    item.Title,
+		EventDate:     item.Date.AsTime(),
+		EventDuration: item.Duration.AsDuration(),
+		NotifyUser: model.NotifyUser{
+			Name:  item.UserName,
+			Email: item.UserEmail,
+		},
+	}
+}
+
+func ToNotificationSlice(items *events.Notifies) []model.Notification {
+	if items == nil {
+		return nil
+	}
+	result := make([]model.Notification, len(items.List))
+	for i, item := range items.List {
+		result[i] = ToNotificationModel(item)
+	}
+	return result
+}
