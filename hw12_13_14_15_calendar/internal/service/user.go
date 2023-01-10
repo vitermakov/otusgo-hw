@@ -62,11 +62,13 @@ func (us UserService) Update(ctx context.Context, user model.User, input model.U
 	if err := us.validateUpdate(ctx, user, input); err != nil {
 		return err
 	}
-	return us.repo.Update(ctx, input, model.UserSearch{ID: &user.ID})
+	_, err := us.repo.Update(ctx, input, model.UserSearch{ID: &user.ID})
+	return err
 }
 
 func (us UserService) Delete(ctx context.Context, user model.User) error {
-	return us.repo.Delete(ctx, model.UserSearch{ID: &user.ID})
+	_, err := us.repo.Delete(ctx, model.UserSearch{ID: &user.ID})
+	return err
 }
 
 func (us UserService) GetAll(ctx context.Context) ([]model.User, error) {

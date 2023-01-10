@@ -5,17 +5,16 @@ import (
 	"fmt"
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/sender"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/queue"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"time"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/mailer/stdout"
 )
 
 type Sender struct {
-	config   config.Config
-	logger   logger.Logger
-	deps     *deps.Deps
-	services *deps.Services
-	closer   closer.Closer
+	config config.Config
+	logger logger.Logger
+	deps   *deps.Deps
 }
 
 func NewSender(config config.Config) App {
@@ -33,28 +32,41 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	//ca.deps = &deps.Deps{Repos: repos, Logger: ca.logger}
+	supportAPI, err := grpc.NewSupportClient(sa.config.APIs.Calendar.Address)
+	if err != nil {
+		return fmt.Errorf("error initialize SupportAPI: %w", err)
+	}
 
-	// ca.services = deps.NewServices(ca.deps)
+	listener, err := queue.NewConsumer(sa.config.MPQ, sa.logger, sa.config.Notify.QueueListen)
+	if err != nil {
+		return fmt.Errorf("error queue listener: %w", err)
+	}
+
+	sa.deps = &deps.Deps{
+		Logger:   sa.logger,
+		APIs:     &deps.APIs{Support: supportAPI},
+		Listener: listener,
+		Mailer: stdout.NewMailer(&stdout.Config{
+			TmplPath:    sa.config.Mailer.TemplatePath,
+			DefaultFrom: sa.config.Mailer.DefaultFrom,
+		}),
+	}
 
 	return nil
-}
-
-func (sa *Sender) Close() {
-	// 10 секунд на завершение
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	err := sa.closer.Close(ctx)
-	if err != nil {
-		sa.logger.Info("calendar stopped: %s", err.Error())
-	} else {
-		sa.logger.Info("calendar stopped successfully")
-	}
 }
 
 func (sa *Sender) Run(ctx context.Context) error { //nolint:unparam // will be used
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	return nil
+	service := deps.NewSender(
+		sa.deps.APIs.Support, sa.deps.Listener, sa.logger, sa.deps.Mailer,
+		sa.config.Notify.QueueListen, sa.config.Mailer.DefaultFrom,
+	)
+
+	return service.Run(ctx)
+}
+
+func (sa *Sender) Close() {
+	sa.logger.Info("sender stopped successfully")
 }
