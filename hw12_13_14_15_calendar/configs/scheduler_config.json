@@ -15,13 +15,13 @@
     "type": "rabbitMq",
     "rabbitMq": {
       "host": "127.0.0.1",
-      "user": "otus",
-      "password": "otus_mq",
+      "user": "username",
+      "password": "password",
       "port": 5672
     }
   },
   "cleanup": {
-    "timeLive": "1y"
+    "storeTime": "1y"
   },
   "notify": {
     "checkingTime": "1m",

@@ -22,7 +22,7 @@ type Logger struct {
 }
 
 type Cleanup struct {
-	TimeLive string `json:"timeLive"` // с единицей измерения: 1y
+	StoreTime string `json:"storeTime"` // с единицей измерения: 1y
 }
 
 type Notify struct {

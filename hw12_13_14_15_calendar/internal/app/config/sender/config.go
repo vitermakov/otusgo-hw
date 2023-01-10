@@ -5,12 +5,15 @@ import (
 )
 
 type Config struct {
-	ServiceID   string        `json:"serviceId"`
-	ServiceName string        `json:"serviceName"`
-	Logger      Logger        `json:"logger"`
-	Mailer      common.Mailer `json:"mailer"`
-	MPQ         common.Queue  `json:"mpq"`
-	Notify      Notify        `json:"notify"`
+	ServiceID   string `json:"serviceId"`
+	ServiceName string `json:"serviceName"`
+	Logger      Logger `json:"logger"`
+	APIs        struct {
+		Calendar common.API `json:"calendar"`
+	} `json:"APIs"`
+	Mailer common.Mailer `json:"mailer"`
+	MPQ    common.Queue  `json:"mpq"`
+	Notify Notify        `json:"notify"`
 }
 
 type Logger struct {

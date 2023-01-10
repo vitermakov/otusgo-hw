@@ -8,12 +8,18 @@
   "notify": {
     "queueListen": "userEvents"
   },
+  "APIs": {
+    "calendar": {
+      "type": "grpc",
+      "address": "127.0.0.1:8096"
+    }
+  },
   "mpq": {
     "type": "rabbitMq",
     "rabbitMq": {
       "host": "127.0.0.1",
-      "user": "otus",
-      "password": "otus_mq",
+      "user": "username",
+      "password": "password",
       "port": 5672
     }
   },
