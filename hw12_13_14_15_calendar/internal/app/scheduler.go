@@ -5,17 +5,16 @@ import (
 	"fmt"
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/scheduler"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/scheduler"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/queue"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"time"
 )
 
 type Scheduler struct {
-	config   config.Config
-	logger   logger.Logger
-	deps     *deps.Deps
-	services *deps.Services
-	closer   closer.Closer
+	config config.Config
+	logger logger.Logger
+	deps   *deps.Deps
 }
 
 func NewScheduler(config config.Config) App {
@@ -33,28 +32,48 @@ func (sa *Scheduler) Initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	//ca.deps = &deps.Deps{Repos: repos, Logger: ca.logger}
+	supportAPI, err := grpc.NewSupportClient(sa.config.APIs.Calendar.Address)
+	if err != nil {
+		return fmt.Errorf("error initialize SupportAPI: %w", err)
+	}
 
-	// ca.services = deps.NewServices(ca.deps)
+	publisher, err := queue.NewProducer(sa.config.MPQ, sa.logger, sa.config.Notify.QueuePublish)
+	if err != nil {
+		return fmt.Errorf("error queue publisher: %w", err)
+	}
 
+	sa.deps = &deps.Deps{
+		APIs:      &deps.APIs{Support: supportAPI},
+		Logger:    sa.logger,
+		Publisher: publisher,
+	}
 	return nil
 }
 
 func (sa *Scheduler) Close() {
-	// 10 секунд на завершение
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	err := sa.closer.Close(ctx)
-	if err != nil {
-		sa.logger.Info("calendar stopped: %s", err.Error())
-	} else {
-		sa.logger.Info("calendar stopped successfully")
-	}
+	sa.logger.Info("scheduler stopped successfully")
 }
 
-func (sa *Scheduler) Run(ctx context.Context) error { //nolint:unparam // will be used
+func (sa *Scheduler) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	ct, err := time.ParseDuration(sa.config.Notify.CheckingTime)
+	if err != nil {
+		ct = time.Minute
+		sa.logger.Warn("wrong checkingTime config value '%s', set default '%s'", sa.config.Notify.CheckingTime, ct.String())
+	}
+
+	supAPI := sa.deps.APIs.Support
+
+	notifier := deps.NewNotifier(supAPI, sa.deps.Publisher, sa.logger, sa.config.Notify.QueuePublish)
+	notifierRun := deps.NewRepeated(notifier, ct, sa.logger)
+	notifierRun.Repeat(ctx)
+
+	//cleaner := deps.NewCleaner(supAPI, sa.logger, sa.config.Cleanup.StoreTime)
+	//cleanerRun := deps.NewRepeated(cleaner, time.Hour*24, sa.logger)
+	//cleanerRun.Repeat(ctx)
+
+	<-ctx.Done()
 	return nil
 }

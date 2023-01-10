@@ -24,7 +24,7 @@
     "storeTime": "1y"
   },
   "notify": {
-    "checkingTime": "1m",
+    "checkingTime": "5s",
     "queuePublish": "userEvents"
   }
 }
