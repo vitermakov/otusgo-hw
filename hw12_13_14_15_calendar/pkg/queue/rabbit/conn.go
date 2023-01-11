@@ -3,14 +3,15 @@ package rabbit
 import (
 	"context"
 	"fmt"
-	"github.com/cenkalti/backoff/v3"
-	"github.com/streadway/amqp"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"log"
 	"net"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/cenkalti/backoff/v3"
+	"github.com/streadway/amqp"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 )
 
 type Config struct {
@@ -45,19 +46,19 @@ func (r *MQConnection) connect() error {
 	}
 	r.conn, err = amqp.Dial(uri.String())
 	if err != nil {
-		return fmt.Errorf("dial: %s", err)
+		return fmt.Errorf("dial: %w", err)
 	}
 
 	r.channel, err = r.conn.Channel()
 	if err != nil {
-		return fmt.Errorf("channel: %s", err)
+		return fmt.Errorf("channel: %w", err)
 	}
 
 	go func() {
 		ncErr := <-r.conn.NotifyClose(make(chan *amqp.Error))
 		r.logger.Error("channel closed: %s", ncErr.Error())
 		// Понимаем, что канал сообщений закрыт, надо пересоздать соединение.
-		r.done <- fmt.Errorf("channel Closed: %s", ncErr)
+		r.done <- fmt.Errorf("channel Closed: %w", ncErr)
 	}()
 
 	if err = r.channel.ExchangeDeclare(
@@ -69,7 +70,7 @@ func (r *MQConnection) connect() error {
 		false,
 		nil,
 	); err != nil {
-		return fmt.Errorf("exchange declare: %s", err)
+		return fmt.Errorf("exchange declare: %w", err)
 	}
 
 	return nil
@@ -86,12 +87,12 @@ func (r *MQConnection) announceQueue(queueName string) (<-chan amqp.Delivery, er
 		nil,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("queue Declare: %s", err)
+		return nil, fmt.Errorf("queue Declare: %w", err)
 	}
 	// Число сообщений, которые можно подтвердить за раз.
 	err = r.channel.Qos(50, 0, false)
 	if err != nil {
-		return nil, fmt.Errorf("error setting qos: %s", err)
+		return nil, fmt.Errorf("error setting qos: %w", err)
 	}
 	// Создаём биндинг (правило маршрутизации).
 	if err = r.channel.QueueBind(
@@ -101,7 +102,7 @@ func (r *MQConnection) announceQueue(queueName string) (<-chan amqp.Delivery, er
 		false,
 		nil,
 	); err != nil {
-		return nil, fmt.Errorf("queue Bind: %s", err)
+		return nil, fmt.Errorf("queue Bind: %w", err)
 	}
 	msgs, err := r.channel.Consume(
 		queue.Name,
@@ -113,7 +114,7 @@ func (r *MQConnection) announceQueue(queueName string) (<-chan amqp.Delivery, er
 		nil,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("queue Consume: %s", err)
+		return nil, fmt.Errorf("queue Consume: %w", err)
 	}
 
 	return msgs, nil
@@ -132,19 +133,17 @@ func (r *MQConnection) reConnect(ctx context.Context, queue string) (<-chan amqp
 		if d == backoff.Stop {
 			return nil, fmt.Errorf("stop reconnecting")
 		}
-		select {
-		case <-time.After(d):
-			if err := r.connect(); err != nil {
-				log.Printf("could not connect in reconnect call: %+v", err)
-				continue
-			}
-			msgs, err := r.announceQueue(queue)
-			if err != nil {
-				fmt.Printf("Couldn't connect: %+v", err)
-				continue
-			}
-
-			return msgs, nil
+		<-time.After(d)
+		if err := r.connect(); err != nil {
+			log.Printf("could not connect in reconnect call: %+v", err)
+			continue
 		}
+		msgs, err := r.announceQueue(queue)
+		if err != nil {
+			fmt.Printf("Couldn't connect: %+v", err)
+			continue
+		}
+
+		return msgs, nil
 	}
 }

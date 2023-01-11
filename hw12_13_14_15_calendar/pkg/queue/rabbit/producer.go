@@ -2,6 +2,7 @@ package rabbit
 
 import (
 	"fmt"
+
 	"github.com/streadway/amqp"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/queue"
 )
@@ -12,8 +13,7 @@ type Producer struct {
 }
 
 func NewProducer(conn *MQConnection) (*Producer, error) {
-	err := conn.connect()
-	if err != nil {
+	if err := conn.connect(); err != nil {
 		return nil, err
 	}
 	return &Producer{MQConnection: conn}, nil

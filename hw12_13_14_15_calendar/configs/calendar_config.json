@@ -8,9 +8,9 @@
     "storage": {
         "type": "pgsql",
         "pgsql": {
-            "host": "127.0.0.1",
-            "user": "otus",
-            "password": "otus_db",
+            "host": "db",
+            "user": "otus_user",
+            "password": "otus_pass",
             "port": 5432,
             "dbName": "calendar"
         },
@@ -19,11 +19,11 @@
     "servers": {
         "http": {
             "host": "127.0.0.1",
-            "port": 8095
+            "port": 8088
         },
         "grpc": {
             "host": "127.0.0.1",
-            "port": 8096
+            "port": 8089
         }
     }
 }

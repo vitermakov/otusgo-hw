@@ -3,12 +3,18 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
+
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/scheduler"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/scheduler"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/queue"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"time"
+)
+
+const (
+	defNotifyCheckingTime  = time.Minute
+	defCleanerCheckingTime = time.Hour * 24
 )
 
 type Scheduler struct {
@@ -32,7 +38,7 @@ func (sa *Scheduler) Initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	supportAPI, err := grpc.NewSupportClient(sa.config.APIs.Calendar.Address)
+	supportAPI, err := grpc.NewSupportClient(sa.config.API.Calendar.Address)
 	if err != nil {
 		return fmt.Errorf("error initialize SupportAPI: %w", err)
 	}
@@ -43,7 +49,7 @@ func (sa *Scheduler) Initialize(ctx context.Context) error {
 	}
 
 	sa.deps = &deps.Deps{
-		APIs:      &deps.APIs{Support: supportAPI},
+		API:       &deps.API{Support: supportAPI},
 		Logger:    sa.logger,
 		Publisher: publisher,
 	}
@@ -58,21 +64,31 @@ func (sa *Scheduler) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	supAPI := sa.deps.API.Support
+
 	ct, err := time.ParseDuration(sa.config.Notify.CheckingTime)
 	if err != nil {
-		ct = time.Minute
-		sa.logger.Warn("wrong checkingTime config value '%s', set default '%s'", sa.config.Notify.CheckingTime, ct.String())
+		ct = defNotifyCheckingTime
+		sa.logger.Warn(
+			"wrong notifier checkingTime config value '%s', set default '%s'",
+			sa.config.Notify.CheckingTime, ct.String(),
+		)
 	}
-
-	supAPI := sa.deps.APIs.Support
-
 	notifier := deps.NewNotifier(supAPI, sa.deps.Publisher, sa.logger, sa.config.Notify.QueuePublish)
 	notifierRun := deps.NewRepeated(notifier, ct, sa.logger)
 	notifierRun.Repeat(ctx)
 
-	//cleaner := deps.NewCleaner(supAPI, sa.logger, sa.config.Cleanup.StoreTime)
-	//cleanerRun := deps.NewRepeated(cleaner, time.Hour*24, sa.logger)
-	//cleanerRun.Repeat(ctx)
+	ct, err = time.ParseDuration(sa.config.Cleanup.CheckingTime)
+	if err != nil {
+		ct = defCleanerCheckingTime
+		sa.logger.Warn(
+			"wrong cleaner checkingTime config value '%s', set default '%s'",
+			sa.config.Cleanup.CheckingTime, ct.String(),
+		)
+	}
+	cleaner := deps.NewCleaner(supAPI, sa.logger, sa.config.Cleanup.StoreTime)
+	cleanerRun := deps.NewRepeated(cleaner, ct, sa.logger)
+	cleanerRun.Repeat(ctx)
 
 	<-ctx.Done()
 	return nil

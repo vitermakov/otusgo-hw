@@ -3,6 +3,7 @@ package rabbit
 import (
 	"context"
 	"fmt"
+
 	"github.com/streadway/amqp"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/queue"
 )
@@ -21,11 +22,11 @@ type Worker func(context.Context, <-chan amqp.Delivery)
 func (c *Consumer) Consume(ctx context.Context, queueName string) (<-chan queue.Message, error) {
 	var err error
 	if err = c.connect(); err != nil {
-		return nil, fmt.Errorf("error: %v", err)
+		return nil, fmt.Errorf("error: %w", err)
 	}
 	delivery, err := c.announceQueue(queueName)
 	if err != nil {
-		return nil, fmt.Errorf("error: %v", err)
+		return nil, fmt.Errorf("error: %w", err)
 	}
 	messages := make(chan queue.Message)
 	go func() {

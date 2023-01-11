@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/benbjohnson/clock"
 	"github.com/leporo/sqlf"
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/calendar"
@@ -12,8 +15,6 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
-	"sync"
-	"time"
 )
 
 type Calendar struct {
@@ -82,15 +83,14 @@ func (ca *Calendar) Close() {
 	// 10 секунд на завершение
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	err := ca.closer.Close(ctx)
-	if err != nil {
+	if err := ca.closer.Close(ctx); err != nil {
 		ca.logger.Info("calendar stopped: %s", err.Error())
 	} else {
 		ca.logger.Info("calendar stopped successfully")
 	}
 }
 
-func (ca *Calendar) Run(ctx context.Context) error { //nolint:unparam // will be used
+func (ca *Calendar) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 

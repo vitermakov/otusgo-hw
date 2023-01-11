@@ -8,10 +8,10 @@ import (
 
 type Deps struct {
 	Logger    logger.Logger
-	APIs      *APIs
+	API       *API
 	Publisher queue.Producer
 }
 
-type APIs struct {
+type API struct {
 	Support events.SupportClient
 }

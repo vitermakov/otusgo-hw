@@ -3,13 +3,12 @@ package stdout
 import (
 	"errors"
 	"fmt"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/mailer"
 	"os"
+
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/mailer"
 )
 
-var (
-	ErrEmptyRecipient = errors.New("empty recipient list")
-)
+var ErrEmptyRecipient = errors.New("empty recipient list")
 
 type Config struct {
 	TmplPath    string

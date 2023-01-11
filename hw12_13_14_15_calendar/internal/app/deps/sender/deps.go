@@ -9,11 +9,11 @@ import (
 
 type Deps struct {
 	Logger   logger.Logger
-	APIs     *APIs
+	API      *API
 	Listener queue.Consumer
 	Mailer   mailer.Mailer
 }
 
-type APIs struct {
+type API struct {
 	Support events.SupportClient
 }

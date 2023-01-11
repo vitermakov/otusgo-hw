@@ -139,7 +139,7 @@ func (er *EventRepo) matchSearch(event model.Event, search model.EventSearch) bo
 	}
 	if search.NeedNotifyTerm != nil {
 		if event.NotifyTerm.Seconds() == 0 {
-
+			return false
 		}
 		if event.Date.After(*search.DateLess) {
 			return false

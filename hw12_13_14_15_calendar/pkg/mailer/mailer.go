@@ -42,6 +42,7 @@ func BuildBody(tplPath, tplName string, data interface{}) (string, error) {
 	}
 	return buff.String(), nil
 }
+
 func BuildHeaders(mail Mail) string {
 	sb := strings.Builder{}
 	sb.WriteString("MIME-version: 1.0;\r\n")

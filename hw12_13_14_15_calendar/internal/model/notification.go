@@ -1,13 +1,14 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Notification модель оповещения о приближающемся событии.
 type Notification struct {
-	EventID       uuid.UUID     `json:"eventID"`       // ID события.
+	EventID       uuid.UUID     `json:"eventId"`       // ID события.
 	EventTitle    string        `json:"eventTitle"`    // Заголовок события.
 	EventDate     time.Time     `json:"eventDate"`     // Дата события.
 	EventDuration time.Duration `json:"eventDuration"` // Продолжительность события.

@@ -8,9 +8,9 @@ type Config struct {
 	ServiceID   string `json:"serviceId"`
 	ServiceName string `json:"serviceName"`
 	Logger      Logger `json:"logger"`
-	APIs        struct {
+	API         struct {
 		Calendar common.API `json:"calendar"`
-	} `json:"APIs"`
+	} `json:"api"`
 	Mailer common.Mailer `json:"mailer"`
 	MPQ    common.Queue  `json:"mpq"`
 	Notify Notify        `json:"notify"`

@@ -2,8 +2,9 @@ package app
 
 import (
 	"context"
-	_ "github.com/jackc/pgx/v4/stdlib" // pgx driver for database/sql
 	stdlog "log"
+
+	_ "github.com/jackc/pgx/v4/stdlib" // pgx driver for database/sql
 )
 
 type App interface {
@@ -12,11 +13,11 @@ type App interface {
 	Close()
 }
 
-// Execute шаблонная функция выполнения приложения
+// Execute шаблонная функция выполнения приложения.
 func Execute(ctx context.Context, app App) {
 	var err error
 
-	// пропишем defer на закрытие приложения до инициализации
+	// пропишем defer на закрытие приложения до инициализации.
 	defer app.Close()
 
 	err = app.Initialize(ctx)

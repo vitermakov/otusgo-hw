@@ -3,12 +3,13 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/queue"
-	"time"
 )
 
 type Notifier struct {
@@ -56,6 +57,7 @@ func (ns Notifier) DoAction(ctx context.Context) {
 		},
 	}
 	for _, note := range notifications {
+		note := note
 		message, err := queue.EncMessage(&note)
 		if err != nil {
 			ns.logger.Info("notifier error encoding notification: %s", err.Error())
@@ -68,5 +70,4 @@ func (ns Notifier) DoAction(ctx context.Context) {
 		}
 	}
 	ns.logger.Info("notifier: %d notifications sent", len(notifications))
-
 }

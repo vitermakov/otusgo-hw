@@ -8,9 +8,9 @@ type Config struct {
 	ServiceID   string `json:"serviceId"`
 	ServiceName string `json:"serviceName"`
 	Logger      Logger `json:"logger"`
-	APIs        struct {
+	API         struct {
 		Calendar common.API `json:"calendar"`
-	} `json:"APIs"`
+	} `json:"api"`
 	MPQ     common.Queue `json:"mpq"`
 	Cleanup Cleanup      `json:"cleanup"`
 	Notify  Notify       `json:"notify"`
@@ -22,7 +22,8 @@ type Logger struct {
 }
 
 type Cleanup struct {
-	StoreTime string `json:"storeTime"` // с единицей измерения: 1y
+	CheckingTime string `json:"checkingTime"` // с единицей измерения: 1d
+	StoreTime    string `json:"storeTime"`    // с единицей измерения: 1y
 }
 
 type Notify struct {

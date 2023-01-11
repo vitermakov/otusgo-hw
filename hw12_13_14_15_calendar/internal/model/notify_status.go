@@ -18,7 +18,7 @@ func (ns NotifyStatus) Valid() bool {
 }
 
 func (ns NotifyStatus) String() string {
-	switch ns {
+	switch ns { //nolint:exhaustive // has def-value
 	case NotifyStatusBlocked:
 		return "blocked"
 	case NotifyStatusNotified:

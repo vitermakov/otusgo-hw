@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/sender"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/queue"
@@ -32,7 +33,7 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	supportAPI, err := grpc.NewSupportClient(sa.config.APIs.Calendar.Address)
+	supportAPI, err := grpc.NewSupportClient(sa.config.API.Calendar.Address)
 	if err != nil {
 		return fmt.Errorf("error initialize SupportAPI: %w", err)
 	}
@@ -44,7 +45,7 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 
 	sa.deps = &deps.Deps{
 		Logger:   sa.logger,
-		APIs:     &deps.APIs{Support: supportAPI},
+		API:      &deps.API{Support: supportAPI},
 		Listener: listener,
 		Mailer: stdout.NewMailer(&stdout.Config{
 			TmplPath:    sa.config.Mailer.TemplatePath,
@@ -55,12 +56,12 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 	return nil
 }
 
-func (sa *Sender) Run(ctx context.Context) error { //nolint:unparam // will be used
+func (sa *Sender) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	service := deps.NewSender(
-		sa.deps.APIs.Support, sa.deps.Listener, sa.logger, sa.deps.Mailer,
+		sa.deps.API.Support, sa.deps.Listener, sa.logger, sa.deps.Mailer,
 		sa.config.Notify.QueueListen, sa.config.Mailer.DefaultFrom,
 	)
 

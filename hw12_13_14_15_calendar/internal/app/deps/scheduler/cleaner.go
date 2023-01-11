@@ -2,10 +2,11 @@ package scheduler
 
 import (
 	"context"
+	"time"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"time"
 )
 
 const defStoreTime = time.Hour * 24 * 365

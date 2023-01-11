@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	common "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"net"
 	"net/url"
 	"strconv"
 	"time"
+
+	common "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 )
 
 const (

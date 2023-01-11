@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/calendar"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/dto"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
@@ -30,8 +31,8 @@ func (e SupportHandlerImpl) GetNotifications(ctx context.Context, _ *emptypb.Emp
 	return dto.FromNotificationSlice(notifiesList), nil
 }
 
-func (e SupportHandlerImpl) SetNotified(ctx context.Context, IDReq *events.NotificationIDReq) (*emptypb.Empty, error) {
-	eventID := dto.NotificationIDReqModel(IDReq)
+func (e SupportHandlerImpl) SetNotified(ctx context.Context, idReq *events.NotificationIDReq) (*emptypb.Empty, error) {
+	eventID := dto.NotificationIDReqModel(idReq)
 	err := e.services.EventNotify.MarkEventNotified(ctx, eventID)
 	if err != nil {
 		err := fmt.Errorf("ошибка подтверждения оповещения события: %w", err)
@@ -43,7 +44,9 @@ func (e SupportHandlerImpl) SetNotified(ctx context.Context, IDReq *events.Notif
 	return &emptypb.Empty{}, nil
 }
 
-func (e SupportHandlerImpl) CleanupOldEvents(ctx context.Context, cleanupReq *events.CleanupReq) (*emptypb.Empty, error) {
+func (e SupportHandlerImpl) CleanupOldEvents(
+	ctx context.Context, cleanupReq *events.CleanupReq,
+) (*emptypb.Empty, error) {
 	n, err := e.services.EventClean.CleanupOldEvents(ctx, cleanupReq.StoreTime.AsDuration())
 	if err != nil {
 		err := fmt.Errorf("ошибка удаления старых события: %w", err)

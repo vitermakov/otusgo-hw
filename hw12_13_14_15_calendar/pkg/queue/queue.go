@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-// Producer отправка сообщений в очередь
+// Producer отправка сообщений в очередь.
 type Producer interface {
 	Produce(message Message) error
 }

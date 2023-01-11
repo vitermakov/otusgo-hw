@@ -8,7 +8,7 @@
   "notify": {
     "queueListen": "userEvents"
   },
-  "APIs": {
+  "api": {
     "calendar": {
       "type": "grpc",
       "address": "127.0.0.1:8096"

@@ -11,7 +11,7 @@ var (
 	ErrShutdownCanceled = errors.New("shutdown cancelled")
 )
 
-// CloseFunc функция для завершения сервиса
+// CloseFunc функция для завершения сервиса.
 type CloseFunc func(ctx context.Context) bool
 
 type Closer struct {

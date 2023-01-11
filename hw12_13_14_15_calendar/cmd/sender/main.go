@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
 	"log"
 	"os/signal"
 	"syscall"
+
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
 )
 
 var configFile string

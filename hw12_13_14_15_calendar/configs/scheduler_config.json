@@ -5,7 +5,7 @@
     "fileName": "./logs/scheduler.log",
     "level": "info"
   },
-  "APIs": {
+  "api": {
     "calendar": {
       "type": "grpc",
       "address": "127.0.0.1:8096"
@@ -21,6 +21,7 @@
     }
   },
   "cleanup": {
+    "checkingTime": "1d",
     "storeTime": "1y"
   },
   "notify": {

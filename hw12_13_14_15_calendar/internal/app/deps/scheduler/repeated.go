@@ -2,8 +2,9 @@ package scheduler
 
 import (
 	"context"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"time"
+
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 )
 
 type Actionable interface {

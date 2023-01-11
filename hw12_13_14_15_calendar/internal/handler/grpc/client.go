@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"fmt"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
