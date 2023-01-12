@@ -2,7 +2,7 @@
   "serviceId": "sender",
   "serviceName": "Otus Calendar Sender",
   "logger": {
-    "fileName": "./logs/sender.log",
+    "fileName": "/var/log/sender.log",
     "level": "info"
   },
   "notify": {
@@ -11,21 +11,22 @@
   "api": {
     "calendar": {
       "type": "grpc",
-      "address": "127.0.0.1:8089"
+      "address": "127.0.0.1:8096"
     }
   },
   "mpq": {
     "type": "rabbitMq",
     "rabbitMq": {
       "host": "127.0.0.1",
-      "user": "username",
-      "password": "password",
+      "user": "otus_user",
+      "password": "otus_pass",
       "port": 5672
     }
   },
   "mailer": {
     "type": "stdout",
     "defaultFrom": "support@otus.ru",
-    "templatePath": "./templates/mail"
+    "templatePath": "/app/templates/mail"
   }
 }
+

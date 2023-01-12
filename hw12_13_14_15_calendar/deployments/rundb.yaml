@@ -1,0 +1,25 @@
+version: "3.5"
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:alpine
+    ports:
+      - "5432:5432"
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: "otus_user"
+      POSTGRES_PASSWORD: "otus_pass"
+      POSTGRES_DB: "calendar"
+    network_mode: host
+  migrate:
+    build:
+      context: ..
+      dockerfile: ./deployments/migrations/Dockerfile
+    environment:
+      GOOSE_DRIVER: "postgres"
+      GOOSE_DBSTRING: "host=127.0.0.1 port=5432 user=otus_user password=otus_pass dbname=calendar sslmode=disable"
+    depends_on:
+      - postgres
+    network_mode: host

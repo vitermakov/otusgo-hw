@@ -5,10 +5,12 @@ GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	docker-compose -f ./deployments/rundb.yaml build
+	docker-compose -f ./deployments/docker-compose.yaml build
 
 run: build
-	$(BIN) -config ./configs/config.json
+	docker-compose -f ./deployments/rundb.yaml up -d
+	docker-compose -f ./deployments/docker-compose.yaml up -d
 
 build-img:
 	docker build \
@@ -24,12 +26,6 @@ version: build
 
 test:
 	go test -race ./internal/... ./pkg/...
-
-migrate-install:
-	go install github.com/pressly/goose/v3/cmd/goose@latest
-
-migrate: migrate-install
-	goose -dir=migrations postgres "user=otus password=otus_db dbname=calendar sslmode=disable" up
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1

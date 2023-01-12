@@ -2,21 +2,21 @@
   "serviceId": "scheduler",
   "serviceName": "Otus Calendar Scheduler",
   "logger": {
-    "fileName": "./logs/scheduler.log",
+    "fileName": "/var/log/scheduler.log",
     "level": "info"
   },
   "api": {
     "calendar": {
       "type": "grpc",
-      "address": "127.0.0.1:8089"
+      "address": "127.0.0.1:8096"
     }
   },
   "mpq": {
     "type": "rabbitMq",
     "rabbitMq": {
       "host": "127.0.0.1",
-      "user": "username",
-      "password": "password",
+      "user": "otus_user",
+      "password": "otus_pass",
       "port": 5672
     }
   },

@@ -1,1 +1,43 @@
 version: "3"
+
+services:
+  calendar:
+    build:
+      context: ..
+      dockerfile: ./deployments/calendar/Dockerfile
+    volumes:
+      - ../logs:/logs
+    restart: on-failure
+    network_mode: host
+  scheduler:
+    build:
+      context: ..
+      dockerfile: ./deployments/scheduler/Dockerfile
+    volumes:
+      - ../logs:/var/log
+    restart: on-failure
+    depends_on:
+      - rabbit
+    network_mode: host
+  sender:
+    build:
+      context: ..
+      dockerfile: ./deployments/sender/Dockerfile
+    volumes:
+      - ../logs:/var/log
+    restart: on-failure
+    depends_on:
+      - rabbit
+    network_mode: host
+  rabbit:
+    container_name: "rabbitmq_container"
+    image: rabbitmq:3.9.12-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=otus_user
+      - RABBITMQ_DEFAULT_PASS=otus_pass
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    expose:
+      - 15672
+    network_mode: host
