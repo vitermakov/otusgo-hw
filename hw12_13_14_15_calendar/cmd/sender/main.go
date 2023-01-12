@@ -15,11 +15,15 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/scheduler/config.json", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/etc/sender/config.json", "Path to configuration file")
 }
 
 func main() {
 	flag.Parse()
+	if flag.Arg(0) == "version" {
+		printVersion()
+		return
+	}
 	var cfg sender.Config
 	err := config.New(configFile, &cfg)
 	if err != nil {

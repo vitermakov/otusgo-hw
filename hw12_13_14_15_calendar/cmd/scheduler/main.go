@@ -20,6 +20,10 @@ func init() {
 
 func main() {
 	flag.Parse()
+	if flag.Arg(0) == "version" {
+		printVersion()
+		return
+	}
 	var cfg scheduler.Config
 	err := config.New(configFile, &cfg)
 	if err != nil {

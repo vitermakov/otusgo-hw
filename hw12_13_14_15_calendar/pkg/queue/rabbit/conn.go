@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cenkalti/backoff/v3"
+	backoffv3 "github.com/cenkalti/backoff/v3"
 	"github.com/streadway/amqp"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 )
@@ -121,16 +121,16 @@ func (r *MQConnection) announceQueue(queueName string) (<-chan amqp.Delivery, er
 }
 
 func (r *MQConnection) reConnect(ctx context.Context, queue string) (<-chan amqp.Delivery, error) {
-	be := backoff.NewExponentialBackOff()
+	be := backoffv3.NewExponentialBackOff()
 	be.MaxElapsedTime = time.Minute
 	be.InitialInterval = 1 * time.Second
 	be.Multiplier = 2
 	be.MaxInterval = 15 * time.Second
 
-	b := backoff.WithContext(be, ctx)
+	b := backoffv3.WithContext(be, ctx)
 	for {
 		d := b.NextBackOff()
-		if d == backoff.Stop {
+		if d == backoffv3.Stop {
 			return nil, fmt.Errorf("stop reconnecting")
 		}
 		<-time.After(d)
