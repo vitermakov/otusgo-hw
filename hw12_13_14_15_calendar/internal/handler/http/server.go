@@ -1,13 +1,18 @@
 package http
 
 import (
+	"context"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/calendar"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
-func NewHandledServer(config config.Server, services *deps.Services, deps *deps.Deps) *rest.Server {
+func NewHandledServer(
+	config config.Server, services *deps.Services, deps *deps.Deps,
+) (*rest.Server, closer.CloseFunc) {
 	server := rest.NewServer(servers.NewConfig(
 		config.Host,
 		config.Port,
@@ -22,5 +27,8 @@ func NewHandledServer(config config.Server, services *deps.Services, deps *deps.
 	server.PUT("/events/{eventID}", hs.Events.Update)
 	server.DELETE("/events/{eventID}", hs.Events.Delete)
 
-	return server
+	return server, func(ctx context.Context) bool {
+		server.Stop(ctx)
+		return true
+	}
 }

@@ -1,15 +1,20 @@
 package grpc
 
 import (
+	"context"
+
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/calendar"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers"
 	grpcServ "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/grpc"
 	"google.golang.org/grpc"
 )
 
-func NewHandledServer(config config.Server, services *deps.Services, deps *deps.Deps) *grpcServ.Server {
+func NewHandledServer(
+	config config.Server, services *deps.Services, deps *deps.Deps,
+) (*grpcServ.Server, closer.CloseFunc) {
 	server := grpcServ.NewServer(servers.NewConfig(
 		config.Host,
 		config.Port,
@@ -21,5 +26,8 @@ func NewHandledServer(config config.Server, services *deps.Services, deps *deps.
 		events.RegisterSupportServer(s, SupportHandlerImpl{services: services, logger: deps.Logger})
 	})
 
-	return server
+	return server, func(_ context.Context) bool {
+		server.Stop()
+		return true
+	}
 }

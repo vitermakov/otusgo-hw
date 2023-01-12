@@ -51,7 +51,7 @@ func (es *EventsSuiteTest) SetupTest() {
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
 	services := deps.NewServices(dependencies)
 
-	restServer := NewHandledServer(config.Server{}, services, dependencies)
+	restServer, _ := NewHandledServer(config.Server{}, services, dependencies)
 
 	es.testServer = httptest.NewServer(restServer)
 

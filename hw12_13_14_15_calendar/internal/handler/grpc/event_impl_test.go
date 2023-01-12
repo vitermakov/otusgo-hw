@@ -52,7 +52,7 @@ func (es *EventsSuiteTest) SetupTest() {
 
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
 	services := deps.NewServices(dependencies)
-	es.grpcServer = NewHandledServer(cfg, services, dependencies)
+	es.grpcServer, _ = NewHandledServer(cfg, services, dependencies)
 
 	go func() {
 		err := es.grpcServer.Start()

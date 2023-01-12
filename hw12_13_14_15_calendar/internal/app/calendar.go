@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -94,45 +93,23 @@ func (ca *Calendar) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	restServer := http.NewHandledServer(ca.config.Servers.HTTP, ca.services, ca.deps)
-	grpcServer := grpc.NewHandledServer(ca.config.Servers.GRPC, ca.services, ca.deps)
-
-	var wg sync.WaitGroup
-
-	// TODO: выделить отдельный механизм для завершающих процедур, убрать в close()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		<-ctx.Done()
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-
-		restServer.Stop(ctx)
-	}()
+	restServer, closeFn := http.NewHandledServer(ca.config.Servers.HTTP, ca.services, ca.deps)
+	ca.closer.Register(closeFn)
+	grpcServer, closeFn := grpc.NewHandledServer(ca.config.Servers.GRPC, ca.services, ca.deps)
+	ca.closer.Register(closeFn)
 
 	go func() {
 		if err := restServer.Start(); err != nil {
 			cancel()
 		}
 	}()
-
-	// TODO: выделить отдельный механизм для завершающих процедур, убрать в close()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		<-ctx.Done()
-		grpcServer.Stop()
-	}()
-
 	go func() {
 		if err := grpcServer.Start(); err != nil {
 			cancel()
 		}
 	}()
-
 	ca.logger.Info("calendar is running...")
-
-	wg.Wait()
+	<-ctx.Done()
 
 	return nil
 }
