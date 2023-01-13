@@ -33,7 +33,10 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	supportAPI, err := grpc.NewSupportClient(sa.config.API.Calendar.Address)
+	supportAPI, authFn, err := grpc.NewSupportClient(
+		sa.config.API.Calendar.Address,
+		sa.config.APILogin,
+	)
 	if err != nil {
 		return fmt.Errorf("error initialize SupportAPI: %w", err)
 	}
@@ -46,6 +49,7 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 	sa.deps = &deps.Deps{
 		Logger:   sa.logger,
 		API:      &deps.API{Support: supportAPI},
+		APIAuth:  authFn,
 		Listener: listener,
 		Mailer: stdout.NewMailer(&stdout.Config{
 			TmplPath:    sa.config.Mailer.TemplatePath,
@@ -61,7 +65,7 @@ func (sa *Sender) Run(ctx context.Context) error {
 	defer cancel()
 
 	service := deps.NewSender(
-		sa.deps.API.Support, sa.deps.Listener, sa.logger, sa.deps.Mailer,
+		sa.deps.API.Support, sa.deps.APIAuth, sa.deps.Listener, sa.logger, sa.deps.Mailer,
 		sa.config.Notify.QueueListen, sa.config.Mailer.DefaultFrom,
 	)
 

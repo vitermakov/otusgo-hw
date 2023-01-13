@@ -5,6 +5,7 @@
     "fileName": "./logs/scheduler.log",
     "level": "info"
   },
+  "apiLogin": "ivan@otus.ru",
   "api": {
     "calendar": {
       "type": "grpc",

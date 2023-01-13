@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/mailer"
@@ -10,6 +11,7 @@ import (
 type Deps struct {
 	Logger   logger.Logger
 	API      *API
+	APIAuth  grpc.AuthFn
 	Listener queue.Consumer
 	Mailer   mailer.Mailer
 }

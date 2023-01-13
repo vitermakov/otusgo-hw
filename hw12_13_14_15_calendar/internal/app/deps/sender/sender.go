@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
@@ -13,6 +14,7 @@ import (
 
 type Sender struct {
 	supportAPI events.SupportClient
+	authAPI    grpc.AuthFn
 	listener   queue.Consumer
 	logger     logger.Logger
 	mailer     mailer.Mailer
@@ -22,10 +24,12 @@ type Sender struct {
 }
 
 func NewSender(
-	api events.SupportClient, consumer queue.Consumer, l logger.Logger, ml mailer.Mailer, qn, from string,
+	api events.SupportClient, authAPI grpc.AuthFn, consumer queue.Consumer, l logger.Logger, ml mailer.Mailer,
+	qn, from string,
 ) *Sender {
 	return &Sender{
-		supportAPI: api, listener: consumer, logger: l, mailer: ml, queueName: qn, defaultFrom: from,
+		supportAPI: api, authAPI: authAPI, listener: consumer, logger: l, mailer: ml,
+		queueName: qn, defaultFrom: from,
 	}
 }
 
@@ -84,6 +88,6 @@ func (s Sender) sendMailAndConfirm(ctx context.Context, note model.Notification)
 	if err != nil {
 		return err
 	}
-	_, err = s.supportAPI.SetNotified(ctx, &events.NotificationIDReq{ID: note.EventID.String()})
+	_, err = s.supportAPI.SetNotified(s.authAPI(ctx), &events.NotificationIDReq{ID: note.EventID.String()})
 	return err
 }

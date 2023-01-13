@@ -47,6 +47,7 @@ func (ca *Calendar) Initialize(ctx context.Context) error {
 		if pool == nil {
 			return fmt.Errorf("unable start logger: %w", err)
 		}
+		dbPool = pool
 		// устанавливаем диалект билдера запросов
 		sqlf.SetDialect(sqlf.PostgreSQL)
 		// это костыль, так как при большом количестве запросов он подтекает

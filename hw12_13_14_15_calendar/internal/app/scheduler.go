@@ -38,7 +38,10 @@ func (sa *Scheduler) Initialize(ctx context.Context) error {
 		return fmt.Errorf("unable start logger: %w", err)
 	}
 
-	supportAPI, err := grpc.NewSupportClient(sa.config.API.Calendar.Address)
+	supportAPI, authFn, err := grpc.NewSupportClient(
+		sa.config.API.Calendar.Address,
+		sa.config.APILogin,
+	)
 	if err != nil {
 		return fmt.Errorf("error initialize SupportAPI: %w", err)
 	}
@@ -50,6 +53,7 @@ func (sa *Scheduler) Initialize(ctx context.Context) error {
 
 	sa.deps = &deps.Deps{
 		API:       &deps.API{Support: supportAPI},
+		APIAuth:   authFn,
 		Logger:    sa.logger,
 		Publisher: publisher,
 	}
@@ -74,7 +78,7 @@ func (sa *Scheduler) Run(ctx context.Context) error {
 			sa.config.Notify.CheckingTime, ct.String(),
 		)
 	}
-	notifier := deps.NewNotifier(supAPI, sa.deps.Publisher, sa.logger, sa.config.Notify.QueuePublish)
+	notifier := deps.NewNotifier(supAPI, sa.deps.APIAuth, sa.deps.Publisher, sa.logger, sa.config.Notify.QueuePublish)
 	notifierRun := deps.NewRepeated(notifier, ct, sa.logger)
 	notifierRun.Repeat(ctx)
 
@@ -86,7 +90,7 @@ func (sa *Scheduler) Run(ctx context.Context) error {
 			sa.config.Cleanup.CheckingTime, ct.String(),
 		)
 	}
-	cleaner := deps.NewCleaner(supAPI, sa.logger, sa.config.Cleanup.StoreTime)
+	cleaner := deps.NewCleaner(supAPI, sa.deps.APIAuth, sa.logger, sa.config.Cleanup.StoreTime)
 	cleanerRun := deps.NewRepeated(cleaner, ct, sa.logger)
 	cleanerRun.Repeat(ctx)
 

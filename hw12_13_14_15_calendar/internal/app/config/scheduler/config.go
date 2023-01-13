@@ -8,6 +8,7 @@ type Config struct {
 	ServiceID   string `json:"serviceId"`
 	ServiceName string `json:"serviceName"`
 	Logger      Logger `json:"logger"`
+	APILogin    string `json:"apiLogin"`
 	API         struct {
 		Calendar common.API `json:"calendar"`
 	} `json:"api"`

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
@@ -14,6 +15,7 @@ import (
 
 type Notifier struct {
 	supportAPI events.SupportClient
+	authAPI    grpc.AuthFn
 	publisher  queue.Producer
 	logger     logger.Logger
 
@@ -21,10 +23,11 @@ type Notifier struct {
 }
 
 func NewNotifier(
-	api events.SupportClient, publisher queue.Producer, logger logger.Logger, queueName string,
+	api events.SupportClient, authAPI grpc.AuthFn, publisher queue.Producer, logger logger.Logger, queueName string,
 ) *Notifier {
 	return &Notifier{
 		supportAPI: api,
+		authAPI:    authAPI,
 		publisher:  publisher,
 		logger:     logger,
 		queueName:  queueName,

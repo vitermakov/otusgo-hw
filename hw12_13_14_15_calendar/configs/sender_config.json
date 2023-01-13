@@ -8,6 +8,7 @@
   "notify": {
     "queueListen": "userEvents"
   },
+  "apiLogin": "ivan@otus.ru",
   "api": {
     "calendar": {
       "type": "grpc",

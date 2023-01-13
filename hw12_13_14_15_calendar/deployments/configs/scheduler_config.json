@@ -5,10 +5,11 @@
     "fileName": "/var/log/scheduler.log",
     "level": "info"
   },
+  "apiLogin": "ivan@otus.ru",
   "api": {
     "calendar": {
       "type": "grpc",
-      "address": "127.0.0.1:8096"
+      "address": "127.0.0.1:8088"
     }
   },
   "mpq": {
