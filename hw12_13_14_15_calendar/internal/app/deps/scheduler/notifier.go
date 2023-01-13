@@ -2,15 +2,13 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/dto"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/queue"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Notifier struct {
@@ -35,29 +33,15 @@ func NewNotifier(
 }
 
 func (ns Notifier) DoAction(ctx context.Context) {
-	/*
-		notificationsPb, err := ns.supportAPI.GetNotifications(ctx, &emptypb.Empty{})
-		if err != nil {
-			ns.Logger.Error("notifier error getting notifications: %s", err.Error())
-			return
-		}
-		notifications := dto.ToNotificationSlice(notificationsPb)
-		if notifications == nil {
-			ns.Logger.Info("notifier: no new notifications")
-			return
-		}
-	*/
-	notifications := []model.Notification{
-		{
-			EventID:       uuid.New(),
-			EventTitle:    fmt.Sprintf("Event Title %d", time.Now().UnixMilli()%1000),
-			EventDate:     time.Now(),
-			EventDuration: time.Minute * 45,
-			NotifyUser: model.NotifyUser{
-				Name:  "Andrew",
-				Email: "vit_ermakov@mail.ru",
-			},
-		},
+	notificationsPb, err := ns.supportAPI.GetNotifications(ns.authAPI(ctx), &emptypb.Empty{})
+	if err != nil {
+		ns.logger.Error("notifier error getting notifications: %s", err.Error())
+		return
+	}
+	notifications := dto.ToNotificationSlice(notificationsPb)
+	if notifications == nil {
+		ns.logger.Info("notifier: no new notifications")
+		return
 	}
 	for _, note := range notifications {
 		note := note
