@@ -15,17 +15,13 @@ type App interface {
 
 // Execute шаблонная функция выполнения приложения.
 func Execute(ctx context.Context, app App) {
-	var err error
-
 	// пропишем defer на закрытие приложения до инициализации.
 	defer app.Close()
 
-	err = app.Initialize(ctx)
-	if err != nil {
-		stdlog.Fatalf("не удалось инициализировать приложение: %s", err.Error())
+	if err := app.Initialize(ctx); err != nil {
+		stdlog.Fatalf("не удалось инициализировать приложение: %s", err)
 	}
-	err = app.Run(ctx)
-	if err != nil {
-		stdlog.Fatalf("не удалось запустить приложение: %s", err.Error())
+	if err := app.Run(ctx); err != nil {
+		stdlog.Fatalf("не удалось запустить приложение: %s", err)
 	}
 }

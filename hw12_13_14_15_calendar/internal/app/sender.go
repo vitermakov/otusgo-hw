@@ -3,11 +3,13 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/sender"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/queue"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/mailer/stdout"
 )
@@ -16,6 +18,7 @@ type Sender struct {
 	config config.Config
 	logger logger.Logger
 	deps   *deps.Deps
+	closer closer.Closer
 }
 
 func NewSender(config config.Config) App {
@@ -23,8 +26,10 @@ func NewSender(config config.Config) App {
 }
 
 func (sa *Sender) Initialize(ctx context.Context) error {
-	var err error
-	logLevel, _ := logger.ParseLevel(sa.config.Logger.Level)
+	logLevel, err := logger.ParseLevel(sa.config.Logger.Level)
+	if err != nil {
+		return fmt.Errorf("'%s': %w", sa.config.Logger.Level, err)
+	}
 	sa.logger, err = logger.NewLogrus(logger.Config{
 		Level:    logLevel,
 		FileName: sa.config.Logger.FileName,
@@ -41,10 +46,11 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 		return fmt.Errorf("error initialize SupportAPI: %w", err)
 	}
 
-	listener, err := queue.NewConsumer(sa.config.MPQ, sa.logger, sa.config.Notify.QueueListen)
+	listener, closerFn, err := queue.NewConsumer(sa.config.MPQ, sa.logger, sa.config.Notify.QueueListen)
 	if err != nil {
 		return fmt.Errorf("error queue listener: %w", err)
 	}
+	sa.closer.Register(closerFn)
 
 	sa.deps = &deps.Deps{
 		Logger:   sa.logger,
@@ -73,5 +79,12 @@ func (sa *Sender) Run(ctx context.Context) error {
 }
 
 func (sa *Sender) Close() {
-	sa.logger.Info("sender stopped successfully")
+	// 10 секунд на завершение
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	if err := sa.closer.Close(ctx); err != nil {
+		sa.logger.Error("sender stopped with error: %s", err.Error())
+	} else {
+		sa.logger.Info("sender stopped successfully")
+	}
 }

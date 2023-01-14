@@ -23,36 +23,34 @@ type EventHandlerImpl struct {
 func (e EventHandlerImpl) Create(ctx context.Context, createEvent *events.CreateEvent) (*events.Event, error) {
 	event, err := e.services.EventCRUD.Add(ctx, dto.EventCreateModel(createEvent))
 	if err != nil {
-		err := fmt.Errorf("ошибка добавления события: %w", err)
-		e.logger.Error(err.Error())
-		s := rqres.FromError(err)
-		return nil, status.Error(s.Code(), s.Message())
+		return nil, e.handleError(fmt.Errorf("ошибка добавления события: %w", err))
 	}
 	e.logger.Info("событие добавлено: eventID=%s", event.ID.String())
 	return dto.FromEventModel(*event), nil
 }
 
 func (e EventHandlerImpl) Update(ctx context.Context, updateEvent *events.UpdateEvent) (*emptypb.Empty, error) {
-	eventID, input := dto.EventUpdateModel(updateEvent)
+	eventID, input, err := dto.EventUpdateModel(updateEvent)
+	if err != nil {
+		return nil, e.handleError(fmt.Errorf("неверные данные обновления: %w", err))
+	}
 	event, err := e.services.EventCRUD.GetByID(ctx, eventID)
 	if err != nil {
-		e.logger.Error(err.Error())
-		s := rqres.FromError(err)
-		return nil, status.Error(s.Code(), s.Message())
+		return nil, e.handleError(err)
 	}
 	err = e.services.EventCRUD.Update(ctx, *event, input)
 	if err != nil {
-		err := fmt.Errorf("ошибка изменения события: %w", err)
-		e.logger.Error(err.Error())
-		s := rqres.FromError(err)
-		return nil, status.Error(s.Code(), s.Message())
+		return nil, e.handleError(fmt.Errorf("ошибка изменения события: %w", err))
 	}
 	e.logger.Info("событие изменено: eventID=%s", event.ID.String())
 	return &emptypb.Empty{}, nil
 }
 
 func (e EventHandlerImpl) Delete(ctx context.Context, idReq *events.EventIDReq) (*emptypb.Empty, error) {
-	eventID := dto.EventIDReqModel(idReq)
+	eventID, err := dto.EventIDReqModel(idReq)
+	if err != nil {
+		return nil, e.handleError(fmt.Errorf("неверный идентификатор события: %w", err))
+	}
 	event, err := e.services.EventCRUD.GetByID(ctx, eventID)
 	if err != nil {
 		e.logger.Error(err.Error())
@@ -71,7 +69,10 @@ func (e EventHandlerImpl) Delete(ctx context.Context, idReq *events.EventIDReq) 
 }
 
 func (e EventHandlerImpl) GetByID(ctx context.Context, idReq *events.EventIDReq) (*events.Event, error) {
-	eventID := dto.EventIDReqModel(idReq)
+	eventID, err := dto.EventIDReqModel(idReq)
+	if err != nil {
+		return nil, e.handleError(fmt.Errorf("неверный идентификатор события: %w", err))
+	}
 	event, err := e.services.EventCRUD.GetByID(ctx, eventID)
 	if err != nil {
 		e.logger.Error(err.Error())
@@ -85,10 +86,13 @@ func (e EventHandlerImpl) GetListOnDate(ctx context.Context, lodReq *events.List
 	date, rangeType := dto.ListOnDateReqModel(lodReq)
 	evList, err := e.services.EventCRUD.GetUserEventsOn(ctx, date, rangeType)
 	if err != nil {
-		err = fmt.Errorf("error events quering: %w", err)
-		e.logger.Error(err.Error())
-		s := rqres.FromError(err)
-		return nil, status.Error(s.Code(), s.Message())
+		return nil, e.handleError(fmt.Errorf("ошибка получения событий: %w", err))
 	}
 	return dto.FromEventSlice(evList), nil
+}
+
+func (e EventHandlerImpl) handleError(err error) error {
+	e.logger.Error(err.Error())
+	s := rqres.FromError(err)
+	return status.Error(s.Code(), s.Message())
 }

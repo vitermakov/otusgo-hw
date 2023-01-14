@@ -24,9 +24,7 @@ func NewRepeated(service Actionable, period time.Duration, logger logger.Logger)
 func (r Repeated) Repeat(ctx context.Context) {
 	go func() {
 		t := time.NewTicker(r.period)
-		defer func() {
-			t.Stop()
-		}()
+		defer t.Stop()
 		for {
 			select {
 			case <-ctx.Done():

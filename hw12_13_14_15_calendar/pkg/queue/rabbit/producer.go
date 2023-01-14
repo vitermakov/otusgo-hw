@@ -13,7 +13,7 @@ type Producer struct {
 }
 
 func NewProducer(conn *MQConnection) (*Producer, error) {
-	if err := conn.connect(); err != nil {
+	if err := conn.Connect(); err != nil {
 		return nil, err
 	}
 	return &Producer{MQConnection: conn}, nil

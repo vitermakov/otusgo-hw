@@ -36,7 +36,7 @@ func New(cfg Config, logger logger.Logger) *MQConnection {
 	return &MQConnection{config: cfg, logger: logger}
 }
 
-func (r *MQConnection) connect() error {
+func (r *MQConnection) Connect() error {
 	var err error
 	uri := url.URL{
 		Scheme: "amqp",
@@ -73,6 +73,13 @@ func (r *MQConnection) connect() error {
 		return fmt.Errorf("exchange declare: %w", err)
 	}
 
+	return nil
+}
+
+func (r *MQConnection) Disconnect() error {
+	if !r.conn.IsClosed() {
+		return r.conn.Close()
+	}
 	return nil
 }
 
@@ -134,7 +141,7 @@ func (r *MQConnection) reConnect(ctx context.Context, queue string) (<-chan amqp
 			return nil, fmt.Errorf("stop reconnecting")
 		}
 		<-time.After(d)
-		if err := r.connect(); err != nil {
+		if err := r.Connect(); err != nil {
 			log.Printf("could not connect in reconnect call: %+v", err)
 			continue
 		}

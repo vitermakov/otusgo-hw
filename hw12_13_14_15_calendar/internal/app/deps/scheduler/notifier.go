@@ -38,7 +38,11 @@ func (ns Notifier) DoAction(ctx context.Context) {
 		ns.logger.Error("notifier error getting notifications: %s", err.Error())
 		return
 	}
-	notifications := dto.ToNotificationSlice(notificationsPb)
+	notifications, err := dto.ToNotificationSlice(notificationsPb)
+	if err != nil {
+		ns.logger.Error("notifier error wrong data: %s", err.Error())
+		return
+	}
 	if notifications == nil {
 		ns.logger.Info("notifier: no new notifications")
 		return

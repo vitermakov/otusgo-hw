@@ -23,12 +23,14 @@ type Event struct {
 
 // EventCreate модель создания события.
 type EventCreate struct {
-	Title       string
-	Date        time.Time
-	Duration    time.Duration
-	OwnerID     uuid.UUID
-	Description *string        // опционально.
-	NotifyTerm  *time.Duration // опционально.
+	Title    string
+	Date     time.Time
+	Duration time.Duration
+	OwnerID  uuid.UUID
+	// Description описание опционально.
+	Description *string
+	// NotifyTerm время до начала события для оповещения, опционально.
+	NotifyTerm *time.Duration
 }
 
 // Validate базовая валидация структуры.
@@ -116,13 +118,16 @@ func (ec EventUpdate) Validate() error {
 // EventSearch модель поиска. Исходя из условия задачи и всех ее аспектов искать события
 // необходимо по идентификатору и промежутку дат (с учетом и без учета продолжительности).
 type EventSearch struct {
-	ID             *uuid.UUID
-	NotID          *uuid.UUID
-	OwnerID        *uuid.UUID
-	DateRange      *DateRange
-	TacDuration    bool       // учитывать продолжительность мероприятий.
-	DateLess       *time.Time // выбрать события с запланированной датой, меньшей указанной.
-	NeedNotifyTerm *time.Time // необходимые к оповещению на указанную дату.
+	ID        *uuid.UUID
+	NotID     *uuid.UUID
+	OwnerID   *uuid.UUID
+	DateRange *DateRange
+	// TacDuration учитывать продолжительность мероприятий.
+	TacDuration bool
+	// DateLess выбрать события с запланированной датой, меньшей указанной.
+	DateLess *time.Time
+	// NeedNotifyTerm необходимые к оповещению на указанную дату.
+	NeedNotifyTerm *time.Time
 }
 
 func EventSearchID(guid string) (EventSearch, error) {

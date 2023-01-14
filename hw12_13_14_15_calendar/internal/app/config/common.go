@@ -60,8 +60,5 @@ func New(fileName string, config interface{}) error {
 	if err != nil {
 		return err
 	}
-	if err = json.Unmarshal(bs, config); err != nil {
-		return err
-	}
-	return err
+	return json.Unmarshal(bs, config)
 }

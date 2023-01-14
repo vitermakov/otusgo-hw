@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
@@ -8,12 +10,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NotificationIDReqModel(idReq *events.NotificationIDReq) uuid.UUID {
+func NotificationIDReqModel(idReq *events.NotificationIDReq) (uuid.UUID, error) {
 	if idReq == nil {
-		return uuid.UUID{}
+		return uuid.UUID{}, errors.New("empty notificationIDReq")
 	}
-	guid, _ := uuid.Parse(idReq.ID)
-	return guid
+	return uuid.Parse(idReq.ID)
 }
 
 func FromNotificationModel(item model.Notification) *events.Notification {
@@ -41,11 +42,14 @@ func FromNotificationSlice(items []model.Notification) *events.Notifies {
 	return result
 }
 
-func ToNotificationModel(item *events.Notification) model.Notification {
+func ToNotificationModel(item *events.Notification) (model.Notification, error) {
 	if item == nil {
-		return model.Notification{}
+		return model.Notification{}, nil
 	}
-	eventID, _ := uuid.Parse(item.ID)
+	eventID, err := uuid.Parse(item.ID)
+	if err != nil {
+		return model.Notification{}, err
+	}
 	return model.Notification{
 		EventID:       eventID,
 		EventTitle:    item.Title,
@@ -55,16 +59,20 @@ func ToNotificationModel(item *events.Notification) model.Notification {
 			Name:  item.UserName,
 			Email: item.UserEmail,
 		},
-	}
+	}, nil
 }
 
-func ToNotificationSlice(items *events.Notifies) []model.Notification {
+func ToNotificationSlice(items *events.Notifies) ([]model.Notification, error) {
 	if items == nil {
-		return nil
+		return nil, nil
 	}
 	result := make([]model.Notification, len(items.List))
 	for i, item := range items.List {
-		result[i] = ToNotificationModel(item)
+		note, err := ToNotificationModel(item)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = note
 	}
-	return result
+	return result, nil
 }

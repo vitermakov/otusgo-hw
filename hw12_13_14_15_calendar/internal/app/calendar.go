@@ -29,8 +29,10 @@ func NewCalendar(config config.Config) App {
 }
 
 func (ca *Calendar) Initialize(ctx context.Context) error {
-	var err error
-	logLevel, _ := logger.ParseLevel(ca.config.Logger.Level)
+	logLevel, err := logger.ParseLevel(ca.config.Logger.Level)
+	if err != nil {
+		return fmt.Errorf("'%s': %w", ca.config.Logger.Level, err)
+	}
 	ca.logger, err = logger.NewLogrus(logger.Config{
 		Level:    logLevel,
 		FileName: ca.config.Logger.FileName,
@@ -79,17 +81,6 @@ func (ca *Calendar) Initialize(ctx context.Context) error {
 	return nil
 }
 
-func (ca *Calendar) Close() {
-	// 10 секунд на завершение
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	if err := ca.closer.Close(ctx); err != nil {
-		ca.logger.Info("calendar stopped: %s", err.Error())
-	} else {
-		ca.logger.Info("calendar stopped successfully")
-	}
-}
-
 func (ca *Calendar) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -113,4 +104,15 @@ func (ca *Calendar) Run(ctx context.Context) error {
 	<-ctx.Done()
 
 	return nil
+}
+
+func (ca *Calendar) Close() {
+	// 10 секунд на завершение
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	if err := ca.closer.Close(ctx); err != nil {
+		ca.logger.Error("calendar stopped with error: %s", err.Error())
+	} else {
+		ca.logger.Info("calendar stopped successfully")
+	}
 }

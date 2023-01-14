@@ -45,8 +45,8 @@ func BuildBody(tplPath, tplName string, data interface{}) (string, error) {
 
 func BuildHeaders(mail Mail) string {
 	sb := strings.Builder{}
-	sb.WriteString("MIME-version: 1.0;\r\n")
-	sb.WriteString("Content-Type: text/plain; charset=\"UTF-8\";\n")
+	sb.WriteString("MIME-version: 1.0\r\n")
+	sb.WriteString("Content-Type: text/plain; charset=\"UTF-8\"\r\n")
 	sb.WriteString(fmt.Sprintf("From: %s\r\n", mail.Sender))
 	if len(mail.To) > 0 {
 		sb.WriteString(fmt.Sprintf("To: %s\r\n", strings.Join(mail.To, ";")))

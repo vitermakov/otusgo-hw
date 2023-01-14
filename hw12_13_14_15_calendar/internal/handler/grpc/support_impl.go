@@ -23,22 +23,19 @@ type SupportHandlerImpl struct {
 func (e SupportHandlerImpl) GetNotifications(ctx context.Context, _ *emptypb.Empty) (*events.Notifies, error) {
 	notifiesList, err := e.services.EventNotify.GetNotifications(ctx)
 	if err != nil {
-		err = fmt.Errorf("error events quering: %w", err)
-		e.logger.Error(err.Error())
-		s := rqres.FromError(err)
-		return nil, status.Error(s.Code(), s.Message())
+		return nil, e.handleError(fmt.Errorf("ошибка запроса оповещений: %w", err))
 	}
 	return dto.FromNotificationSlice(notifiesList), nil
 }
 
 func (e SupportHandlerImpl) SetNotified(ctx context.Context, idReq *events.NotificationIDReq) (*emptypb.Empty, error) {
-	eventID := dto.NotificationIDReqModel(idReq)
-	err := e.services.EventNotify.MarkEventNotified(ctx, eventID)
+	eventID, err := dto.NotificationIDReqModel(idReq)
 	if err != nil {
-		err := fmt.Errorf("ошибка подтверждения оповещения события: %w", err)
-		e.logger.Error(err.Error())
-		s := rqres.FromError(err)
-		return nil, status.Error(s.Code(), s.Message())
+		return nil, e.handleError(fmt.Errorf("неверный идентификатор события: %w", err))
+	}
+	err = e.services.EventNotify.MarkEventNotified(ctx, eventID)
+	if err != nil {
+		return nil, e.handleError(fmt.Errorf("ошибка подтверждения оповещения события: %w", err))
 	}
 	e.logger.Info("событие изменено: eventID=%s", eventID.String())
 	return &emptypb.Empty{}, nil
@@ -49,11 +46,14 @@ func (e SupportHandlerImpl) CleanupOldEvents(
 ) (*emptypb.Empty, error) {
 	n, err := e.services.EventClean.CleanupOldEvents(ctx, cleanupReq.StoreTime.AsDuration())
 	if err != nil {
-		err := fmt.Errorf("ошибка удаления старых события: %w", err)
-		e.logger.Error(err.Error())
-		s := rqres.FromError(err)
-		return nil, status.Error(s.Code(), s.Message())
+		return nil, e.handleError(fmt.Errorf("ошибка удаления старых события: %w", err))
 	}
 	e.logger.Info("успешно удалено старых событий: %d", n)
 	return &emptypb.Empty{}, nil
+}
+
+func (e SupportHandlerImpl) handleError(err error) error {
+	e.logger.Error(err.Error())
+	s := rqres.FromError(err)
+	return status.Error(s.Code(), s.Message())
 }

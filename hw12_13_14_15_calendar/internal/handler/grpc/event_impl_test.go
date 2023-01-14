@@ -169,7 +169,7 @@ func (es *EventsSuiteTest) TestGetByID() {
 		}, {
 			name:         "wrong event ID",
 			ID:           "ascascas",
-			expectedCode: codes.NotFound,
+			expectedCode: codes.InvalidArgument,
 		}, {
 			name:         "not exists event",
 			ID:           uuid.New().String(),

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,10 +45,10 @@ func EventCreateModel(createEvent *events.CreateEvent) model.EventCreate {
 	return input
 }
 
-func EventUpdateModel(updateEvent *events.UpdateEvent) (uuid.UUID, model.EventUpdate) {
+func EventUpdateModel(updateEvent *events.UpdateEvent) (uuid.UUID, model.EventUpdate, error) {
 	// если ec == nil, возвращаем пустой model.EventUpdate{}
 	if updateEvent == nil {
-		return uuid.UUID{}, model.EventUpdate{}
+		return uuid.UUID{}, model.EventUpdate{}, errors.New("empty query")
 	}
 	input := model.EventUpdate{}
 	if updateEvent.Title != nil {
@@ -71,16 +72,18 @@ func EventUpdateModel(updateEvent *events.UpdateEvent) (uuid.UUID, model.EventUp
 		val := updateEvent.NotifyTerm.AsDuration()
 		input.NotifyTerm = &val
 	}
-	guid, _ := uuid.Parse(updateEvent.ID)
-	return guid, input
+	guid, err := uuid.Parse(updateEvent.ID)
+	if err != nil {
+		return uuid.UUID{}, model.EventUpdate{}, err
+	}
+	return guid, input, nil
 }
 
-func EventIDReqModel(idReq *events.EventIDReq) uuid.UUID {
+func EventIDReqModel(idReq *events.EventIDReq) (uuid.UUID, error) {
 	if idReq == nil {
-		return uuid.UUID{}
+		return uuid.UUID{}, errors.New("empty eventIDReq")
 	}
-	guid, _ := uuid.Parse(idReq.ID)
-	return guid
+	return uuid.Parse(idReq.ID)
 }
 
 func ListOnDateReqModel(req *events.ListOnDateReq) (time.Time, model.RangeKind) {

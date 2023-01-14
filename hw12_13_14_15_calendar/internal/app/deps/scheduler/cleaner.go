@@ -10,8 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-const defStoreTime = time.Hour * 24 * 365
-
 type Cleaner struct {
 	supportAPI events.SupportClient
 	authAPI    grpc.AuthFn
@@ -21,14 +19,9 @@ type Cleaner struct {
 }
 
 func NewCleaner(
-	api events.SupportClient, authAPI grpc.AuthFn, logger logger.Logger, storeTime string,
+	api events.SupportClient, authAPI grpc.AuthFn, logger logger.Logger, storeTime time.Duration,
 ) *Cleaner {
-	st, err := time.ParseDuration(storeTime)
-	if err != nil {
-		st = defStoreTime
-		logger.Warn("wrong storeTime config value '%s', set default '%s'", storeTime, st.String())
-	}
-	return &Cleaner{supportAPI: api, authAPI: authAPI, logger: logger, storeTime: st}
+	return &Cleaner{supportAPI: api, authAPI: authAPI, logger: logger, storeTime: storeTime}
 }
 
 func (cs Cleaner) DoAction(ctx context.Context) {

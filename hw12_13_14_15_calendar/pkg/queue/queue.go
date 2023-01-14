@@ -17,11 +17,7 @@ type Consumer interface {
 type Message []byte
 
 func EncMessage(object interface{}) (Message, error) {
-	bs, err := json.Marshal(object)
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
+	return json.Marshal(object)
 }
 
 func (m Message) Decode(object interface{}) error {

@@ -21,7 +21,7 @@ type Worker func(context.Context, <-chan amqp.Delivery)
 
 func (c *Consumer) Consume(ctx context.Context, queueName string) (<-chan queue.Message, error) {
 	var err error
-	if err = c.connect(); err != nil {
+	if err = c.Connect(); err != nil {
 		return nil, fmt.Errorf("error: %w", err)
 	}
 	delivery, err := c.announceQueue(queueName)

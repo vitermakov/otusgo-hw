@@ -8,8 +8,7 @@ import (
 	"syscall"
 
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
+	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
 )
 
 var configFile string
@@ -24,10 +23,9 @@ func main() {
 		printVersion()
 		return
 	}
-	var cfg sender.Config
-	err := config.New(configFile, &cfg)
+	cfg, err := config.New(configFile)
 	if err != nil {
-		log.Fatalf("error reading configuaration from '%s': %v", configFile, err)
+		log.Fatal(err)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
