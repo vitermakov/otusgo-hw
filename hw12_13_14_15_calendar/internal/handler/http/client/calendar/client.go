@@ -48,12 +48,12 @@ func NewClient(baseURL, authEmail string) Client {
 func (c ClientImpl) Create(ctx context.Context, input dto.EventCreate) (*dto.Event, error) {
 	var event *dto.Event
 	resp, err := c.api.Post(ctx, "/events", input)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	if err = client.EncodeResponse(resp, event); err != nil {
 		return nil, err
 	}
@@ -62,24 +62,24 @@ func (c ClientImpl) Create(ctx context.Context, input dto.EventCreate) (*dto.Eve
 
 func (c ClientImpl) Update(ctx context.Context, id string, input dto.EventUpdate) error {
 	resp, err := c.api.Put(ctx, fmt.Sprintf("/events/%s", id), input)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	return client.EncodeResponse(resp, nil)
 }
 
 func (c ClientImpl) GetByID(ctx context.Context, id string) (*dto.Event, error) {
 	var event *dto.Event
 	resp, err := c.api.Get(ctx, fmt.Sprintf("/events/%s", id), nil)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	if err = client.EncodeResponse(resp, event); err != nil {
 		return nil, err
 	}
@@ -93,12 +93,12 @@ func (c ClientImpl) GetListOnDate(ctx context.Context, rangeType string, t time.
 		fmt.Sprintf("/events/list/%s", rangeType),
 		map[string]interface{}{"date": t.String()},
 	)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	if err = client.EncodeResponse(resp, &events); err != nil {
 		return nil, err
 	}
@@ -107,11 +107,11 @@ func (c ClientImpl) GetListOnDate(ctx context.Context, rangeType string, t time.
 
 func (c ClientImpl) Delete(ctx context.Context, id string) error {
 	resp, err := c.api.Delete(ctx, fmt.Sprintf("/events/%s", id), nil)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	return client.EncodeResponse(resp, nil)
 }
