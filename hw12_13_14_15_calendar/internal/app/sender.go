@@ -48,9 +48,9 @@ func (sa *Sender) Initialize(ctx context.Context) error {
 
 	listener, closerFn, err := queue.NewConsumer(sa.config.MPQ, sa.logger, sa.config.Notify.QueueListen)
 	if err != nil {
-		return fmt.Errorf("error queue listener: %w", err)
+		return fmt.Errorf("error start queue listener: %w", err)
 	}
-	sa.closer.Register(closerFn)
+	sa.closer.Register("Queue listener", closerFn)
 
 	sa.deps = &deps.Deps{
 		Logger:   sa.logger,
@@ -82,9 +82,7 @@ func (sa *Sender) Close() {
 	// 10 секунд на завершение
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	if err := sa.closer.Close(ctx); err != nil {
-		sa.logger.Error("sender stopped with error: %s", err.Error())
-	} else {
-		sa.logger.Info("sender stopped successfully")
-	}
+
+	sa.closer.Close(ctx, sa.logger)
+	sa.logger.Info("sender stopped")
 }

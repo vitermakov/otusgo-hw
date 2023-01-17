@@ -1,6 +1,6 @@
-BIN_CALENDAR := "./bin/calendar"
-BIN_SCHEDULER := "./bin/scheduler"
-BIN_SENDER := "./bin/sender"
+BIN_CALENDAR="./bin/calendar"
+BIN_SCHEDULER="./bin/scheduler"
+BIN_SENDER="./bin/sender"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)

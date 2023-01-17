@@ -47,9 +47,9 @@ func (sa *Scheduler) Initialize(ctx context.Context) error {
 
 	publisher, closerFn, err := queue.NewProducer(sa.config.MPQ, sa.logger, sa.config.Notify.QueuePublish)
 	if err != nil {
-		return fmt.Errorf("error queue publisher: %w", err)
+		return fmt.Errorf("error start queue publisher: %w", err)
 	}
-	sa.closer.Register(closerFn)
+	sa.closer.Register("Queue publisher", closerFn)
 
 	sa.deps = &deps.Deps{
 		API:       &deps.API{Support: supportAPI},
@@ -64,11 +64,9 @@ func (sa *Scheduler) Close() {
 	// 10 секунд на завершение
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	if err := sa.closer.Close(ctx); err != nil {
-		sa.logger.Error("scheduler stopped with error: %s", err.Error())
-	} else {
-		sa.logger.Info("scheduler stopped successfully")
-	}
+
+	sa.closer.Close(ctx, sa.logger)
+	sa.logger.Info("scheduler stopped")
 }
 
 func (sa *Scheduler) Run(ctx context.Context) error {

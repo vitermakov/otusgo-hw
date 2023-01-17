@@ -1,6 +1,7 @@
 package rqres
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -272,4 +273,37 @@ func FromError(err error) Response {
 		}
 	}
 	return BadRequest(err.Error(), http.StatusBadRequest)
+}
+
+func ErrFromResponse(status int, data []byte) error {
+	var resp struct {
+		Status  string            `json:"status"`
+		Code    int               `json:"code"`
+		Message string            `json:"message"`
+		Errors  map[string]string `json:"errors"`
+		Data    interface{}       `json:"data"`
+	}
+	if status < http.StatusBadRequest {
+		return nil
+	}
+	err := json.Unmarshal(data, &resp)
+	if err != nil {
+		return err
+	}
+	err = errors.New(resp.Message)
+	switch status {
+	case http.StatusBadRequest:
+		return errx.LogicNew(err, resp.Code)
+	case http.StatusForbidden, http.StatusUnauthorized:
+		return errx.PermsNew(err)
+	case http.StatusNotFound:
+		return errx.NotFoundNew(err, resp.Data)
+	case http.StatusUnprocessableEntity:
+		var errs errx.NamedErrors
+		for f, s := range resp.Errors {
+			errs.Add(errx.NamedError{Field: f, Err: errors.New(s)})
+		}
+		return errx.InvalidNew(resp.Message, errs)
+	}
+	return nil
 }

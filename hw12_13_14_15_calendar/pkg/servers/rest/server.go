@@ -52,20 +52,15 @@ func NewServer(cfg servers.Config, authSrv servers.AuthService, logger logger.Lo
 }
 
 func (s *Server) Start() error {
-	s.Logger.Info("HTTP server starting")
 	err := s.Server.ListenAndServe()
 	if err == nil || errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
-	s.Logger.Error("Failed to start HTTP server: %w", err)
 	return err
 }
 
-func (s *Server) Stop(ctx context.Context) {
-	if err := s.Server.Shutdown(ctx); err != nil {
-		s.Logger.Error("Failed to stop HTTP server: %w", err)
-	}
-	s.Logger.Info("HTTP server stopped")
+func (s *Server) Stop(ctx context.Context) error {
+	return s.Server.Shutdown(ctx)
 }
 
 func (s *Server) GET(pattern string, handler HandlerFunc) {

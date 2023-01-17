@@ -44,7 +44,7 @@ func (ca *Calendar) Initialize(ctx context.Context) error {
 	var dbPool *sql.DB
 	if ca.config.Storage.Type == "pgsql" {
 		pool, closeFn := deps.NewPgConn(ca.config.ServiceID, ca.config.Storage.PGConn, ca.logger)
-		ca.closer.Register(closeFn)
+		ca.closer.Register("DB", closeFn)
 
 		if pool == nil {
 			return fmt.Errorf("unable start logger: %w", err)
@@ -86,20 +86,25 @@ func (ca *Calendar) Run(ctx context.Context) error {
 	defer cancel()
 
 	restServer, closeFn := http.NewHandledServer(ca.config.Servers.HTTP, ca.services, ca.deps)
-	ca.closer.Register(closeFn)
+	ca.closer.Register("REST Server", closeFn)
 	grpcServer, closeFn := grpc.NewHandledServer(ca.config.Servers.GRPC, ca.services, ca.deps)
-	ca.closer.Register(closeFn)
+	ca.closer.Register("GRPC Server", closeFn)
 
 	go func() {
+		ca.logger.Info("HTTP server starting")
 		if err := restServer.Start(); err != nil {
+			ca.logger.Error("failed to start HTTP server: %w", err)
 			cancel()
 		}
 	}()
 	go func() {
+		ca.logger.Info("GRPC server starting")
 		if err := grpcServer.Start(); err != nil {
+			ca.logger.Error("failed to start GRPC server: %w", err)
 			cancel()
 		}
 	}()
+
 	ca.logger.Info("calendar is running...")
 	<-ctx.Done()
 
@@ -110,9 +115,7 @@ func (ca *Calendar) Close() {
 	// 10 секунд на завершение
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	if err := ca.closer.Close(ctx); err != nil {
-		ca.logger.Error("calendar stopped with error: %s", err.Error())
-	} else {
-		ca.logger.Info("calendar stopped successfully")
-	}
+
+	ca.closer.Close(ctx, ca.logger)
+	ca.logger.Info("calendar stopped")
 }

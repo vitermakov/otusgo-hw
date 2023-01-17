@@ -84,15 +84,7 @@ func NewPgConn(appName string, config common.SQLConn, log logger.Logger) (*sql.D
 
 	log.Info("DB connected to %s", dbHost)
 
-	return dbPool, func(ctx context.Context) bool {
-		log.Info("closing DB connection")
-		err := dbPool.Close()
-		if err == nil {
-			log.Info("DB connection to %s closed", dbHost)
-			return true
-		}
-
-		log.Info("error closing DB connection to %s: %s", dbHost, err.Error())
-		return false
+	return dbPool, func(_ context.Context) error {
+		return dbPool.Close()
 	}
 }

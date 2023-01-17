@@ -26,8 +26,8 @@ func NewHandledServer(
 		events.RegisterSupportServer(s, SupportHandlerImpl{services: services, logger: deps.Logger})
 	})
 
-	return server, func(_ context.Context) bool {
+	return server, func(_ context.Context) error {
 		server.Stop()
-		return true
+		return nil
 	}
 }

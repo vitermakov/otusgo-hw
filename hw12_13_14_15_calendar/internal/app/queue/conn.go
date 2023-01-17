@@ -36,7 +36,7 @@ func NewProducer(
 		if err != nil {
 			return nil, nil, err
 		}
-		return producer, connRabbitCloser(conn, logger), nil
+		return producer, connRabbitCloser(conn), nil
 	}
 	return nil, nil, ErrUnknownMPQType
 }
@@ -46,17 +46,13 @@ func NewConsumer(
 ) (queue.Consumer, closer.CloseFunc, error) {
 	if config.Type == "rabbitMq" {
 		conn := NewAMQPConn(config.RabbitMQ, logger, queueName)
-		return rabbit.NewConsumer(conn), connRabbitCloser(conn, logger), nil
+		return rabbit.NewConsumer(conn), connRabbitCloser(conn), nil
 	}
 	return nil, nil, ErrUnknownMPQType
 }
 
-func connRabbitCloser(conn *rabbit.MQConnection, logger logger.Logger) func(ctx context.Context) bool {
-	return func(ctx context.Context) bool {
-		if err := conn.Disconnect(); err != nil {
-			logger.Error("error closing rabbitMQ: %s", err.Error())
-			return false
-		}
-		return true
+func connRabbitCloser(conn *rabbit.MQConnection) closer.CloseFunc {
+	return func(ctx context.Context) error {
+		return conn.Disconnect()
 	}
 }

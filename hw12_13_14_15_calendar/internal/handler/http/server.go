@@ -27,8 +27,7 @@ func NewHandledServer(
 	server.PUT("/events/{eventID}", hs.Events.Update)
 	server.DELETE("/events/{eventID}", hs.Events.Delete)
 
-	return server, func(ctx context.Context) bool {
-		server.Stop(ctx)
-		return true
+	return server, func(ctx context.Context) error {
+		return server.Stop(ctx)
 	}
 }

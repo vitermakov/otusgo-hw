@@ -35,7 +35,6 @@ func (s *Server) RegisterHandler(handlerFunc RegisterHandlerFunc) {
 }
 
 func (s *Server) Start() error {
-	s.Logger.Info("GRPC server starting")
 	address := net.JoinHostPort(s.config.GetHost(), strconv.Itoa(s.config.GetPort()))
 	socket, err := net.Listen("tcp", address)
 	if err != nil {
@@ -45,11 +44,9 @@ func (s *Server) Start() error {
 	if err == nil || errors.Is(err, grpc.ErrServerStopped) {
 		return nil
 	}
-	s.Logger.Error("Failed to start GRPC server: %w", err)
 	return err
 }
 
 func (s *Server) Stop() {
 	s.Server.GracefulStop()
-	s.Logger.Info("GRPC server stopped")
 }
