@@ -35,7 +35,7 @@ func (ur UserRepo) Add(ctx context.Context, input model.UserCreate) (*model.User
 	return &users[0], nil
 }
 
-func (ur UserRepo) Update(ctx context.Context, input model.UserUpdate, search model.UserSearch) error {
+func (ur UserRepo) Update(ctx context.Context, input model.UserUpdate, search model.UserSearch) (int64, error) {
 	stmt := sqlf.Update("users")
 	ur.applySearch(stmt, search)
 	if input.Name != nil {
@@ -44,15 +44,21 @@ func (ur UserRepo) Update(ctx context.Context, input model.UserUpdate, search mo
 	if input.Email != nil {
 		stmt.Set("email", *input.Email)
 	}
-	_, err := stmt.ExecAndClose(ctx, ur.pool)
-	return err
+	res, err := stmt.ExecAndClose(ctx, ur.pool)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
-func (ur UserRepo) Delete(ctx context.Context, search model.UserSearch) error {
+func (ur UserRepo) Delete(ctx context.Context, search model.UserSearch) (int64, error) {
 	stmt := sqlf.DeleteFrom("users")
 	ur.applySearch(stmt, search)
-	_, err := stmt.ExecAndClose(ctx, ur.pool)
-	return err
+	res, err := stmt.ExecAndClose(ctx, ur.pool)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
 // GetList не учитываем пагинацию, сортировку.

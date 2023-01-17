@@ -1,8 +1,8 @@
 {
-    "serviceId": "otus_calendar",
+    "serviceId": "calendar",
     "serviceName": "Otus Calendar",
     "logger": {
-        "fileName": "./logs/hw12-15.log",
+        "fileName": "./logs/calendar.log",
         "level": "info"
     },
     "storage": {
@@ -16,30 +16,14 @@
         },
         "memory": {}
     },
-    "queue": {
-        "type": "rabbitMq",
-        "rabbitMq": {
-            "host": "127.0.0.1",
-            "user": "otus",
-            "password": "otus_mq",
-            "port": 5672
-        }
-    },
     "servers": {
         "http": {
             "host": "127.0.0.1",
-            "port": 8095
+            "port": 8088
         },
         "grpc": {
             "host": "127.0.0.1",
-            "port": 8096
+            "port": 8089
         }
-    },
-    "bgParams": {
-        "timeLive": 365
-    },
-    "notifications": {
-        "default_term": 7,
-        "queueName": "notifies"
     }
 }

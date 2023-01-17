@@ -42,13 +42,13 @@ func TestUserMemoryRepo(t *testing.T) {
 		}
 
 		users[1].Email = "user2_updated@yandex.ru"
-		_ = userRepo.Update(ctx, model.UserUpdate{Email: &users[1].Email}, model.UserSearch{ID: &users[1].ID})
+		_, _ = userRepo.Update(ctx, model.UserUpdate{Email: &users[1].Email}, model.UserSearch{ID: &users[1].ID})
 
 		users[2].Name = "user 3 updated"
-		_ = userRepo.Update(ctx, model.UserUpdate{Name: &users[2].Name}, model.UserSearch{Email: &users[2].Email})
+		_, _ = userRepo.Update(ctx, model.UserUpdate{Name: &users[2].Name}, model.UserSearch{Email: &users[2].Email})
 
-		_ = userRepo.Delete(ctx, model.UserSearch{ID: &users[0].ID})
-		_ = userRepo.Delete(ctx, model.UserSearch{ID: &users[4].ID})
+		_, _ = userRepo.Delete(ctx, model.UserSearch{ID: &users[0].ID})
+		_, _ = userRepo.Delete(ctx, model.UserSearch{ID: &users[4].ID})
 
 		actual, _ := userRepo.GetList(ctx, model.UserSearch{})
 

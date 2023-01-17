@@ -5,18 +5,18 @@ import (
 	"strings"
 )
 
-type ValidationError struct {
+type NamedError struct {
 	Field string
 	Err   error
 }
 
-func (ve ValidationError) Error() string {
+func (ve NamedError) Error() string {
 	return fmt.Sprintf("{%s} - %s", ve.Field, ve.Err.Error())
 }
 
-type ValidationErrors []ValidationError
+type NamedErrors []NamedError
 
-func (vs ValidationErrors) Error() string {
+func (vs NamedErrors) Error() string {
 	if len(vs) == 0 {
 		return ""
 	}
@@ -30,10 +30,10 @@ func (vs ValidationErrors) Error() string {
 	return err.String()
 }
 
-func (vs *ValidationErrors) Add(ve ValidationError) {
+func (vs *NamedErrors) Add(ve NamedError) {
 	*vs = append(*vs, ve)
 }
 
-func (vs ValidationErrors) Empty() bool {
+func (vs NamedErrors) Empty() bool {
 	return len(vs) == 0
 }

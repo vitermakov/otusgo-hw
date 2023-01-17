@@ -13,13 +13,13 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
-type EventService struct {
+type EventCRUDService struct {
 	repo repository.Event
 	log  logger.Logger
 	user User
 }
 
-func (es EventService) validateAdd(ctx context.Context, input model.EventCreate) error {
+func (es EventCRUDService) validateAdd(ctx context.Context, input model.EventCreate) error {
 	if err := input.Validate(); err != nil {
 		return err
 	}
@@ -47,14 +47,14 @@ func (es EventService) validateAdd(ctx context.Context, input model.EventCreate)
 	return nil
 }
 
-func (es EventService) Add(ctx context.Context, input model.EventCreate) (*model.Event, error) {
+func (es EventCRUDService) Add(ctx context.Context, input model.EventCreate) (*model.Event, error) {
 	user, err := es.getAuthorizedUser(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	input.OwnerID = user.ID
 	if err = es.validateAdd(ctx, input); err != nil {
-		errs := errx.ValidationErrors{}
+		errs := errx.NamedErrors{}
 		if errors.As(err, &errs) {
 			return nil, errx.InvalidNew("неверные параметры", errs)
 		}
@@ -67,7 +67,7 @@ func (es EventService) Add(ctx context.Context, input model.EventCreate) (*model
 	return event, nil
 }
 
-func (es EventService) validateUpdate(ctx context.Context, event model.Event, input model.EventUpdate) error {
+func (es EventCRUDService) validateUpdate(ctx context.Context, event model.Event, input model.EventUpdate) error {
 	if err := input.Validate(); err != nil {
 		return err
 	}
@@ -100,25 +100,25 @@ func (es EventService) validateUpdate(ctx context.Context, event model.Event, in
 	return nil
 }
 
-func (es EventService) Update(ctx context.Context, event model.Event, input model.EventUpdate) error {
+func (es EventCRUDService) Update(ctx context.Context, event model.Event, input model.EventUpdate) error {
 	_, err := es.getAuthorizedUser(ctx, event.Owner)
 	if err != nil {
 		return err
 	}
 	if err = es.validateUpdate(ctx, event, input); err != nil {
-		errs := errx.ValidationErrors{}
+		errs := errx.NamedErrors{}
 		if errors.As(err, &errs) {
 			return errx.InvalidNew("неверные параметры", errs)
 		}
 		return err
 	}
-	if err = es.repo.Update(ctx, input, model.EventSearch{ID: &event.ID}); err != nil {
+	if _, err = es.repo.Update(ctx, input, model.EventSearch{ID: &event.ID}); err != nil {
 		return errx.FatalNew(err)
 	}
 	return nil
 }
 
-func (es EventService) GetUserEventsOn(
+func (es EventCRUDService) GetUserEventsOn(
 	ctx context.Context,
 	date time.Time,
 	kind model.RangeKind,
@@ -137,7 +137,7 @@ func (es EventService) GetUserEventsOn(
 	})
 }
 
-func (es EventService) GetEvents(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
+func (es EventCRUDService) GetEvents(ctx context.Context, search model.EventSearch) ([]model.Event, error) {
 	events, err := es.repo.GetList(ctx, search)
 	if err != nil {
 		// неустранимая пользователем ошибка.
@@ -146,19 +146,19 @@ func (es EventService) GetEvents(ctx context.Context, search model.EventSearch) 
 	return events, nil
 }
 
-func (es EventService) Delete(ctx context.Context, event model.Event) error {
+func (es EventCRUDService) Delete(ctx context.Context, event model.Event) error {
 	_, err := es.getAuthorizedUser(ctx, event.Owner)
 	if err != nil {
 		return err
 	}
-	if err = es.repo.Delete(ctx, model.EventSearch{ID: &event.ID}); err != nil {
+	if _, err = es.repo.Delete(ctx, model.EventSearch{ID: &event.ID}); err != nil {
 		// неустранимая пользователем ошибка.
 		return errx.FatalNew(err)
 	}
 	return nil
 }
 
-func (es EventService) GetByID(ctx context.Context, eventID uuid.UUID) (*model.Event, error) {
+func (es EventCRUDService) GetByID(ctx context.Context, eventID uuid.UUID) (*model.Event, error) {
 	event, err := es.getOne(ctx, model.EventSearch{ID: &eventID})
 	if err == nil {
 		return event, nil
@@ -174,7 +174,7 @@ func (es EventService) GetByID(ctx context.Context, eventID uuid.UUID) (*model.E
 	return nil, err
 }
 
-func (es EventService) getOne(ctx context.Context, search model.EventSearch) (*model.Event, error) {
+func (es EventCRUDService) getOne(ctx context.Context, search model.EventSearch) (*model.Event, error) {
 	events, err := es.GetEvents(ctx, search)
 	if err != nil {
 		return nil, err
@@ -186,7 +186,7 @@ func (es EventService) getOne(ctx context.Context, search model.EventSearch) (*m
 }
 
 // getAuthorizedUser получить текущего пользователя.
-func (es EventService) getAuthorizedUser(ctx context.Context, checkUser *model.User) (*model.User, error) {
+func (es EventCRUDService) getAuthorizedUser(ctx context.Context, checkUser *model.User) (*model.User, error) {
 	user, err := es.user.GetCurrent(ctx)
 	if err != nil {
 		// пользователь не авторизован.
@@ -202,8 +202,8 @@ func (es EventService) getAuthorizedUser(ctx context.Context, checkUser *model.U
 	return user, nil
 }
 
-func NewEventService(repo repository.Event, log logger.Logger, user User) Event {
-	return &EventService{
+func NewEventCRUDService(repo repository.Event, log logger.Logger, user User) EventCRUD {
+	return &EventCRUDService{
 		repo: repo,
 		log:  log,
 		user: user,

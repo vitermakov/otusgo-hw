@@ -27,7 +27,7 @@ func (e *Events) GetListOnDate(request *rs.Request) rs.Response {
 	if err != nil {
 		e.handleError(actionName, fmt.Errorf("неверная дата %w", err))
 	}
-	events, err := e.services.Event.GetUserEventsOn(request.Context(), date, rangeType)
+	events, err := e.services.EventCRUD.GetUserEventsOn(request.Context(), date, rangeType)
 	if err != nil {
 		err = fmt.Errorf("error events quering: %w", err)
 		e.logger.Error(err.Error())
@@ -43,7 +43,7 @@ func (e *Events) GetByID(request *rs.Request) rs.Response {
 	if err != nil {
 		return e.handleError(actionName, fmt.Errorf("неверный eventID: %w", err))
 	}
-	event, err := e.services.Event.GetByID(ctx, eventID)
+	event, err := e.services.EventCRUD.GetByID(ctx, eventID)
 	if err != nil {
 		return e.handleError(actionName, err)
 	}
@@ -68,7 +68,7 @@ func (e *Events) Create(request *rs.Request) rs.Response {
 		err := errx.InvalidNew("неверные данные", vErrs)
 		return e.handleError(actionName, err)
 	}
-	event, err := e.services.Event.Add(request.Context(), inputCreate)
+	event, err := e.services.EventCRUD.Add(request.Context(), inputCreate)
 	if err != nil {
 		err := fmt.Errorf("ошибка добавления события: %w", err)
 		e.logger.Error(err.Error())
@@ -101,11 +101,11 @@ func (e *Events) Update(request *rs.Request) rs.Response {
 		err = errx.InvalidNew("неверные данные", vErrs)
 		return e.handleError(actionName, err)
 	}
-	event, err := e.services.Event.GetByID(ctx, eventID)
+	event, err := e.services.EventCRUD.GetByID(ctx, eventID)
 	if err != nil {
 		return e.handleError(actionName, err)
 	}
-	err = e.services.Event.Update(request.Context(), *event, inputUpdate)
+	err = e.services.EventCRUD.Update(request.Context(), *event, inputUpdate)
 	if err != nil {
 		return e.handleError(actionName, err)
 	}
@@ -120,11 +120,11 @@ func (e *Events) Delete(request *rs.Request) rs.Response {
 		return e.handleError(actionName, fmt.Errorf("неверный eventID: %w", err))
 	}
 	ctx := request.Context()
-	event, err := e.services.Event.GetByID(ctx, eventID)
+	event, err := e.services.EventCRUD.GetByID(ctx, eventID)
 	if err != nil {
 		return e.handleError(actionName, err)
 	}
-	err = e.services.Event.Delete(request.Context(), *event)
+	err = e.services.EventCRUD.Delete(request.Context(), *event)
 	if err != nil {
 		return e.handleError(actionName, err)
 	}

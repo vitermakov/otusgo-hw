@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps"
+	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/calendar"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc/pb/events"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
@@ -47,12 +47,12 @@ func (es *EventsSuiteTest) SetupTest() {
 	es.Suite.Require().NoError(err)
 
 	// слой репозиториев мы не будем мокать, а будем использовать реализацию memory.
-	repos, err := deps.NewRepos(config.Storage{Type: "memory"}, &deps.Resources{})
+	repos, err := deps.NewRepos(config.Storage{Type: "memory"}, nil)
 	es.Suite.Require().NoError(err)
 
 	dependencies := &deps.Deps{Repos: repos, Logger: logs}
 	services := deps.NewServices(dependencies)
-	es.grpcServer = NewHandledServer(cfg, services, dependencies)
+	es.grpcServer, _ = NewHandledServer(cfg, services, dependencies)
 
 	go func() {
 		err := es.grpcServer.Start()
@@ -169,7 +169,7 @@ func (es *EventsSuiteTest) TestGetByID() {
 		}, {
 			name:         "wrong event ID",
 			ID:           "ascascas",
-			expectedCode: codes.NotFound,
+			expectedCode: codes.InvalidArgument,
 		}, {
 			name:         "not exists event",
 			ID:           uuid.New().String(),

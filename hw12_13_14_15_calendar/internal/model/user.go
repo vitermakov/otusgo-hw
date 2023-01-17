@@ -22,16 +22,16 @@ type UserCreate struct {
 
 // Validate базовая валидация структуры.
 func (uc UserCreate) Validate() error {
-	var errs errx.ValidationErrors
+	var errs errx.NamedErrors
 	if uc.Name == "" {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Name",
 			Err:   ErrUserEmptyName,
 		})
 	}
 	_, err := mail.ParseAddress(uc.Email)
 	if err != nil {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Email",
 			Err:   ErrUserWrongEmail,
 		})
@@ -50,9 +50,9 @@ type UserUpdate struct {
 
 // Validate базовая валидация структуры.
 func (uu UserUpdate) Validate() error {
-	var errs errx.ValidationErrors
+	var errs errx.NamedErrors
 	if uu.Name != nil && *uu.Name == "" {
-		errs.Add(errx.ValidationError{
+		errs.Add(errx.NamedError{
 			Field: "Name",
 			Err:   ErrUserEmptyName,
 		})
@@ -60,7 +60,7 @@ func (uu UserUpdate) Validate() error {
 	if uu.Email != nil {
 		_, err := mail.ParseAddress(*uu.Email)
 		if err != nil {
-			errs.Add(errx.ValidationError{
+			errs.Add(errx.NamedError{
 				Field: "Email",
 				Err:   ErrUserWrongEmail,
 			})

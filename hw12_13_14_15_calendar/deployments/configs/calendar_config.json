@@ -1,0 +1,29 @@
+{
+    "serviceId": "calendar",
+    "serviceName": "Otus Calendar",
+    "logger": {
+        "fileName": "/var/log/app/calendar.log",
+        "level": "info"
+    },
+    "storage": {
+        "type": "pgsql",
+        "pgsql": {
+            "host": "127.0.0.1",
+            "user": "otus_user",
+            "password": "otus_pass",
+            "port": 5432,
+            "dbName": "calendar"
+        },
+        "memory": {}
+    },
+    "servers": {
+        "http": {
+            "host": "127.0.0.1",
+            "port": 8080
+        },
+        "grpc": {
+            "host": "127.0.0.1",
+            "port": 8088
+        }
+    }
+}

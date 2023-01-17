@@ -64,7 +64,7 @@ func FatalNew(err error) Base {
 
 type Invalid struct {
 	title  string
-	errors ValidationErrors
+	errors NamedErrors
 }
 
 func (err Invalid) Error() string {
@@ -74,7 +74,7 @@ func (err Invalid) Error() string {
 	return fmt.Sprintf("%s: %s", err.title, err.errors.Error())
 }
 
-func (err Invalid) Errors() []ValidationError {
+func (err Invalid) Errors() []NamedError {
 	return err.errors
 }
 
@@ -86,6 +86,6 @@ func (err Invalid) Kind() byte {
 	return TypeInvalid
 }
 
-func InvalidNew(title string, errors ValidationErrors) Invalid {
+func InvalidNew(title string, errors NamedErrors) Invalid {
 	return Invalid{title: title, errors: errors}
 }

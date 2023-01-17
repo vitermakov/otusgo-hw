@@ -15,14 +15,14 @@ func TestEventCreateValidate(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    EventCreate
-		expected errx.ValidationErrors
+		expected errx.NamedErrors
 	}{
 		{
 			name: "bad event create",
 			input: EventCreate{
 				NotifyTerm: &wrongNotifyTerm,
 			},
-			expected: []errx.ValidationError{
+			expected: []errx.NamedError{
 				{
 					Field: "Title",
 					Err:   ErrEventEmptyTitle,
@@ -45,7 +45,7 @@ func TestEventCreateValidate(t *testing.T) {
 			input: EventCreate{
 				Duration: -3,
 			},
-			expected: []errx.ValidationError{
+			expected: []errx.NamedError{
 				{
 					Field: "Title",
 					Err:   ErrEventEmptyTitle,
@@ -79,7 +79,7 @@ func TestEventCreateValidate(t *testing.T) {
 			if tc.expected == nil {
 				require.NoError(t, err)
 			} else {
-				var validationError errx.ValidationErrors
+				var validationError errx.NamedErrors
 				require.True(t, errors.As(err, &validationError))
 				require.ElementsMatch(t, validationError, tc.expected)
 			}
@@ -101,7 +101,7 @@ func TestEventUpdateValidate(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    EventUpdate
-		expected errx.ValidationErrors
+		expected errx.NamedErrors
 	}{
 		{
 			name:     "ok empty event update",
@@ -115,7 +115,7 @@ func TestEventUpdateValidate(t *testing.T) {
 				Duration:   &wrongDuration,
 				NotifyTerm: &wrongNotifyTerm,
 			},
-			expected: []errx.ValidationError{
+			expected: []errx.NamedError{
 				{
 					Field: "Title",
 					Err:   ErrEventEmptyTitle,
@@ -149,7 +149,7 @@ func TestEventUpdateValidate(t *testing.T) {
 			if tc.expected == nil {
 				require.NoError(t, err)
 			} else {
-				var validationError errx.ValidationErrors
+				var validationError errx.NamedErrors
 				require.True(t, errors.As(err, &validationError))
 				require.ElementsMatch(t, validationError, tc.expected)
 			}
