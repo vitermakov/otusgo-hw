@@ -12,7 +12,7 @@
   "api": {
     "calendar": {
       "type": "grpc",
-      "address": "127.0.0.1:8089"
+      "address": "127.0.0.1:8088"
     }
   },
   "mpq": {

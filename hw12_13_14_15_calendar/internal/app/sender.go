@@ -25,7 +25,7 @@ func NewSender(config config.Config) App {
 	return &Sender{config: config, closer: closer.NewCloser()}
 }
 
-func (sa *Sender) Initialize(ctx context.Context) error {
+func (sa *Sender) Initialize(_ context.Context) error {
 	logLevel, err := logger.ParseLevel(sa.config.Logger.Level)
 	if err != nil {
 		return fmt.Errorf("'%s': %w", sa.config.Logger.Level, err)
@@ -75,7 +75,13 @@ func (sa *Sender) Run(ctx context.Context) error {
 		sa.config.Notify.QueueListen, sa.config.Mailer.DefaultFrom,
 	)
 
-	return service.Run(ctx)
+	if err := service.Run(ctx); err != nil {
+		return err
+	}
+	sa.logger.Info("sender is running...")
+
+	<-ctx.Done()
+	return nil
 }
 
 func (sa *Sender) Close() {

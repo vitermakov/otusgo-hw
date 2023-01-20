@@ -24,7 +24,7 @@ func NewScheduler(config config.Config) App {
 	return &Scheduler{config: config, closer: closer.NewCloser()}
 }
 
-func (sa *Scheduler) Initialize(ctx context.Context) error {
+func (sa *Scheduler) Initialize(_ context.Context) error {
 	logLevel, err := logger.ParseLevel(sa.config.Logger.Level)
 	if err != nil {
 		return fmt.Errorf("'%s': %w", sa.config.Logger.Level, err)
@@ -60,6 +60,28 @@ func (sa *Scheduler) Initialize(ctx context.Context) error {
 	return nil
 }
 
+func (sa *Scheduler) Run(ctx context.Context) error {
+	supAPI := sa.deps.API.Support
+
+	notifier := deps.NewNotifier(supAPI, sa.deps.APIAuth, sa.deps.Publisher, sa.logger, sa.config.Notify.QueuePublish)
+	checkingTime, _ := sa.config.Notify.CheckingTime.AsDuration()
+	notifierRun := deps.NewRepeated(notifier, checkingTime, sa.logger)
+
+	storeTime, _ := sa.config.Cleanup.StoreTime.AsDuration()
+	cleaner := deps.NewCleaner(supAPI, sa.deps.APIAuth, sa.logger, storeTime)
+
+	checkingTime, _ = sa.config.Cleanup.CheckingTime.AsDuration()
+	cleanerRun := deps.NewRepeated(cleaner, checkingTime, sa.logger)
+
+	notifierRun.Repeat(ctx)
+	cleanerRun.Repeat(ctx)
+
+	sa.logger.Info("scheduler is running...")
+
+	<-ctx.Done()
+	return nil
+}
+
 func (sa *Scheduler) Close() {
 	// 10 секунд на завершение
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -67,19 +89,4 @@ func (sa *Scheduler) Close() {
 
 	sa.closer.Close(ctx, sa.logger)
 	sa.logger.Info("scheduler stopped")
-}
-
-func (sa *Scheduler) Run(ctx context.Context) error {
-	supAPI := sa.deps.API.Support
-
-	notifier := deps.NewNotifier(supAPI, sa.deps.APIAuth, sa.deps.Publisher, sa.logger, sa.config.Notify.QueuePublish)
-	notifierRun := deps.NewRepeated(notifier, sa.config.Notify.CheckingTime, sa.logger)
-	notifierRun.Repeat(ctx)
-
-	cleaner := deps.NewCleaner(supAPI, sa.deps.APIAuth, sa.logger, sa.config.Cleanup.StoreTime)
-	cleanerRun := deps.NewRepeated(cleaner, sa.config.Cleanup.CheckingTime, sa.logger)
-	cleanerRun.Repeat(ctx)
-
-	<-ctx.Done()
-	return nil
 }
