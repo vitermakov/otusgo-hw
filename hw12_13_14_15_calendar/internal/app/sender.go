@@ -7,8 +7,8 @@ import (
 
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/sender"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/sender"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/queue"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/queue"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/mailer/stdout"
@@ -18,11 +18,11 @@ type Sender struct {
 	config config.Config
 	logger logger.Logger
 	deps   *deps.Deps
-	closer closer.Closer
+	closer *closer.Closer
 }
 
 func NewSender(config config.Config) App {
-	return &Sender{config: config}
+	return &Sender{config: config, closer: closer.NewCloser()}
 }
 
 func (sa *Sender) Initialize(ctx context.Context) error {

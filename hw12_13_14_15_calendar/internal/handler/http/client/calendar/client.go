@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/client"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/dto"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest"
 )
 
 type Client interface {
@@ -23,7 +23,7 @@ type Auth struct {
 	email string
 }
 
-func NewAuth(email string) client.IAuth {
+func NewAuth(email string) rest.ClientAuth {
 	return &Auth{email: email}
 }
 
@@ -36,25 +36,22 @@ func (a Auth) Authorize(request *http.Request) error {
 }
 
 type ClientImpl struct {
-	api *client.API
+	api *rest.Client
 }
 
 func NewClient(baseURL, authEmail string) Client {
 	return &ClientImpl{
-		api: client.NewAPI(baseURL, client.WithAuth(NewAuth(authEmail))),
+		api: rest.NewClient(baseURL, rest.WithAuth(NewAuth(authEmail))),
 	}
 }
 
 func (c ClientImpl) Create(ctx context.Context, input dto.EventCreate) (*dto.Event, error) {
-	var event *dto.Event
+	var event = new(dto.Event)
 	resp, err := c.api.Post(ctx, "/events", input)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	if err = client.EncodeResponse(resp, event); err != nil {
+	if err = rest.EncodeResponse(resp, event, true); err != nil {
 		return nil, err
 	}
 	return event, nil
@@ -65,44 +62,19 @@ func (c ClientImpl) Update(ctx context.Context, id string, input dto.EventUpdate
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	return client.EncodeResponse(resp, nil)
+	return rest.EncodeResponse(resp, nil, true)
 }
 
 func (c ClientImpl) GetByID(ctx context.Context, id string) (*dto.Event, error) {
-	var event *dto.Event
+	var event = new(dto.Event)
 	resp, err := c.api.Get(ctx, fmt.Sprintf("/events/%s", id), nil)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	if err = client.EncodeResponse(resp, event); err != nil {
+	if err = rest.EncodeResponse(resp, event, false); err != nil {
 		return nil, err
 	}
 	return event, nil
-}
-
-func (c ClientImpl) GetListOnDate(ctx context.Context, rangeType string, t time.Time) ([]dto.Event, error) {
-	var events []dto.Event
-	resp, err := c.api.Get(
-		ctx,
-		fmt.Sprintf("/events/list/%s", rangeType),
-		map[string]interface{}{"date": t.String()},
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	if err = client.EncodeResponse(resp, &events); err != nil {
-		return nil, err
-	}
-	return events, nil
 }
 
 func (c ClientImpl) Delete(ctx context.Context, id string) error {
@@ -110,8 +82,21 @@ func (c ClientImpl) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	return client.EncodeResponse(resp, nil)
+	return rest.EncodeResponse(resp, nil, true)
+}
+
+func (c ClientImpl) GetListOnDate(ctx context.Context, rangeType string, t time.Time) ([]dto.Event, error) {
+	var events []dto.Event
+	resp, err := c.api.Get(
+		ctx,
+		fmt.Sprintf("/events/list/%s", rangeType),
+		map[string]interface{}{"date": t.Format(time.RFC3339)},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = rest.EncodeResponse(resp, &events, false); err != nil {
+		return nil, err
+	}
+	return events, nil
 }

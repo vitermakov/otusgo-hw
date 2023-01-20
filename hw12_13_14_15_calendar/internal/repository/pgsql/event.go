@@ -27,7 +27,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		Set("id", guid.String()).
 		Set("title", input.Title).
 		Set("date", input.Date).
-		Set("duration", fmt.Sprintf("%d minutes", int(input.Duration.Minutes()))).
+		Set("duration", fmt.Sprintf("%d seconds", int64(input.Duration.Seconds()))).
 		Set("notify_status", model.NotifyStatusNone.String())
 	if input.OwnerID.ID() > 0 {
 		stmt.Set("owner_id", input.OwnerID.String())
@@ -36,7 +36,7 @@ func (er EventRepo) Add(ctx context.Context, input model.EventCreate) (*model.Ev
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", fmt.Sprintf("%d days", int(input.NotifyTerm.Hours()/24)))
+		stmt.Set("notify_term", fmt.Sprintf("%d seconds", int64(input.NotifyTerm.Seconds())))
 	}
 	_, err := stmt.ExecAndClose(ctx, er.pool)
 	if err != nil {
@@ -60,13 +60,13 @@ func (er EventRepo) Update(ctx context.Context, input model.EventUpdate, search 
 		stmt.Set("date", *input.Date)
 	}
 	if input.Duration != nil {
-		stmt.Set("duration", fmt.Sprintf("%d minutes", int(input.Duration.Minutes())))
+		stmt.Set("duration", fmt.Sprintf("%d seconds", int(input.Duration.Seconds())))
 	}
 	if input.Description != nil {
 		stmt.Set("description", *input.Description)
 	}
 	if input.NotifyTerm != nil {
-		stmt.Set("notify_term", fmt.Sprintf("%d days", int(input.NotifyTerm.Hours()/24)))
+		stmt.Set("notify_term", fmt.Sprintf("%d seconds", int(input.NotifyTerm.Seconds())))
 	}
 	if input.NotifyStatus != nil {
 		stmt.Set("notify_status", input.NotifyStatus.String())
@@ -121,8 +121,7 @@ func (er EventRepo) GetList(ctx context.Context, search model.EventSearch) ([]mo
 func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
 	var (
 		id, description, userJSON, notifyStatus sql.NullString
-		duration                                sql.NullInt64
-		notifyTerm                              sql.NullInt64
+		duration, notifyTerm                    sql.NullInt64
 		event                                   model.Event
 	)
 	if err := row.Scan(
@@ -164,6 +163,9 @@ func (er EventRepo) prepareModel(row *sql.Rows) (model.Event, error) {
 	}
 	if description.Valid {
 		event.Description = description.String
+	}
+	if notifyTerm.Valid {
+		event.NotifyTerm = time.Duration(notifyTerm.Int64) * time.Second
 	}
 	if notifyStatus.Valid {
 		nf, err := model.ParseNotifyStatus(notifyStatus.String)

@@ -21,11 +21,11 @@ type Calendar struct {
 	logger   logger.Logger
 	deps     *deps.Deps
 	services *deps.Services
-	closer   closer.Closer
+	closer   *closer.Closer
 }
 
 func NewCalendar(config config.Config) App {
-	return &Calendar{config: config}
+	return &Calendar{config: config, closer: closer.NewCloser()}
 }
 
 func (ca *Calendar) Initialize(ctx context.Context) error {

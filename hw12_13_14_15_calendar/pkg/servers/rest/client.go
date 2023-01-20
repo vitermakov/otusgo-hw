@@ -15,20 +15,20 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/servers/rest/rqres"
 )
 
-type APIOption func(api *API)
+type ClientOpt func(client *Client)
 
-type IAuth interface {
+type ClientAuth interface {
 	Authorize(request *http.Request) error
 }
 
-type API struct {
+type Client struct {
 	client  *http.Client
 	baseURL string
-	auth    IAuth
+	auth    ClientAuth
 }
 
-func NewAPI(baseURL string, opts ...APIOption) *API {
-	api := &API{
+func NewClient(baseURL string, opts ...ClientOpt) *Client {
+	api := &Client{
 		baseURL: baseURL,
 		client: &http.Client{
 			Timeout: 120 * time.Second,
@@ -62,7 +62,7 @@ func makeJSONBody(params interface{}) (io.Reader, error) {
 
 func makeQueryURL(baseURL, resource string, params interface{}) (string, error) {
 	var queryURL strings.Builder
-	var query url.Values
+	var query = make(url.Values)
 	queryURL.WriteString(baseURL)
 	queryURL.WriteString(resource)
 	if params != nil {
@@ -81,20 +81,20 @@ func makeQueryURL(baseURL, resource string, params interface{}) (string, error) 
 	return queryURL.String(), nil
 }
 
-func WithAuth(auth IAuth) APIOption {
-	return func(api *API) {
+func WithAuth(auth ClientAuth) ClientOpt {
+	return func(api *Client) {
 		api.auth = auth
 	}
 }
 
-func (ac *API) authorize(request *http.Request) error {
+func (ac *Client) authorize(request *http.Request) error {
 	if ac.auth != nil {
 		return ac.auth.Authorize(request)
 	}
 	return nil
 }
 
-func (ac *API) doQuery(ctx context.Context, method, resource string, params interface{}) (*http.Response, error) {
+func (ac *Client) doQuery(ctx context.Context, method, resource string, params interface{}) (*http.Response, error) {
 	var (
 		requestURL  string
 		requestBody io.Reader
@@ -132,35 +132,32 @@ func (ac *API) doQuery(ctx context.Context, method, resource string, params inte
 	return response, nil
 }
 
-func (ac *API) Get(ctx context.Context, resource string, query map[string]interface{}) (*http.Response, error) {
+func (ac *Client) Get(ctx context.Context, resource string, query map[string]interface{}) (*http.Response, error) {
 	return ac.doQuery(ctx, http.MethodGet, resource, query)
 }
 
-func (ac *API) Post(ctx context.Context, resource string, data interface{}) (*http.Response, error) {
+func (ac *Client) Post(ctx context.Context, resource string, data interface{}) (*http.Response, error) {
 	return ac.doQuery(ctx, http.MethodPost, resource, data)
 }
 
-func (ac *API) Put(ctx context.Context, resource string, data interface{}) (*http.Response, error) {
+func (ac *Client) Put(ctx context.Context, resource string, data interface{}) (*http.Response, error) {
 	return ac.doQuery(ctx, http.MethodPut, resource, data)
 }
 
-func (ac *API) Delete(ctx context.Context, resource string, data interface{}) (*http.Response, error) {
+func (ac *Client) Delete(ctx context.Context, resource string, data interface{}) (*http.Response, error) {
 	return ac.doQuery(ctx, http.MethodDelete, resource, data)
 }
 
-func EncodeResponse(resp *http.Response, object interface{}) error {
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if err = rqres.ErrFromResponse(resp.StatusCode, data); err != nil {
-		return err
-	}
-	if object == nil {
+func EncodeResponse(resp *http.Response, dataObj interface{}, reqResp bool) error {
+	if resp == nil {
 		return nil
 	}
-	if err = json.Unmarshal(data, object); err != nil {
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil || len(data) == 0 {
 		return err
 	}
-	return nil
+	return rqres.ParseResponse(resp.StatusCode, data, dataObj, reqResp)
 }

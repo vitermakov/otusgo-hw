@@ -18,6 +18,10 @@ type Closer struct {
 	closeFunc map[string]CloseFunc
 }
 
+func NewCloser() *Closer {
+	return &Closer{closeFunc: make(map[string]CloseFunc)}
+}
+
 func (c *Closer) Register(name string, closeFunc CloseFunc) {
 	if closeFunc == nil {
 		return
@@ -35,11 +39,11 @@ func (c *Closer) Close(ctx context.Context, logger logger.Logger) {
 	go func() {
 		defer close(complete)
 		for name, closer := range c.closeFunc {
-			logger.Info("%s: closing")
+			logger.Info("%s: closing", name)
 			if err := closer(ctx); err != nil {
 				logger.Error("error closing %s: %s", name, err.Error())
 			}
-			logger.Info("%s: closed successfully")
+			logger.Info("%s: closed successfully", name)
 		}
 	}()
 

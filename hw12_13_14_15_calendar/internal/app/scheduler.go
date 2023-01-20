@@ -7,8 +7,8 @@ import (
 
 	config "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config/scheduler"
 	deps "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/deps/scheduler"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/queue"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/grpc"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/queue"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/closer"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/logger"
 )
@@ -17,11 +17,11 @@ type Scheduler struct {
 	config config.Config
 	logger logger.Logger
 	deps   *deps.Deps
-	closer closer.Closer
+	closer *closer.Closer
 }
 
 func NewScheduler(config config.Config) App {
-	return &Scheduler{config: config}
+	return &Scheduler{config: config, closer: closer.NewCloser()}
 }
 
 func (sa *Scheduler) Initialize(ctx context.Context) error {

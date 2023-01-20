@@ -101,27 +101,29 @@ func (eu EventUpdate) Model() (model.EventUpdate, errx.NamedErrors) {
 }
 
 type Event struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Date        time.Time `json:"date"`
-	Duration    string    `json:"duration"`
-	Owner       *User     `json:"owner,omitempty"`
-	Description string    `json:"description"`
-	NotifyTerm  string    `json:"notifyTerm"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Date         time.Time `json:"date"`
+	Duration     string    `json:"duration"`
+	Owner        *User     `json:"owner,omitempty"`
+	Description  string    `json:"description"`
+	NotifyTerm   string    `json:"notifyTerm"`
+	NotifyStatus string    `json:"notifyStatus"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 func FromEventModel(item model.Event) Event {
 	event := Event{
-		ID:          item.ID.String(),
-		Title:       item.Title,
-		Date:        item.Date,
-		Duration:    item.Duration.String(),
-		Description: item.Description,
-		NotifyTerm:  item.NotifyTerm.String(),
-		CreatedAt:   item.CreatedAt,
-		UpdatedAt:   item.UpdatedAt,
+		ID:           item.ID.String(),
+		Title:        item.Title,
+		Date:         item.Date,
+		Duration:     item.Duration.String(),
+		Description:  item.Description,
+		NotifyTerm:   item.NotifyTerm.String(),
+		NotifyStatus: item.NotifyStatus.String(),
+		CreatedAt:    item.CreatedAt,
+		UpdatedAt:    item.UpdatedAt,
 	}
 	if item.Owner != nil {
 		user := FromUserModel(*item.Owner)
