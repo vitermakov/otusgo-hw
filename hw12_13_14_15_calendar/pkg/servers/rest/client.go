@@ -1,4 +1,4 @@
-package client
+package rest
 
 import (
 	"bytes"
@@ -65,12 +65,14 @@ func makeQueryURL(baseURL, resource string, params interface{}) (string, error) 
 	var query url.Values
 	queryURL.WriteString(baseURL)
 	queryURL.WriteString(resource)
-	paramsMap, ok := params.(map[string]interface{})
-	if !ok {
-		return "", errors.New("wrong data for query params")
-	}
-	for key, value := range paramsMap {
-		query.Set(key, fmt.Sprintf("%v", value))
+	if params != nil {
+		paramsMap, ok := params.(map[string]interface{})
+		if !ok {
+			return "", errors.New("wrong data for query params")
+		}
+		for key, value := range paramsMap {
+			query.Set(key, fmt.Sprintf("%v", value))
+		}
 	}
 	if len(query) > 0 {
 		queryURL.WriteByte('?')
@@ -113,7 +115,6 @@ func (ac *API) doQuery(ctx context.Context, method, resource string, params inte
 	default:
 		return nil, errors.New("method is not allowed")
 	}
-
 	request, err := http.NewRequestWithContext(ctx, method, requestURL, requestBody)
 	if err != nil {
 		return nil, err
