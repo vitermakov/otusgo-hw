@@ -3,9 +3,10 @@ package scheduler
 import (
 	"errors"
 	"fmt"
+	"log"
+
 	common "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/jsonx"
-	"log"
 )
 
 var ErrEmptyQueuePublish = errors.New("empty queue name for notifier publishing")
@@ -24,7 +25,7 @@ type Config struct {
 	API         struct {
 		Calendar common.API `json:"calendar"`
 	} `json:"api"`
-	MPQ     common.Queue `json:"mpq"`
+	AMQP    common.Queue `json:"amqp"`
 	Cleanup Cleanup      `json:"cleanup"`
 	Notify  Notify       `json:"notify"`
 }

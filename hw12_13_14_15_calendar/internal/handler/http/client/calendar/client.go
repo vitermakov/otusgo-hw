@@ -46,8 +46,8 @@ func NewClient(baseURL, authEmail string) Client {
 }
 
 func (c ClientImpl) Create(ctx context.Context, input dto.EventCreate) (*dto.Event, error) {
-	var event = new(dto.Event)
-	resp, err := c.api.Post(ctx, "/events", input)
+	event := new(dto.Event)
+	resp, err := c.api.Post(ctx, "/events", input) //nolint:bodyclose // it close in EncodeResponse
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (c ClientImpl) Create(ctx context.Context, input dto.EventCreate) (*dto.Eve
 }
 
 func (c ClientImpl) Update(ctx context.Context, id string, input dto.EventUpdate) error {
-	resp, err := c.api.Put(ctx, fmt.Sprintf("/events/%s", id), input)
+	resp, err := c.api.Put(ctx, fmt.Sprintf("/events/%s", id), input) //nolint:bodyclose // it close in EncodeResponse
 	if err != nil {
 		return err
 	}
@@ -66,8 +66,8 @@ func (c ClientImpl) Update(ctx context.Context, id string, input dto.EventUpdate
 }
 
 func (c ClientImpl) GetByID(ctx context.Context, id string) (*dto.Event, error) {
-	var event = new(dto.Event)
-	resp, err := c.api.Get(ctx, fmt.Sprintf("/events/%s", id), nil)
+	event := new(dto.Event)
+	resp, err := c.api.Get(ctx, fmt.Sprintf("/events/%s", id), nil) //nolint:bodyclose // it close in EncodeResponse
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (c ClientImpl) GetByID(ctx context.Context, id string) (*dto.Event, error) 
 }
 
 func (c ClientImpl) Delete(ctx context.Context, id string) error {
-	resp, err := c.api.Delete(ctx, fmt.Sprintf("/events/%s", id), nil)
+	resp, err := c.api.Delete(ctx, fmt.Sprintf("/events/%s", id), nil) //nolint:bodyclose // it close in EncodeResponse
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (c ClientImpl) Delete(ctx context.Context, id string) error {
 
 func (c ClientImpl) GetListOnDate(ctx context.Context, rangeType string, t time.Time) ([]dto.Event, error) {
 	var events []dto.Event
-	resp, err := c.api.Get(
+	resp, err := c.api.Get( //nolint:bodyclose // it close in EncodeResponse
 		ctx,
 		fmt.Sprintf("/events/list/%s", rangeType),
 		map[string]interface{}{"date": t.Format(time.RFC3339)},

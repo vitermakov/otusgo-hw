@@ -46,7 +46,7 @@ func (sa *Sender) Initialize(_ context.Context) error {
 		return fmt.Errorf("error initialize SupportAPI: %w", err)
 	}
 
-	listener, closerFn, err := queue.NewConsumer(sa.config.MPQ, sa.logger, sa.config.Notify.QueueListen)
+	listener, closerFn, err := queue.NewConsumer(sa.config.AMQP, sa.logger, sa.config.Notify.QueueListen)
 	if err != nil {
 		return fmt.Errorf("error start queue listener: %w", err)
 	}

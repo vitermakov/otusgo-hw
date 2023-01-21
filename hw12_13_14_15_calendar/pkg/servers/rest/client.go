@@ -62,7 +62,7 @@ func makeJSONBody(params interface{}) (io.Reader, error) {
 
 func makeQueryURL(baseURL, resource string, params interface{}) (string, error) {
 	var queryURL strings.Builder
-	var query = make(url.Values)
+	query := make(url.Values)
 	queryURL.WriteString(baseURL)
 	queryURL.WriteString(resource)
 	if params != nil {

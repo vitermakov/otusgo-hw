@@ -3,8 +3,9 @@ package rqres
 import (
 	"encoding/json"
 	"errors"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 	"net/http"
+
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
 // Response интерфейс для связи с веб-сервером.

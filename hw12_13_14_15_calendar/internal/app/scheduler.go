@@ -45,7 +45,7 @@ func (sa *Scheduler) Initialize(_ context.Context) error {
 		return fmt.Errorf("error initialize SupportAPI: %w", err)
 	}
 
-	publisher, closerFn, err := queue.NewProducer(sa.config.MPQ, sa.logger, sa.config.Notify.QueuePublish)
+	publisher, closerFn, err := queue.NewProducer(sa.config.AMQP, sa.logger, sa.config.Notify.QueuePublish)
 	if err != nil {
 		return fmt.Errorf("error start queue publisher: %w", err)
 	}

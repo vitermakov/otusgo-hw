@@ -35,7 +35,7 @@ var allowedDs = map[byte]time.Duration{
 // - d day
 // - w week
 // - n 30 days
-// - y 365 days
+// - y 365 days.
 func (d *Duration) UnmarshalJSON(data []byte) error {
 	var err error
 	if data[0] == QuotesByte {
