@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
+	"github.com/google/uuid"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/client/calendar"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/handler/http/dto"
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/model"
-	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/errx"
 )
 
 type MainSuiteTest struct {
@@ -479,7 +479,7 @@ func (ms *MainSuiteTest) TestNotify() {
 	select {
 	case <-ctx.Done():
 		ms.Suite.Require().True(false, "testing adding or timer is too long")
-	case <-time.After(time.Second * 6):
+	case <-time.After(time.Second * 7):
 	}
 
 	for _, tc := range testCases {

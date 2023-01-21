@@ -18,9 +18,15 @@ type EventNotifyService struct {
 }
 
 func (en EventNotifyService) GetNotifications(ctx context.Context) ([]model.Notification, error) {
-	events, err := en.repo.BlockEvents4Notify(ctx, en.clock.Now())
+	//events, err := en.repo.BlockEvents4Notify(ctx, en.clock.Now())
+	now := en.clock.Now()
+	events, err := en.repo.GetList(ctx, model.EventSearch{NeedNotifyTerm: &now})
 	if err != nil {
-		// неустранимая пользователем ошибка.
+		return nil, errx.FatalNew(err)
+	}
+	status := model.NotifyStatusBlocked
+	_, err = en.repo.Update(ctx, model.EventUpdate{NotifyStatus: &status}, model.EventSearch{NeedNotifyTerm: &now})
+	if err != nil {
 		return nil, errx.FatalNew(err)
 	}
 	result := make([]model.Notification, len(events))
