@@ -1,0 +1,29 @@
+{
+    "serviceId": "calendar",
+    "serviceName": "Otus Calendar",
+    "logger": {
+        "fileName": "/var/logs/calendar.log",
+        "level": "${LOGGER_LEVEL}"
+    },
+    "storage": {
+        "type": "pgsql",
+        "pgsql": {
+            "host": "${POSTGRES_HOST}",
+            "user": "${POSTGRES_USER}",
+            "password": "${POSTGRES_PASSWORD}",
+            "port": ${POSTGRES_PORT},
+            "dbName": "${POSTGRES_DBNAME}"
+        },
+        "memory": {}
+    },
+    "servers": {
+        "http": {
+            "host": "${SERVER_REST_HOST}",
+            "port": ${SERVER_REST_PORT}
+        },
+        "grpc": {
+            "host": "${SERVER_GRPC_HOST}",
+            "port": ${SERVER_GRPC_PORT}
+        }
+    }
+}

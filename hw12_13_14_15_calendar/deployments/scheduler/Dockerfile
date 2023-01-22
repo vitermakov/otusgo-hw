@@ -27,7 +27,8 @@ LABEL MAINTAINERS="student@otus.ru"
 
 COPY --from=build ${BIN_FILE} /sbin/scheduler
 
-ENV CONFIG_FILE /etc/scheduler/config.json
-COPY ./deployments/configs/scheduler_config.json ${CONFIG_FILE}
+ARG CONFIG_FILE
+ENV CONFIG_FILE_LOCAL /etc/scheduler/config.json
+COPY ${CONFIG_FILE} ${CONFIG_FILE_LOCAL}
 
 ENTRYPOINT ["/sbin/scheduler"]

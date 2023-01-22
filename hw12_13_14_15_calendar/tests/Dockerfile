@@ -10,4 +10,4 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test ./deployments/tests/
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test ./tests/

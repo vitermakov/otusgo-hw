@@ -1,0 +1,33 @@
+{
+  "serviceId": "sender",
+  "serviceName": "Otus Calendar Sender",
+  "logger": {
+    "fileName": "/var/log/sender.log",
+    "level": "${LOGGER_LEVEL}"
+  },
+  "notify": {
+    "queueListen": "${RABBIT_NOTIFY_QUEUE}"
+  },
+  "apiLogin": "${REST_API_AUTH_EMAIL}",
+  "api": {
+    "calendar": {
+      "type": "grpc",
+      "address": "${SERVER_GRPC_HOST}:${SERVER_GRPC_PORT}"
+    }
+  },
+  "amqp": {
+    "type": "rabbitMq",
+    "rabbitMq": {
+      "host": "${RABBIT_HOST}",
+      "user": "${RABBIT_USER}",
+      "password": "${RABBIT_PASSWORD}",
+      "port": ${RABBIT_PORT}
+    }
+  },
+  "mailer": {
+    "type": "${MAILER_TYPE}",
+    "defaultFrom": "${MAILER_DEFAULT_FROM}",
+    "templatePath": "/app/templates/mail"
+  }
+}
+

@@ -27,7 +27,8 @@ LABEL MAINTAINERS="student@otus.ru"
 
 COPY --from=build ${BIN_FILE} /sbin/sender
 
-ENV CONFIG_FILE /etc/sender/config.json
-COPY ./deployments/configs/sender_config.json ${CONFIG_FILE}
+ARG CONFIG_FILE
+ENV CONFIG_FILE_LOCAL /etc/sender/config.json
+COPY ${CONFIG_FILE} ${CONFIG_FILE_LOCAL}
 
 ENTRYPOINT ["/sbin/sender"]

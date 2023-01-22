@@ -27,8 +27,9 @@ LABEL MAINTAINERS="student@otus.ru"
 
 COPY --from=build ${BIN_FILE} /sbin/calendar
 
-ENV CONFIG_FILE /etc/calendar/config.json
-COPY ./deployments/configs/calendar_config.json ${CONFIG_FILE}
+ARG CONFIG_FILE
+ENV CONFIG_FILE_LOCAL /etc/calendar/config.json
+COPY ${CONFIG_FILE} ${CONFIG_FILE_LOCAL}
 
 EXPOSE 8080
 EXPOSE 8088

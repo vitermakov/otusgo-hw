@@ -1,10 +1,47 @@
-BIN_CALENDAR="./bin/calendar"
-BIN_SCHEDULER="./bin/scheduler"
-BIN_SENDER="./bin/sender"
+BIN_CALENDAR=./bin/calendar
+CFG_CALENDAR_FILE=./deployments/configs/calendar_config.json
+CFG_CALENDAR_TPL=./deployments/configs/calendar_config.json.template
+BIN_SCHEDULER=./bin/scheduler
+CFG_SCHEDULER_FILE=./deployments/configs/scheduler_config.json
+CFG_SCHEDULER_TPL=./deployments/configs/scheduler_config.json.template
+BIN_SENDER=./bin/sender
+CFG_SENDER_FILE=./deployments/configs/sender_config.json
+CFG_SENDER_TPL=./deployments/configs/sender_config.json.template
+ENV_NAME=tests
+
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
+
+up: cfg-up
+	docker-compose -f ./deployments/docker-compose.yaml up -d --build
+
+down: cfg-clean
+	docker-compose down
+
+restart: down up
+
+cfg-up:
+	env `cat ./deployments/env.${ENV_NAME}` envsubst < ${CFG_CALENDAR_TPL} > ${CFG_CALENDAR_FILE}; \
+	env `cat ./deployments/env.${ENV_NAME}` envsubst < ${CFG_SCHEDULER_TPL} > ${CFG_SCHEDULER_FILE}; \
+	env `cat ./deployments/env.${ENV_NAME}` envsubst < ${CFG_SENDER_TPL} > ${CFG_SENDER_FILE};
+
+cfg-clean:
+	rm -f ${CFG_CALENDAR_FILE} ${CFG_SCHEDULER_FILE} ${CFG_SENDER_FILE}
+
+integration-test-up: cfg-up
+	set -e ;\
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.test.yaml up -d ;\
+	test_status_code=0 ;\
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.test.yaml run integration_tests || test_status_code=$$? ;\
+	exit $$test_status_code ;
+
+integration-test-cleanup: cfg-clean
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.test.yaml down --rmi local --volumes --remove-orphans --timeout 60; \
+  	docker-compose rm -f ./deployments/docker-compose.test.yaml
+
+integration-test: integration-test-up integration-test-cleanup
 
 build:
 	go build -v -o $(BIN_CALENDAR) -ldflags "$(LDFLAGS)" ./cmd/calendar
