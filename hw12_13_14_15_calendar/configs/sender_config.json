@@ -15,7 +15,7 @@
       "address": "127.0.0.1:8088"
     }
   },
-  "mpq": {
+  "amqp": {
     "type": "rabbitMq",
     "rabbitMq": {
       "host": "127.0.0.1",
