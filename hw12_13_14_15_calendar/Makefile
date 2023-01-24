@@ -30,21 +30,17 @@ cfg-up:
 cfg-clean:
 	rm -f ${CFG_CALENDAR_FILE} ${CFG_SCHEDULER_FILE} ${CFG_SENDER_FILE}
 
-integration-test-up: cfg-up
+integration-test: cfg-up
 	set -e ;\
 	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml up -d --build;\
 	test_status_code=0 ;\
 	docker build -t tests --network host -f tests/Dockerfile . || test_status_code=$$? ;\
-	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml down --rmi local --volumes --remove-orphans --timeout 60; \
-      	docker-compose rm -f ./deployments/docker-compose.yaml; \
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml down --rmi local --volumes --remove-orphans; \
     rm -f ${CFG_CALENDAR_FILE} ${CFG_SCHEDULER_FILE} ${CFG_SENDER_FILE}; \
 	exit $$test_status_code ;
 
 integration-test-cleanup: cfg-clean
-	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml down --rmi local --volumes --remove-orphans --timeout 60; \
-  	docker-compose rm -f ./deployments/docker-compose.test.yaml
-
-integration-test: integration-test-up integration-test-cleanup
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml down --rmi local --volumes --remove-orphans;
 
 build:
 	go build -v -o $(BIN_CALENDAR) -ldflags "$(LDFLAGS)" ./cmd/calendar
