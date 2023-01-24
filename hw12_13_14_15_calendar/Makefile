@@ -15,10 +15,10 @@ GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 up: cfg-up
-	docker-compose -f ./deployments/docker-compose.yaml up -d --build
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml up -d --build
 
 down: cfg-clean
-	docker-compose down
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml down
 
 restart: down up
 
@@ -32,13 +32,16 @@ cfg-clean:
 
 integration-test-up: cfg-up
 	set -e ;\
-	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.test.yaml up -d ;\
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml up -d --build;\
 	test_status_code=0 ;\
-	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.test.yaml run integration_tests || test_status_code=$$? ;\
+	docker build -t tests --network host -f tests/Dockerfile . || test_status_code=$$? ;\
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml down --rmi local --volumes --remove-orphans --timeout 60; \
+      	docker-compose rm -f ./deployments/docker-compose.yaml; \
+    rm -f ${CFG_CALENDAR_FILE} ${CFG_SCHEDULER_FILE} ${CFG_SENDER_FILE}; \
 	exit $$test_status_code ;
 
 integration-test-cleanup: cfg-clean
-	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.test.yaml down --rmi local --volumes --remove-orphans --timeout 60; \
+	env `cat ./deployments/env.${ENV_NAME}` docker-compose -f ./deployments/docker-compose.yaml down --rmi local --volumes --remove-orphans --timeout 60; \
   	docker-compose rm -f ./deployments/docker-compose.test.yaml
 
 integration-test: integration-test-up integration-test-cleanup

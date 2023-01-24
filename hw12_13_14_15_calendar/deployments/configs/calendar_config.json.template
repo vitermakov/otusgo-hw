@@ -2,7 +2,7 @@
     "serviceId": "calendar",
     "serviceName": "Otus Calendar",
     "logger": {
-        "fileName": "/var/logs/calendar.log",
+        "fileName": "/var/log/calendar.log",
         "level": "${LOGGER_LEVEL}"
     },
     "storage": {
