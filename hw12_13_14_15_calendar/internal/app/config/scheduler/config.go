@@ -4,17 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"time"
 
 	common "github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/internal/app/config"
+	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/utils/jsonx"
 )
 
 var ErrEmptyQueuePublish = errors.New("empty queue name for notifier publishing")
 
 const (
-	defCleanupCheckingTime = time.Hour * 24
-	defCleanupStoreTime    = time.Hour * 24 * 365
-	defNotifyCheckingTime  = time.Minute
+	defCleanupCheckingTime = "1d"
+	defCleanupStoreTime    = "1y"
+	defNotifyCheckingTime  = "1m"
 )
 
 type Config struct {
@@ -25,7 +25,7 @@ type Config struct {
 	API         struct {
 		Calendar common.API `json:"calendar"`
 	} `json:"api"`
-	MPQ     common.Queue `json:"mpq"`
+	AMQP    common.Queue `json:"amqp"`
 	Cleanup Cleanup      `json:"cleanup"`
 	Notify  Notify       `json:"notify"`
 }
@@ -36,13 +36,13 @@ type Logger struct {
 }
 
 type Cleanup struct {
-	CheckingTime time.Duration `json:"checkingTime"` // с единицей измерения: 1d
-	StoreTime    time.Duration `json:"storeTime"`    // с единицей измерения: 1y
+	CheckingTime jsonx.Duration `json:"checkingTime"` // с единицей измерения: 1d
+	StoreTime    jsonx.Duration `json:"storeTime"`    // с единицей измерения: 1y
 }
 
 type Notify struct {
-	CheckingTime time.Duration `json:"checkingTime"` // с единицей измерения: 1m
-	QueuePublish string        `json:"queuePublish"`
+	CheckingTime jsonx.Duration `json:"checkingTime"` // с единицей измерения: 1m
+	QueuePublish string         `json:"queuePublish"`
 }
 
 func New(fileName string) (Config, error) {
@@ -50,30 +50,27 @@ func New(fileName string) (Config, error) {
 	if err := common.New(fileName, &cfg); err != nil {
 		return cfg, fmt.Errorf("error reading configuaration from '%s': %w", fileName, err)
 	}
-	if cfg.Cleanup.CheckingTime <= 0 {
+	if !cfg.Cleanup.CheckingTime.Valid() {
 		log.Printf(
-			"wrong checkingTime cleaner config value '%s', set default '%s'\n",
-			cfg.Cleanup.CheckingTime,
-			defCleanupCheckingTime,
+			"wrong checkingTime cleaner config value, set default '%s'\n", defCleanupCheckingTime,
 		)
-		cfg.Cleanup.StoreTime = defCleanupCheckingTime
+		cfg.Cleanup.CheckingTime, _ = jsonx.ParseDuration(defCleanupCheckingTime)
 	}
-	if cfg.Cleanup.StoreTime <= 0 {
+
+	if !cfg.Cleanup.StoreTime.Valid() {
 		log.Printf(
-			"wrong storeTime cleaner config value '%s', set default '%s'\n",
-			cfg.Cleanup.StoreTime,
-			defCleanupStoreTime,
+			"wrong storeTime cleaner config value, set default '%s'\n", defCleanupStoreTime,
 		)
-		cfg.Cleanup.StoreTime = defCleanupStoreTime
+		cfg.Cleanup.StoreTime, _ = jsonx.ParseDuration(defCleanupStoreTime)
 	}
-	if cfg.Notify.CheckingTime <= 0 {
+
+	if !cfg.Notify.CheckingTime.Valid() {
 		log.Printf(
-			"wrong checkingTime notifier config value '%s', set default '%s'\n",
-			cfg.Notify.CheckingTime,
-			defNotifyCheckingTime,
+			"wrong checkingTime notifier config value, set default '%s'\n", defNotifyCheckingTime,
 		)
-		cfg.Notify.CheckingTime = defNotifyCheckingTime
+		cfg.Notify.CheckingTime, _ = jsonx.ParseDuration(defNotifyCheckingTime)
 	}
+
 	if len(cfg.Notify.QueuePublish) == 0 {
 		err := ErrEmptyQueuePublish
 		log.Println(err.Error())

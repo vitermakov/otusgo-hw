@@ -23,6 +23,7 @@ func (e *Events) GetListOnDate(request *rs.Request) rs.Response {
 	if err != nil {
 		e.handleError(actionName, fmt.Errorf("неверный rangeType %w", err))
 	}
+	fmt.Println(err)
 	date, err := time.Parse(time.RFC3339, request.URL.Query().Get("date"))
 	if err != nil {
 		e.handleError(actionName, fmt.Errorf("неверная дата %w", err))

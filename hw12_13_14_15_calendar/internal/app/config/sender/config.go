@@ -19,7 +19,7 @@ type Config struct {
 		Calendar common.API `json:"calendar"`
 	} `json:"api"`
 	Mailer common.Mailer `json:"mailer"`
-	MPQ    common.Queue  `json:"mpq"`
+	AMQP   common.Queue  `json:"amqp"`
 	Notify Notify        `json:"notify"`
 }
 

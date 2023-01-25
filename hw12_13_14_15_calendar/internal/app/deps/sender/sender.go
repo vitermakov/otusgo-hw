@@ -38,9 +38,8 @@ func (s Sender) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error initializing consumer: %w", err)
 	}
-	done := make(chan struct{})
+
 	go func() {
-		defer close(done)
 		for {
 			select {
 			case <-ctx.Done():
@@ -64,7 +63,6 @@ func (s Sender) Run(ctx context.Context) error {
 			}
 		}
 	}()
-	<-done
 	return nil
 }
 

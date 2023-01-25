@@ -1,0 +1,32 @@
+{
+  "serviceId": "scheduler",
+  "serviceName": "Otus Calendar Scheduler",
+  "logger": {
+    "fileName": "/var/log/scheduler.log",
+    "level": "${LOGGER_LEVEL}"
+  },
+  "apiLogin": "${REST_API_AUTH_EMAIL}",
+  "api": {
+    "calendar": {
+      "type": "grpc",
+      "address": "${SERVER_GRPC_HOST}:${SERVER_GRPC_PORT}"
+    }
+  },
+  "amqp": {
+    "type": "rabbitMq",
+    "rabbitMq": {
+      "host": "${RABBIT_HOST}",
+      "user": "${RABBIT_USER}",
+      "password": "${RABBIT_PASSWORD}",
+      "port": ${RABBIT_PORT}
+    }
+  },
+  "cleanup": {
+    "checkingTime": "${CLEANUP_CHECKING_TIME}",
+    "storeTime": "${CLEANUP_STORE_TIME}"
+  },
+  "notify": {
+    "checkingTime": "${NOTIFY_CHECKING_TIME}",
+    "queuePublish": "${RABBIT_NOTIFY_QUEUE}"
+  }
+}

@@ -12,7 +12,7 @@ import (
 	"github.com/vitermakov/otusgo-hw/hw12_13_14_15_calendar/pkg/queue/rabbit"
 )
 
-var ErrUnknownMPQType = errors.New("unsupported ampq type")
+var ErrUnknownMPQType = errors.New("unsupported amqp type")
 
 func NewAMQPConn(config common.Conn, logger logger.Logger, queueName string) *rabbit.MQConnection {
 	MPQCfg := rabbit.Config{

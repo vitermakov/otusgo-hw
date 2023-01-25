@@ -275,16 +275,23 @@ func FromError(err error) Response {
 	return BadRequest(err.Error(), http.StatusBadRequest)
 }
 
-func ErrFromResponse(status int, data []byte) error {
+func ParseResponse(status int, data []byte, dataObj interface{}, reqResp bool) error {
 	var resp struct {
 		Status  string            `json:"status"`
 		Code    int               `json:"code"`
 		Message string            `json:"message"`
-		Errors  map[string]string `json:"errors"`
 		Data    interface{}       `json:"data"`
+		Errors  map[string]string `json:"errors"`
 	}
-	if status < http.StatusBadRequest {
-		return nil
+	if len(data) == 0 {
+		return errors.New("empty response")
+	}
+	if !reqResp && status < http.StatusBadRequest {
+		err := json.Unmarshal(data, &dataObj)
+		return err
+	}
+	if dataObj != nil {
+		resp.Data = dataObj
 	}
 	err := json.Unmarshal(data, &resp)
 	if err != nil {
@@ -299,11 +306,11 @@ func ErrFromResponse(status int, data []byte) error {
 	case http.StatusNotFound:
 		return errx.NotFoundNew(err, resp.Data)
 	case http.StatusUnprocessableEntity:
-		var errs errx.NamedErrors
+		var namedErrs errx.NamedErrors
 		for f, s := range resp.Errors {
-			errs.Add(errx.NamedError{Field: f, Err: errors.New(s)})
+			namedErrs.Add(errx.NamedError{Field: f, Err: errors.New(s)})
 		}
-		return errx.InvalidNew(resp.Message, errs)
+		return errx.InvalidNew(resp.Message, namedErrs)
 	}
 	return nil
 }

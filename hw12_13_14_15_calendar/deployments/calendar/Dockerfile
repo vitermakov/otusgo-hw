@@ -1,5 +1,5 @@
 # Environment
-FROM golang:1.19 as build
+FROM golang:1.19
 
 ENV BIN_FILE /app/calendar
 ENV CODE_DIR /app
@@ -18,19 +18,19 @@ COPY . ${CODE_DIR}
 ARG LDFLAGS
 RUN CGO_ENABLED=0 go build -ldflags "$LDFLAGS" -a -o ${BIN_FILE} cmd/calendar/*
 
-# Release
-FROM alpine:latest
-
 LABEL ORGANIZATION="OTUS Online Education"
 LABEL SERVICE="calendar"
 LABEL MAINTAINERS="student@otus.ru"
 
-COPY --from=build ${BIN_FILE} /sbin/calendar
-
-ENV CONFIG_FILE /etc/calendar/config.json
-COPY ./deployments/configs/calendar_config.json ${CONFIG_FILE}
+ARG CONFIG_FILE
+ENV CONFIG_FILE_LOCAL /etc/calendar/config.json
+COPY ${CONFIG_FILE} ${CONFIG_FILE_LOCAL}
 
 EXPOSE 8080
 EXPOSE 8088
 
-ENTRYPOINT ["/sbin/calendar"]
+## Add the wait script to the image
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /wait
+RUN chmod +x /wait
+
+CMD /wait && ${BIN_FILE} -config ${CONFIG_FILE_LOCAL}

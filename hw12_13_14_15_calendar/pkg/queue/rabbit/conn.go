@@ -56,9 +56,13 @@ func (r *MQConnection) Connect() error {
 
 	go func() {
 		ncErr := <-r.conn.NotifyClose(make(chan *amqp.Error))
-		r.logger.Error("channel closed: %s", ncErr.Error())
-		// Понимаем, что канал сообщений закрыт, надо пересоздать соединение.
-		r.done <- fmt.Errorf("channel Closed: %w", ncErr)
+		if ncErr != nil {
+			r.logger.Error("channel closed: %s", ncErr.Error())
+			// Понимаем, что канал сообщений закрыт, надо пересоздать соединение.
+			r.done <- fmt.Errorf("channel Closed: %w", ncErr)
+		} else {
+			r.done <- fmt.Errorf("channel Closed")
+		}
 	}()
 
 	if err = r.channel.ExchangeDeclare(
