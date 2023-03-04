@@ -1,15 +1,17 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
+	"syscall"
 	"time"
 )
 
@@ -28,7 +30,7 @@ func main() {
 		log.Fatalf("invalid port %s", args[1])
 	}
 
-	address := fmt.Sprintf("%s:%d", args[0], port)
+	address := net.JoinHostPort(args[0], args[1])
 	tClient := NewTelnetClient(address, ts, os.Stdin, os.Stdout)
 	if err := tClient.Connect(); err != nil {
 		log.Fatalf("Error connecting %s: %s", address, err.Error())
@@ -37,28 +39,31 @@ func main() {
 		_ = tClient.Close()
 	}()
 
-	ctx, cancel := signal.NotifyContext(context.TODO(), os.Interrupt)
-	defer cancel()
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	go manageProcess(ctx, cancel, tClient)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGQUIT, syscall.SIGINT)
 
-	<-ctx.Done()
-}
-
-func manageProcess(ctx context.Context, cancel context.CancelFunc, client TelnetClient) {
 	go func() {
-		<-ctx.Done()
-		client.Close()
-		fmt.Fprint(os.Stderr, "client closed")
+		defer wg.Done()
+		for {
+			if err := tClient.Receive(); err != nil {
+				if !errors.Is(err, io.EOF) {
+					_, _ = fmt.Fprint(os.Stderr, err)
+				}
+				return
+			}
+		}
 	}()
 
 	go func() {
+		defer wg.Done()
 		for {
-			if err := client.Receive(); err != nil {
+			if err := tClient.Send(); err != nil {
 				if !errors.Is(err, io.EOF) {
-					fmt.Fprint(os.Stderr, err)
+					_, _ = fmt.Fprint(os.Stderr, err)
 				}
-				cancel()
 				return
 			}
 		}
@@ -66,13 +71,14 @@ func manageProcess(ctx context.Context, cancel context.CancelFunc, client Telnet
 
 	go func() {
 		for {
-			if err := client.Send(); err != nil {
-				if !errors.Is(err, io.EOF) {
-					fmt.Fprint(os.Stderr, err)
-				}
-				cancel()
-				return
+			sig := <-sigChan
+			if sig == syscall.SIGINT {
+				fmt.Println("CTRL+C Pressed. Exit...")
+				_ = tClient.Close()
+				os.Exit(0)
 			}
 		}
 	}()
+
+	wg.Wait()
 }
